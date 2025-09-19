@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <fcntl.h>
 
 // parent creates pipe ptoc1
 // parent creates pipe c1top2
@@ -68,16 +69,17 @@ int main(int argc, char *argv[]) {
 		// Get information from the parent
 		char *buffer = NULL;
 		size_t n = 0;
-		FILE *output_fd = fopen("output.txt", "w");
-		if (output_fd == NULL) {
+		int output_fd = open("output.txt", O_CREAT|O_WRONLY|O_TRUNC, 0666);
+		if (output_fd == -1) {
 			close(fd[0]);
 			fclose(f);
 			return EXIT_FAILURE;
 		}
 
-		if (fwrite("hello", sizeof(char), 5, output_fd) == -1) {
+		// if (fwrite("hello", sizeof(char), 5, output_fd) == -1) {
+		if (write(output_fd, "hello", sizeof(char)*strlen("hello")) == -1) {
 			fclose(f);
-			fclose(output_fd);
+			close(output_fd);
 			close(fd[0]);
 			return EXIT_FAILURE;
 		}
@@ -98,7 +100,7 @@ int main(int argc, char *argv[]) {
 		close(fd[0]);
 		fclose(f);
 		// free(buffer);
-		fclose(output_fd);
+		close(output_fd);
 
 		return EXIT_SUCCESS;
 	}
@@ -112,7 +114,13 @@ int main(int argc, char *argv[]) {
 		}
 
 		char message[] = "this message was sent from the parent to the child (the child wrote it to output.txt)\n";
-		fprintf(f, "%s", message);
+		// fprintf(f, "%s", message);
+
+		if (fwrite(message, sizeof(char), strlen(message), f) == -1) {
+			close(fd[1]);
+			fclose(f);
+			return EXIT_FAILURE;
+		}
 
 		// wait for the child process to finish
 		waitpid(pid, &wait_status, 0);
