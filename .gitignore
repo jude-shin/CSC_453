@@ -1,0 +1,6 @@
+# binary files 
+*.o
+*.out
+
+# random
+.jpg
