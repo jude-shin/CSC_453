@@ -59,26 +59,17 @@ int main(int argc, char *argv[]) {
 		// Close "write end" file descriptor (OR OTHER FILE DESCRIPTORS THAT ARE IRRELEVENT)
 		close(fd[1]);
 
-		// Convert "read end" file descriptor to file stream
-		FILE *f = fdopen(fd[0], "r");
-		if (f == NULL) {
-			close(fd[0]);
-			return EXIT_FAILURE;
-		}
-
 		// Get information from the parent
 		char *buffer = NULL;
 		size_t n = 0;
 		int output_fd = open("output.txt", O_CREAT|O_WRONLY|O_TRUNC, 0666);
 		if (output_fd == -1) {
 			close(fd[0]);
-			fclose(f);
 			return EXIT_FAILURE;
 		}
 
 		// if (fwrite("hello", sizeof(char), 5, output_fd) == -1) {
 		if (write(output_fd, "hello", sizeof(char)*strlen("hello")) == -1) {
-			fclose(f);
 			close(output_fd);
 			close(fd[0]);
 			return EXIT_FAILURE;
@@ -98,7 +89,6 @@ int main(int argc, char *argv[]) {
 
 		// Cleanup
 		close(fd[0]);
-		fclose(f);
 		// free(buffer);
 		close(output_fd);
 
@@ -107,18 +97,10 @@ int main(int argc, char *argv[]) {
 	else { // parent code
 		close(fd[0]); // close the read end of the file descriptor
 
-		FILE *f = fdopen(fd[1], "w");
-		if (f == NULL) {
-			close(fd[1]);
-			return EXIT_FAILURE;
-		}
-
 		char message[] = "this message was sent from the parent to the child (the child wrote it to output.txt)\n";
-		// fprintf(f, "%s", message);
 
-		if (fwrite(message, sizeof(char), strlen(message), f) == -1) {
+		if (write(fd[1], message, sizeof(char)*strlen("hello")) == -1) {
 			close(fd[1]);
-			fclose(f);
 			return EXIT_FAILURE;
 		}
 
@@ -127,12 +109,10 @@ int main(int argc, char *argv[]) {
 
 		if (!WIFEXITED(wait_status)) {
 			close(fd[1]);
-			fclose(f);
 			return EXIT_FAILURE;
 		}
 
 		close(fd[1]);
-		fclose(f);
 
 		printf("program finished successfully...\n");
 		return EXIT_SUCCESS;
