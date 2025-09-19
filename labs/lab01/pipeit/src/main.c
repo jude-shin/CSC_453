@@ -45,11 +45,11 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	// output file
-
 	// create child2
 	pid = fork();
 	if (pid == -1) { 
+		close(fd[0]);
+		close(fd[1]);
 		return EXIT_FAILURE;
 	}
 
@@ -68,27 +68,37 @@ int main(int argc, char *argv[]) {
 		// Get information from the parent
 		char *buffer = NULL;
 		size_t n = 0;
-		FILE *output_fd = fopen("output.txt", "+w");
+		FILE *output_fd = fopen("output.txt", "w");
 		if (output_fd == NULL) {
-			// printf("something shitty happened");
+			close(fd[0]);
+			fclose(f);
 			return EXIT_FAILURE;
 		}
 
-		while ((n = getline(&buffer, &n, f)) != -1) {
-			// TODO write to output.txt
-			// printf("%s", buffer);
-			if (fwrite(buffer, sizeof(char), n, output_fd) == -1) {
-				fclose(f);
-				fclose(output_fd);
-				return EXIT_FAILURE;
-			}
+		if (fwrite("hello", sizeof(char), 5, output_fd) == -1) {
+			fclose(f);
+			fclose(output_fd);
+			close(fd[0]);
+			return EXIT_FAILURE;
 		}
 
+		// while ((n = getline(&buffer, &n, f)) != -1) {
+		// 	// TODO write to output.txt
+		// 	// printf("%s", buffer);
+		// 	if (fwrite(buffer, sizeof(char), n, output_fd) == -1) {
+		// 		free(buffer);
+		// 		fclose(f);
+		// 		fclose(output_fd);
+		// 		close(fd[0]);
+		// 		return EXIT_FAILURE;
+		// 	}
+		// }
+
 		// Cleanup
-		free(buffer);
-		fclose(output_fd);
 		close(fd[0]);
 		fclose(f);
+		// free(buffer);
+		fclose(output_fd);
 
 		return EXIT_SUCCESS;
 	}
@@ -108,6 +118,8 @@ int main(int argc, char *argv[]) {
 		waitpid(pid, &wait_status, 0);
 
 		if (!WIFEXITED(wait_status)) {
+			close(fd[1]);
+			fclose(f);
 			return EXIT_FAILURE;
 		}
 
