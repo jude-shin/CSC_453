@@ -2,8 +2,5 @@
 *.o
 *.out
 
-# postscript folder
-postscripts/
-
 # random
 .jpg
