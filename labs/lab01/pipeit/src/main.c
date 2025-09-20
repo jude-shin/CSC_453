@@ -6,6 +6,8 @@
 #include <string.h>
 #include <fcntl.h>
 
+#define BUFFER_SIZE 2048
+
 // parent creates pipe ptoc1
 // parent creates pipe c1top2
 // parent creates pipe c2toout
@@ -37,82 +39,79 @@ int main(int argc, char *argv[]) {
 	int wait_status = 0;
 
 	// file descriptors
-	// int ptoc1[2]; // file desc. for parent -> child1
-	// int c1toc2[2]; // file desc. for child1 -> child2
-	// int c2toout[2]; // file desc. for child2 -> output (a file)
-
-	int fd[2]; // file descriptor for testing
-	if (pipe(fd) == -1) {
+	int parent_child1_fd[2]; // file desc. for parent -> child1
+	if (pipe(parent_child1_fd) == -1) {
+		perror("[parent] error making pipe parent_child1_fd");
 		return EXIT_FAILURE;
 	}
+	// int c1toc2[2]; // file desc. for child1 -> child2
+
 
 	// create child2
 	pid = fork();
 	if (pid == -1) { 
-		close(fd[0]);
-		close(fd[1]);
+		close(parent_child1_fd[0]);
+		close(parent_child1_fd[1]);
+		perror("[parent] error forking child2");
 		return EXIT_FAILURE;
 	}
 
 	if (pid == 0) { // child2 code
-		// do whatever you want in the child code
 		// Close "write end" file descriptor (OR OTHER FILE DESCRIPTORS THAT ARE IRRELEVENT)
-		close(fd[1]);
+		close(parent_child1_fd[1]);
 
 		// Get information from the parent
-		char *buffer = NULL;
-		size_t n = 0;
-		int output_fd = open("output.txt", O_CREAT|O_WRONLY|O_TRUNC, 0666);
+		char buffer[BUFFER_SIZE];
+		ssize_t n = 0;
+		int output_fd = open("output", O_CREAT|O_WRONLY|O_TRUNC, 0644);
 		if (output_fd == -1) {
-			close(fd[0]);
+			close(parent_child1_fd[0]);
+			perror("[child2] could not open output file");
 			return EXIT_FAILURE;
 		}
 
-		// if (fwrite("hello", sizeof(char), 5, output_fd) == -1) {
-		if (write(output_fd, "hello", sizeof(char)*strlen("hello")) == -1) {
+		while ((n = read(parent_child1_fd[0], buffer, BUFFER_SIZE)) > 0) {
+			if (write(output_fd, buffer, n) == -1) {
+				close(parent_child1_fd[0]);
+				close(output_fd);
+				perror("[child2] error writing to output file");
+				return EXIT_FAILURE;
+			}
+		}
+
+		if (n == -1) {
+			close(parent_child1_fd[0]);
 			close(output_fd);
-			close(fd[0]);
+			perror("[child2] error reading from pipe parent_child1_fd");
 			return EXIT_FAILURE;
 		}
 
-		// while ((n = getline(&buffer, &n, f)) != -1) {
-		// 	// TODO write to output.txt
-		// 	// printf("%s", buffer);
-		// 	if (fwrite(buffer, sizeof(char), n, output_fd) == -1) {
-		// 		free(buffer);
-		// 		fclose(f);
-		// 		fclose(output_fd);
-		// 		close(fd[0]);
-		// 		return EXIT_FAILURE;
-		// 	}
-		// }
-
-		// Cleanup
-		close(fd[0]);
-		// free(buffer);
+		close(parent_child1_fd[0]);
 		close(output_fd);
 
 		return EXIT_SUCCESS;
 	}
 	else { // parent code
-		close(fd[0]); // close the read end of the file descriptor
+		close(parent_child1_fd[0]); // close the read end of the file descriptor
 
-		char message[] = "this message was sent from the parent to the child (the child wrote it to output.txt)\n";
+		char message[] = "hello world!\n";
 
-		if (write(fd[1], message, sizeof(char)*strlen("hello")) == -1) {
-			close(fd[1]);
+		if (write(parent_child1_fd[1], message, sizeof(char)*strlen(message)) == -1) {
+			close(parent_child1_fd[1]);
+			perror("[parent] error writing message to pipe parent_child1_fd");
 			return EXIT_FAILURE;
 		}
 
-		// wait for the child process to finish
-		waitpid(pid, &wait_status, 0);
+		// // wait for the child process to finish
+		// waitpid(pid, &wait_status, 0);
 
-		if (!WIFEXITED(wait_status)) {
-			close(fd[1]);
-			return EXIT_FAILURE;
-		}
+		// if (!WIFEXITED(wait_status)) {
+		// 	close(parent_child1_fd[1]);
+		// 	perror("[parent] error waiting for child2");
+		// 	return EXIT_FAILURE;
+		// }
 
-		close(fd[1]);
+		close(parent_child1_fd[1]); // data will only send EOF when the pipe is closed on the write end
 
 		printf("program finished successfully...\n");
 		return EXIT_SUCCESS;

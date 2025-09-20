@@ -1,5 +1,5 @@
 CC = gcc
-FLAGS= -Wall -pedantic -g -lSDL3
+FLAGS= -Wall -pedantic -g
 
 MAIN = main.out
 OBJS = bin/main.o
