@@ -7,6 +7,7 @@
 #include <fcntl.h>
 
 #define BUFFER_SIZE 2048
+#define OUT_PERMS 0644 // permissions for the output file
 
 // parent creates pipe ptoc1
 // parent creates pipe c1top2
@@ -60,8 +61,7 @@ int main(int argc, char *argv[]) {
 		char buffer[BUFFER_SIZE];
 		ssize_t n = 0;
 
-		// TODO: magic number 0644
-		int output_fd = open("output", O_CREAT|O_WRONLY|O_TRUNC, 0644); 
+		int output_fd = open("output", O_CREAT|O_WRONLY|O_TRUNC, OUT_PERMS); 
 		if (output_fd == -1) {
 			close(parent_child1_fd[0]);
 			perror("[child2] could not open output file");
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		while ((n = read(parent_child1_fd[0], buffer, BUFFER_SIZE)) > 0) {
-			if (write(output_fd, buffer, n) == -1) {
+			if (write(output_fd, buffer, n) != -1) {
 				close(parent_child1_fd[0]);
 				close(output_fd);
 				perror("[child2] error writing to output file");
@@ -94,7 +94,8 @@ int main(int argc, char *argv[]) {
 		close(parent_child1_fd[0]);
 
 		char message[] = "hello world!\n";
-		exec();
+		// TODO: exec something, and then pipe that as the message
+		// (use the same while loop style as in the first child
 
 		// TODO: ask the professor what kind of indenting he would prefer
 		if (write(parent_child1_fd[1], message, 
