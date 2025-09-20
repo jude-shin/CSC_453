@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		while ((n = read(parent_child1_fd[0], buffer, BUFFER_SIZE)) > 0) {
-			if (write(output_fd, buffer, n) != -1) {
+			if (write(output_fd, buffer, n) == -1) {
 				close(parent_child1_fd[0]);
 				close(output_fd);
 				perror("[child2] error writing to output file");
@@ -93,23 +93,16 @@ int main(int argc, char *argv[]) {
 	else { // parent code
 		close(parent_child1_fd[0]);
 
-		char message[] = "hello world!\n";
-		// TODO: exec something, and then pipe that as the message
-		// (use the same while loop style as in the first child
-
-		// TODO: ask the professor what kind of indenting he would prefer
-		if (write(parent_child1_fd[1], message, 
-					sizeof(char)*strlen(message)) == -1) {
-			close(parent_child1_fd[1]);
-			perror("[parent] error writing message to pipe parent_child1_fd");
+		if (dup2(parent_child1_fd[1], STDOUT_FILENO) == -1) {
+			close(parent_child1_fd[1]); 
 			return EXIT_FAILURE;
 		}
-		
-		// start the chain reaction
-		// data will only send EOF when the pipe is closed on the write end
 		close(parent_child1_fd[1]); 
 
-		printf("program finished successfully...\n");
-		return EXIT_SUCCESS;
+
+		if (execlp("ls", "ls", NULL) == -1) {
+			perror("[parent] error execlp ls command");
+			return EXIT_FAILURE;
+		}
 	}
 }
