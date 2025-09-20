@@ -30,9 +30,6 @@
 // make sure to close all file descriptors (even in error)
 
 
-// small example: skip child1
-
-
 int main(int argc, char *argv[]) {
 	// forking
 	pid_t pid = 0;
@@ -57,17 +54,19 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (pid == 0) { // child2 code
-		// Close "write end" file descriptor (OR OTHER FILE DESCRIPTORS THAT ARE IRRELEVENT)
 		close(parent_child1_fd[1]);
 
 		// Get information from the parent
 		char buffer[BUFFER_SIZE];
 		ssize_t n = 0;
-		int output_fd = open("output", O_CREAT|O_WRONLY|O_TRUNC, 0644);
+
+		// TODO: magic number 0644
+		int output_fd = open("output", O_CREAT|O_WRONLY|O_TRUNC, 0644); 
 		if (output_fd == -1) {
 			close(parent_child1_fd[0]);
 			perror("[child2] could not open output file");
 			return EXIT_FAILURE;
+
 		}
 
 		while ((n = read(parent_child1_fd[0], buffer, BUFFER_SIZE)) > 0) {
@@ -92,26 +91,22 @@ int main(int argc, char *argv[]) {
 		return EXIT_SUCCESS;
 	}
 	else { // parent code
-		close(parent_child1_fd[0]); // close the read end of the file descriptor
+		close(parent_child1_fd[0]);
 
 		char message[] = "hello world!\n";
+		exec();
 
-		if (write(parent_child1_fd[1], message, sizeof(char)*strlen(message)) == -1) {
+		// TODO: ask the professor what kind of indenting he would prefer
+		if (write(parent_child1_fd[1], message, 
+					sizeof(char)*strlen(message)) == -1) {
 			close(parent_child1_fd[1]);
 			perror("[parent] error writing message to pipe parent_child1_fd");
 			return EXIT_FAILURE;
 		}
-
-		// // wait for the child process to finish
-		// waitpid(pid, &wait_status, 0);
-
-		// if (!WIFEXITED(wait_status)) {
-		// 	close(parent_child1_fd[1]);
-		// 	perror("[parent] error waiting for child2");
-		// 	return EXIT_FAILURE;
-		// }
-
-		close(parent_child1_fd[1]); // data will only send EOF when the pipe is closed on the write end
+		
+		// start the chain reaction
+		// data will only send EOF when the pipe is closed on the write end
+		close(parent_child1_fd[1]); 
 
 		printf("program finished successfully...\n");
 		return EXIT_SUCCESS;
