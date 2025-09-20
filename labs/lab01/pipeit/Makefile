@@ -1,8 +1,8 @@
 CC = gcc
 FLAGS= -Wall -pedantic -g
 
-MAIN = main.out
-OBJS = bin/main.o
+MAIN = pipeit.out
+OBJS = bin/main.o bin/family.o
 PROGS = $(MAIN)
 
 all : $(PROGS)

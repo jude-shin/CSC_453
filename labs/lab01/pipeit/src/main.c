@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/wait.h>
-#include <string.h>
 #include <fcntl.h>
+
+#include "family.h"
 
 #define BUFFER_SIZE 2048
 #define OUT_PERMS 0644 // permissions for the output file
@@ -57,8 +57,9 @@ int main(int argc, char *argv[]) {
 			// (therefore, close the "write side" of that pipe
 			close(child1_child2_fd[1]);
 
-			printf("THIS IS CHILD2!!!");
-
+			// --------------------------------
+			// TODO: make this a seperate function?
+			// called redirect_to_file or something like that
 			char buffer[BUFFER_SIZE];
 			ssize_t n = 0;
 
@@ -84,8 +85,7 @@ int main(int argc, char *argv[]) {
 				perror("[child2] error reading from pipe parent_child1_fd");
 				return EXIT_FAILURE;
 			}
-
-			printf("THIS IS CHILD2!!!");
+			// --------------------------------
 
 			close(child1_child2_fd[1]);
 			return EXIT_SUCCESS;
@@ -125,22 +125,7 @@ int main(int argc, char *argv[]) {
 	}
 	// TODO: get rid of the else statements?
 	else { // parent code
-		close(parent_child1_fd[0]);
-		
-		// redirect stdout to the file descriptor that is the "write" end of 
-		// the parent to child 1 pipe
-		if (dup2(parent_child1_fd[1], STDOUT_FILENO) == -1) {
-			close(parent_child1_fd[1]); 
-			return EXIT_FAILURE;
-		}
-		close(parent_child1_fd[1]); 
-
-		// the output which goes to stdout is now the write end of the pipe
-		// when ls is executed, the output will flow through that pipe
-		if (execlp("ls", "ls", NULL) == -1) {
-			perror("[parent] error executing \"$ls\" command");
-			return EXIT_FAILURE;
-		}
+		return parent(parent_child1_fd);
 	}
 }
 
