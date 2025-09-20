@@ -1,17 +1,18 @@
 CC = gcc
-FLAGS= -Wall -pedantic -g
+CFLAGS= -Wall -pedantic -g
+LD = gcc
+LDFLAGS =
+SHELL=/bin/bash
 
-MAIN = pipeit.out
+MAIN = pipeit
 OBJS = bin/main.o bin/family.o
 PROGS = $(MAIN)
 
-all : $(PROGS)
+$(MAIN) : $(OBJS)
+	$(LD) $(LDFLAGS) -o $(MAIN) $(OBJS)
 
 bin/%.o: src/%.c
-	$(CC) $(FLAGS) -c $< -o $@
-
-$(MAIN) : $(OBJS)
-	$(CC) $(FLAGS) -o $(MAIN) $(OBJS)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean :
-	rm bin/*.o $(PROGS) core
+	rm bin/*.o $(PROGS)
