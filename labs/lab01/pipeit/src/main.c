@@ -6,10 +6,6 @@
 
 #include "family.h"
 
-#define BUFFER_SIZE 2048
-#define OUT_PERMS 0644 // permissions for the output file
-
-
 int main(int argc, char *argv[]) {
 	// forking
 	pid_t pid = 0;
@@ -54,21 +50,17 @@ int main(int argc, char *argv[]) {
 			close(parent_child1_fd[0]);
 			close(parent_child1_fd[1]);
 
-			// TODO: ASK if I should close the write end here (asap), or
+			// TODO: ASK Ask ask if I should close the write end here (asap), or
 			// in the function (as it is now... for readablity)
 			child2(child1_child2_fd);
 		}
+
 		// TODO: get rid of the else statements?
-		else { // child1 code
-			child1(parent_child1_fd, child1_child2_fd);
-		}
+		child1(parent_child1_fd, child1_child2_fd);
 	}
-	
-	// TODO: get rid of the else statements?
-	else { // parent code
-		// TODO: ASK if I should close the write end here (asap), or
-		// in the function (as it is now... for readablity)
-		parent(parent_child1_fd);
-	}
+
+	// TODO: ASK Ask ask if I should close the write end here (asap), or
+	// in the function (as it is now... for readablity)
+	parent(parent_child1_fd);
 }
 
