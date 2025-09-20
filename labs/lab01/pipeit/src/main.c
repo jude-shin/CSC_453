@@ -54,8 +54,8 @@ int main(int argc, char *argv[]) {
 			close(parent_child1_fd[0]);
 			close(parent_child1_fd[1]);
 
-			// TODO: ask if you should close the child process before
-			// the function is called, or if you should close them as soon as possible
+			// TODO: ASK if I should close the write end here (asap), or
+			// in the function (as it is now... for readablity)
 			child2(child1_child2_fd);
 		}
 		// TODO: get rid of the else statements?
@@ -66,8 +66,8 @@ int main(int argc, char *argv[]) {
 	
 	// TODO: get rid of the else statements?
 	else { // parent code
-		// TODO: ask if you should close the child process before
-		// the function is called, or if you should close them as soon as possible
+		// TODO: ASK if I should close the write end here (asap), or
+		// in the function (as it is now... for readablity)
 		parent(parent_child1_fd);
 	}
 }
