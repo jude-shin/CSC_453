@@ -5,9 +5,18 @@
 
 #include "family.h"
 
-// TODO: ASK Ask ask if I should close the write end here (asap), or
+// TODO: Ask if I should close the write end here (asap), or
 // in the function (as it is now... for readablity)
 // for both the child and parent functions
+
+// TODO: Ask if the // ========================== are annoying to the proff
+// TODO: Ask about params and return in function comments
+// TODO: Ask where the comments for the functions should be (in the
+// .h files, or in the .c files, or both)
+// TODO: Ask if I am closing everything correctly (pipes and fd)
+// TODO: Ask if I am waiting correctly
+// TODO: Should the child functions have the return type of void?
+// TODO: Should I use the _ or camel case?
 
 int main(int argc, char *argv[]) {
   // forking variables
@@ -21,7 +30,6 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
   
-  // ==========================================
   // create the child 1 process 
   pid_c1 = fork();
   if (pid_c1 == -1) { 
@@ -31,6 +39,7 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  // ==========================================
   // perform child 1 logic 
   if (pid_c1 == 0) {
     // exec the '$ ls' command
@@ -38,7 +47,6 @@ int main(int argc, char *argv[]) {
     child1(ipc_fd);
   }
 
-  // ==========================================
   // create the child 2 process 
   pid_c2 = fork();
   if (pid_c2 == -1) { 
@@ -47,7 +55,8 @@ int main(int argc, char *argv[]) {
     perror("[parent] error forking child 2");
     exit(EXIT_FAILURE);
   }
-  
+ 
+  // ==========================================
   // perform child 2 logic 
   if (pid_c2 == 0) {
     // executes the '$ sort -r' command on the incoming stream from pipe ipc_fd
