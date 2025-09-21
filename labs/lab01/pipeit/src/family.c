@@ -10,7 +10,7 @@
 #define BUFFER_SIZE 2048
 #define OUT_PERMS 0644 // permissions for the output file
 
-void child(int *ipc_fd) {
+void child2(int *ipc_fd) {
   // keep the "read side" of ipc_fd
   // (therefore, close the "write side" of that pipe)
   clean_close(ipc_fd[1]);
@@ -46,7 +46,7 @@ void child(int *ipc_fd) {
   }
 }
 
-void parent(int *ipc_fd) {
+void child1(int *ipc_fd) {
   // keep the "write side" of ipc_fd
   // (therefore, close the "read side" of that pipe)
   clean_close(ipc_fd[0]);

@@ -49,12 +49,12 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  // perform child 1 actions
   if (pid_c1 == 0) {
-    // perform child actions
     // take stdin from ipc_fd pipe that was written by parent
     // redirect stdout to output_fd pipe for the ouput file 
     // execute '$ sort -r' command, which writes the stream to the 
-    parent(ipc_fd);
+    child1(ipc_fd);
   }
 
   // ==========================================
@@ -66,9 +66,10 @@ int main(int argc, char *argv[]) {
     perror("[parent] error forking child 2");
     exit(EXIT_FAILURE);
   }
-
+  
+  // perform child 2 actions
   if (pid_c2 == 0) {
-    child(ipc_fd);
+    child2(ipc_fd);
   }
 
   // ==========================================

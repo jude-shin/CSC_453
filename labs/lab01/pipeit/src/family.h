@@ -1,2 +1,2 @@
-void parent(int *ipc_fd);
-void child(int *ipc_fd);
+void child1(int *ipc_fd);
+void child2(int *ipc_fd);
