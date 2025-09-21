@@ -10,7 +10,7 @@
 
 void child2(int *ipc_fd) {
   // keep the "read side" of ipc_fd
-  // (therefore, close the "write side" of that pipe)
+  // therefore, close the "write side" of that pipe
   close(ipc_fd[1]);
 
   // make the output_fd and open as (write, and create file if nessicary)
@@ -39,13 +39,16 @@ void child2(int *ipc_fd) {
 
   // execute sort
   execlp("sort", "sort", "-r", NULL);
+
+  // execlp only returns on error. therefore reaching these lines signifies 
+  // an error with the command to be executed
   perror("[child2] error executing \"$sort -r\" command");
   exit(EXIT_FAILURE);
 }
 
 void child1(int *ipc_fd) {
   // keep the "write side" of ipc_fd
-  // (therefore, close the "read side" of that pipe)
+  // therefore, close the "read side" of that pipe
   close(ipc_fd[0]);
 
   // redirect stdout to the file descriptor that is the "write" end of 
@@ -60,6 +63,9 @@ void child1(int *ipc_fd) {
   // the output which goes to stdout is now the write end of the pipe
   // when ls is executed, the output will flow through that pipe
   execlp("ls", "ls", NULL);
+  
+  // execlp only returns on error. therefore reaching these lines signifies 
+  // an error with the command to be executed
   perror("[child1] error executing \"$ls\" command");
   exit(EXIT_FAILURE);
 }
