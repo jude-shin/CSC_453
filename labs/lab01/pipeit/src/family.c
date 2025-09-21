@@ -11,10 +11,10 @@ void child2(int *ipc_fd) {
   // "write side" of that pipe.
   close(ipc_fd[1]);
 
-  // Make the output_fd file descriptor and open as writable, creating the
+  // Make the outfile_fd file descriptor and open as writable, creating the
   // file if it does not exsist. Give general permissions to it as well.
-  int output_fd = open("output", O_CREAT|O_WRONLY|O_TRUNC, OUT_PERMS); 
-  if (output_fd == -1) {
+  int outfile_fd = open("outfile", O_CREAT|O_WRONLY|O_TRUNC, OUT_PERMS); 
+  if (outfile_fd == -1) {
     close(ipc_fd[0]);
     perror("[child2] could not open output file");
     exit(EXIT_FAILURE);
@@ -27,16 +27,16 @@ void child2(int *ipc_fd) {
     exit(EXIT_FAILURE);
   }
 
-  // Change stdout to be the output_fd so that the "$ sort -r" command outputs
-  // to the 'output' file.
-  if (dup2(output_fd, STDOUT_FILENO) == -1) {
+  // Change stdout to be the outfile_fd so that the "$ sort -r" command outputs
+  // to the 'outfile'.
+  if (dup2(outfile_fd, STDOUT_FILENO) == -1) {
     close(ipc_fd[0]);
-    close(output_fd);
+    close(outfile_fd);
     exit(EXIT_FAILURE);
   }
 
   close(ipc_fd[0]);
-  close(output_fd);
+  close(outfile_fd);
   
   // Note: execlp will only return on failure, and will send the appropriate 
   // exit(EXIT_FAILURE) and exit(EXIT_SUCCESS) signals to the parent.
