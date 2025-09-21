@@ -43,8 +43,8 @@ int main(int argc, char *argv[]) {
   // create the child 1 process 
   pid_c1 = fork();
   if (pid_c1 == -1) { 
-    clean_close(ipc_fd[0]);
-    clean_close(ipc_fd[1]);
+    close(ipc_fd[0]);
+    close(ipc_fd[1]);
     perror("[parent] error forking child 1");
     exit(EXIT_FAILURE);
   }
@@ -61,8 +61,8 @@ int main(int argc, char *argv[]) {
   // create the child 2 process 
   pid_c2 = fork();
   if (pid_c2 == -1) { 
-    clean_close(ipc_fd[0]);
-    clean_close(ipc_fd[1]);
+    close(ipc_fd[0]);
+    close(ipc_fd[1]);
     perror("[parent] error forking child 2");
     exit(EXIT_FAILURE);
   }
