@@ -40,10 +40,9 @@ void child2(int *ipc_fd) {
   clean_close(output_fd);
 
   // execute sort
-  if (execlp("sort", "sort", "-r", NULL) == -1) {
-    perror("[child1] error executing \"$sort -r\" command");
-    exit(EXIT_FAILURE);
-  }
+  execlp("sort", "sort", "-r", NULL);
+  perror("[child1] error executing \"$sort -r\" command");
+  exit(EXIT_FAILURE);
 }
 
 void child1(int *ipc_fd) {
@@ -62,8 +61,7 @@ void child1(int *ipc_fd) {
 
   // the output which goes to stdout is now the write end of the pipe
   // when ls is executed, the output will flow through that pipe
-  if (execlp("ls", "ls", NULL) == -1) {
-    perror("[parent] error executing \"$ls\" command");
-    exit(EXIT_FAILURE);
-  }
+  execlp("ls", "ls", NULL);
+  perror("[parent] error executing \"$ls\" command");
+  exit(EXIT_FAILURE);
 }
