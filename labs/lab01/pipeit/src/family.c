@@ -1,8 +1,6 @@
-// make sure these are all needed
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <fcntl.h>
 
 #define BUFFER_SIZE 2048
