@@ -5,8 +5,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-#include "helper.h"
-
 #define BUFFER_SIZE 2048
 #define OUT_PERMS 0644 // permissions for the output file
 

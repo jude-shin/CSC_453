@@ -7,7 +7,6 @@
 #include <wait.h>
 
 #include "family.h"
-#include "helper.h"
 
 // TODO: ASK Ask ask if I should close the write end here (asap), or
 // in the function (as it is now... for readablity)
