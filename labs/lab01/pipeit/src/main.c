@@ -31,8 +31,10 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  // perform child 1 actions
+  // perform child 1 logic 
   if (pid_c1 == 0) {
+    // exec the '$ ls' command
+    // toss that output through the pipe ipc_fd for child 2 to recieve
     child1(ipc_fd);
   }
 
@@ -46,13 +48,15 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
   
-  // perform child 2 actions
+  // perform child 2 logic 
   if (pid_c2 == 0) {
+    // executes the '$ sort -r' command on the incoming stream from pipe ipc_fd
+    // and writes it to the file in the project directory called 'output'
     child2(ipc_fd);
   }
 
   // ==========================================
-  // parent code
+  // perform parent logic
 
   close(ipc_fd[0]);
   close(ipc_fd[1]);

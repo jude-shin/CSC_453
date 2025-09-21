@@ -7,12 +7,12 @@
 #define OUT_PERMS 0644 // permissions for the output file
 
 void child2(int *ipc_fd) {
-  // keep the "read side" of ipc_fd
-  // therefore, close the "write side" of that pipe
+  // The "read side" of the ipc_fd pipe will be used, so close the unused 
+  // "write side" of that pipe.
   close(ipc_fd[1]);
 
-  // make the output_fd and open as (write, and create file if nessicary)
-  // give general permissions to the file as well
+  // Make the output_fd file descriptor and open as writable, creating the
+  // file if it does not exsist. Give general permissions to it as well.
   int output_fd = open("output", O_CREAT|O_WRONLY|O_TRUNC, OUT_PERMS); 
   if (output_fd == -1) {
     close(ipc_fd[0]);
@@ -20,12 +20,15 @@ void child2(int *ipc_fd) {
     exit(EXIT_FAILURE);
   }
 
-  // change stdin to be from the ipc_fd "read side"
+  // Change stdin to be the "read side" of the ipc_fd pipe so the "sort"  
+  // command uses the output from child1's exec of the "$ ls" command.
   if (dup2(ipc_fd[0], STDIN_FILENO) == -1) {
     close(ipc_fd[0]);
     exit(EXIT_FAILURE);
   }
-  // change stdout to be to the output_fd
+
+  // Change stdout to be the output_fd so that the "$ sort -r" command outputs
+  // to the 'output' file.
   if (dup2(output_fd, STDOUT_FILENO) == -1) {
     close(ipc_fd[0]);
     close(output_fd);
@@ -34,23 +37,21 @@ void child2(int *ipc_fd) {
 
   close(ipc_fd[0]);
   close(output_fd);
-
-  // execute sort
+  
+  // Note: execlp will only return on failure, and will send the appropriate 
+  // exit(EXIT_FAILURE) and exit(EXIT_SUCCESS) signals to the parent.
   execlp("sort", "sort", "-r", NULL);
-
-  // execlp only returns on error. therefore reaching these lines signifies 
-  // an error with the command to be executed
   perror("[child2] error executing \"$sort -r\" command");
   exit(EXIT_FAILURE);
 }
 
 void child1(int *ipc_fd) {
-  // keep the "write side" of ipc_fd
-  // therefore, close the "read side" of that pipe
+  // The "write side" of the ipc_fd pipe will be used, so close the unused
+  // "read side" of that pipe.
   close(ipc_fd[0]);
 
-  // redirect stdout to the file descriptor that is the "write" end of 
-  // the parent to child 1 pipe
+  // Change stdout to be the "write side" of the ipc_fd pipe so that the "$ ls"
+  // command outputs to the ipc_fd pipe that will be used by child2.
   if (dup2(ipc_fd[1], STDOUT_FILENO) == -1) {
     close(ipc_fd[1]); 
     exit(EXIT_FAILURE);
@@ -58,12 +59,9 @@ void child1(int *ipc_fd) {
 
   close(ipc_fd[1]); 
 
-  // the output which goes to stdout is now the write end of the pipe
-  // when ls is executed, the output will flow through that pipe
+  // Note: execlp will only return on failure, and will send the appropriate 
+  // exit(EXIT_FAILURE) and exit(EXIT_SUCCESS) signals to the parent.
   execlp("ls", "ls", NULL);
-  
-  // execlp only returns on error. therefore reaching these lines signifies 
-  // an error with the command to be executed
   perror("[child1] error executing \"$ls\" command");
   exit(EXIT_FAILURE);
 }
