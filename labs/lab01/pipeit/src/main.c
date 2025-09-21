@@ -5,43 +5,42 @@
 #include <fcntl.h>
 
 #include "family.h"
+#include "helper.h"
 
 // TODO: ASK Ask ask if I should close the write end here (asap), or
 // in the function (as it is now... for readablity)
-// for both the child1 and parent functions
-
-
+// for both the child and parent functions
 
 int main(int argc, char *argv[]) {
   // forking
   pid_t pid = 0;
 
-  // file desc. for parent -> child1
-  int parent_child1_fd[2]; 
-  if (pipe(parent_child1_fd) == -1) {
-    perror("[parent] error making pipe parent_child1_fd");
-    return EXIT_FAILURE;
+  // file desc. for parent <-> child
+  int ipc_fd[2]; 
+  if (pipe(ipc_fd) == -1) {
+    perror("[parent] error making pipe ipc_fd");
+    exit(EXIT_FAILURE);
   }
 
-  // create a new process (child 1) as parent
+  // create a new process (child) as parent
   pid = fork();
   if (pid == -1) { 
-    close(parent_child1_fd[0]);
-    close(parent_child1_fd[1]);
-    perror("[parent] error forking child1");
-    return EXIT_FAILURE;
+    clean_close(ipc_fd[0]);
+    clean_close(ipc_fd[1]);
+    perror("[parent] error forking child");
+    exit(EXIT_FAILURE);
   }
 
   if (pid == 0) {
-    // perform child1 actions
-    // take stdin from parent_child1_fd pipe that was written by parent
+    // perform child actions
+    // take stdin from ipc_fd pipe that was written by parent
     // redirect stdout to output_fd pipe for the ouput file 
     // execute '$ sort -r' command, which writes the stream to the 
-    child1(parent_child1_fd);
+    child(ipc_fd);
   }
 
   // perform parent actions
-  // redirect stdout to parent_child1_fd pipe for child1 to read
+  // redirect stdout to ipc_fd pipe for child to read
   // execute '$ ls' command,
-  parent(parent_child1_fd);
+  parent(ipc_fd);
 }
