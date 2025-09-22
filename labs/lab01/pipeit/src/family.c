@@ -6,6 +6,20 @@
 #define BUFFER_SIZE 2048 // write size for buffers writing to files
 #define OUT_PERMS 0644 // permissions for the 'outfile'
 
+
+/*
+Function:
+  Executes the '$ sort -r' command on the incoming stream from pipe ipc_fd
+  and writes it's output to a file in the project directory called
+  'outfile'. If that file is not found, a file called 'outfile' is created
+  and used.
+Parameters: 
+  ipc_fd: A Pointer to the pipe which child1 and child2 will communicate. 
+  Note that ipc_fd[0] and ipc_fd[1] represent the 'read' end 'write' end of 
+  the pipe respectively.
+Returns:
+   void.
+*/
 void child2(int *ipc_fd) {
   // The "read side" of the ipc_fd pipe will be used, so close the unused 
   // "write side" of that pipe.
@@ -45,6 +59,20 @@ void child2(int *ipc_fd) {
   exit(EXIT_FAILURE);
 }
 
+
+
+
+/*
+Function:
+  Executes the '$ ls' command and tosses that output through the pipe ipc_fd 
+  for child 2.
+Parameters: 
+  ipc_fd: A Pointer to the pipe which child1 and child2 will communicate. 
+  Note that ipc_fd[0] and ipc_fd[1] represent the 'read' end 'write' end of 
+  the pipe respectively.
+Returns:
+  void.
+*/
 void child1(int *ipc_fd) {
   // The "write side" of the ipc_fd pipe will be used, so close the unused
   // "read side" of that pipe.

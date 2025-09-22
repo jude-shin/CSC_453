@@ -5,19 +5,6 @@
 
 #include "family.h"
 
-// TODO: Ask if I should close the write end here (asap), or
-// in the function (as it is now... for readablity)
-// for both the child and parent functions
-
-// TODO: Ask if the // ========================== are annoying to the proff
-// TODO: Ask about params and return in function comments
-// TODO: Ask where the comments for the functions should be (in the
-// .h files, or in the .c files, or both)
-// TODO: Ask if I am closing everything correctly (pipes and fd)
-// TODO: Ask if I am waiting correctly
-// TODO: Should the child functions have the return type of void?
-// TODO: Should I use the _ or camel case?
-
 int main(int argc, char *argv[]) {
   // forking variables for child1 and child2
   int wait_status_c1, wait_status_c2;
