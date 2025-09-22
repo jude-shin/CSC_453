@@ -6,7 +6,6 @@
 #define BUFFER_SIZE 2048 // write size for buffers writing to files
 #define OUT_PERMS 0644 // permissions for the 'outfile'
 
-
 /*
 Function:
   Executes the '$ sort -r' command on the incoming stream from pipe ipc_fd
@@ -58,8 +57,6 @@ void child2(int *ipc_fd) {
   perror("[child2] error executing \"sort -r\" command");
   exit(EXIT_FAILURE);
 }
-
-
 
 
 /*

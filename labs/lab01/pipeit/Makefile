@@ -5,14 +5,14 @@ LDFLAGS =
 SHELL=/bin/bash
 
 MAIN = pipeit
-OBJS = bin/main.o bin/family.o
+OBJS = main.o family.o
 PROGS = $(MAIN)
 
 $(MAIN) : $(OBJS)
 	$(LD) $(LDFLAGS) -o $(MAIN) $(OBJS)
 
-bin/%.o: src/%.c
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean :
-	rm bin/*.o $(PROGS) outfile
+	rm *.o $(PROGS) outfile
