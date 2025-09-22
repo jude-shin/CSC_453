@@ -5,7 +5,7 @@ LDFLAGS =
 SHELL=/bin/bash
 
 MAIN = pipeit
-OBJS = main.o family.o
+OBJS = pipeit.o family.o
 PROGS = $(MAIN)
 
 $(MAIN) : $(OBJS)
