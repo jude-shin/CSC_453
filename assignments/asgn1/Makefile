@@ -4,18 +4,18 @@ LD = gcc
 LDFLAGS =
 SHELL=/bin/bash
 
-MAIN = tryme
-OBJS = tryme.c chunk.o alloc.o
-PROGS = $(MAIN)
-
-# TODO: make an archive in this make
-
-$(MAIN) : $(OBJS)
-	$(LD) $(LDFLAGS) -o $(MAIN) $(OBJS)
+OBJS = chunk.o alloc.o
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# TODO: clean the archive as well
-clean :
-	rm *.o $(PROGS)
+malloc: 
+
+libmalloc.a: 
+	ar r libmalloc.a $(OBJS)
+
+clean:
+	rm *.o $(PROGS) libmalloc.a
+
+test: $(OBJS)
+	$(LD) $(LDFLAGS) -o test $(OBJS) test.o
