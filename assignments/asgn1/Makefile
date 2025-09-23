@@ -4,18 +4,16 @@ LD = gcc
 LDFLAGS =
 SHELL=/bin/bash
 
-OBJS = chunk.o alloc.o
+MAIN = test 
+OBJS = bin/test.o bin/alloc.o bin/chunk.o
+PROGS = $(MAIN)
 
-%.o: %.c
+$(MAIN): $(OBJS)
+	$(LD) $(LDFLAGS) -o $(MAIN) $(OBJS)
+
+bin/%.o: src/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-malloc: 
+clean :
+	rm *.o $(PROGS)
 
-libmalloc.a: 
-	ar r libmalloc.a $(OBJS)
-
-clean:
-	rm *.o $(PROGS) libmalloc.a
-
-test: $(OBJS)
-	$(LD) $(LDFLAGS) -o test $(OBJS) test.o
