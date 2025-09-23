@@ -1,9 +1,8 @@
-#include "chunk.h"
+#include <stddef.h> 
+#include "datastruct.h"
 
 /*
-Checks the current and next chunks, to clean up space.
-If curr chunk is not being used, and next chunk is also not being used, 
-keep the curr header, and turn the rest of space into the data of the curr
+Checks the current and next chunks, to clean up space.  If curr chunk is not being used, and next chunk is also not being used, keep the curr header, and turn the rest of space into the data of the curr
 header. 
 Repeat recursively (setting the prev header as curr in this function) 
 until the end is reached, or there is a chunk that is being used.
@@ -23,3 +22,4 @@ until the end is reached, or there is a chunk that is being used.
 int merge_prev(Chunk *curr) {
   return 0;
 }
+
