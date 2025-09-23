@@ -1,15 +1,26 @@
 #include <stddef.h> 
+#include <stdio.h> 
 
 #include "chunk.h"
 
 
 #define CHUNK_SIZE 16
 
-void *calloc(size_t nmemb, size_t size) {
+void *my_calloc(size_t nmemb, size_t size) {
+  printf("hello from calloc");
+  return NULL;
 }
-void *malloc(size_t size) {
+
+void *my_malloc(size_t size) {
+  printf("hello from malloc");
+  return NULL;
 }
-void free(void *ptr) {
+
+void my_free(void *ptr) {
+  printf("hello from free");
 }
-void *realloc(void *ptr, size_t size) {
+
+void *my_realloc(void *ptr, size_t size) {
+  printf("hello from realloc");
+  return NULL;
 }
