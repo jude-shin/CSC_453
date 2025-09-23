@@ -1,5 +1,3 @@
 Jude Shin (jshin53)
-The 'Makefile' will take source files from the src/ directory, put the .o 
-files in the bin/ directory, and link together the executable named 'pipeit'
-in the project directory which the Makefile is located.
+'$make pipeit' will compile the program
 There are no special notes for grading.
