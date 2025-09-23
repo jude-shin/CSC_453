@@ -5,7 +5,7 @@ LDFLAGS =
 SHELL=/bin/bash
 
 MAIN = malloc 
-OBJS = malloc.o chunk.o
+OBJS = malloc.o chunk.o alloc.o
 PROGS = $(MAIN)
 
 # TODO: make an archive in this make
