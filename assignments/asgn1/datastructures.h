@@ -1,7 +1,7 @@
 #include <stdbool.h>
 
-#ifndef CHUNK_DS
-#define CHUNK_DS 
+#ifndef DATASTRUCTURES 
+#define DATASTRUCTURES 
 
 // hold the data structure for the linked list in here. this should hold some
 // pointer information, size, whether it is free or being used, and possibly

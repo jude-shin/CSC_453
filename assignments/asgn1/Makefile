@@ -4,8 +4,8 @@ LD = gcc
 LDFLAGS =
 SHELL=/bin/bash
 
-MAIN = malloc 
-OBJS = malloc.o chunk.o alloc.o
+MAIN = tryme
+OBJS = tryme.c chunk.o alloc.o
 PROGS = $(MAIN)
 
 # TODO: make an archive in this make

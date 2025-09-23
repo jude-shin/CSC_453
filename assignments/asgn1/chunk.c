@@ -1,5 +1,5 @@
 #include <stddef.h> 
-#include "datastruct.h"
+#include "datastructures.h"
 
 /*
 Checks the current and next chunks, to clean up space.  If curr chunk is not being used, and next chunk is also not being used, keep the curr header, and turn the rest of space into the data of the curr
