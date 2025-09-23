@@ -1,3 +1,8 @@
+#include <stdbool.h>
+
+#ifndef CHUNK 
+#define CHUNK 
+
 // hold the data structure for the linked list in here. this should hold some
 // pointer information, size, whether it is free or being used, and possibly
 // the previous chunk as well
@@ -15,7 +20,7 @@ The header holds the following information:
   A pointer to the next chunk (which is the same as the beginning of it's 
   header) if there is one.
 */
-struct chunk {
+typedef struct Chunk {
   // how large the data segment of this chunk should be
   long unsigned int size;
 
@@ -23,11 +28,12 @@ struct chunk {
   bool is_available;
 
   // points to the header (chunk) beginnings, not the data portion
-  chunk *prev;
-  chunk *next;
+  struct Chunk *prev;
+  struct Chunk *next;
 
   // NOTE: where does the data region of this chunk start?
   // we should know this: current chunk pointer plust the size(chunk) should
   // hold the beginning of where the data actually starts
-};
+} Chunk;
 
+#endif
