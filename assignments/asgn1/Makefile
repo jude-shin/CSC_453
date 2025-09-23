@@ -15,5 +15,5 @@ bin/%.o: src/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean :
-	rm *.o $(PROGS)
+	rm bin/*.o $(PROGS)
 
