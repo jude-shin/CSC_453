@@ -68,10 +68,9 @@ int main(int argc, char *argv[]) {
   waitpid(pid_c2, &wait_status_c2, 0);
 
   if (WIFEXITED(wait_status_c1) && WIFEXITED(wait_status_c2)) {
-    printf("Program Finished Successfully!\n");
     return 0;
   }
-  
-  // TODO: do we put perrors at the end? or do we just have the program finish?
-  return -1; 
+  else{
+    return -1; 
+  }
 }
