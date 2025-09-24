@@ -1,26 +1,36 @@
 #include <stddef.h> 
 #include <stdio.h> 
+#include <unistd.h> 
 
-#include "chunk.h"
+#include "unk.h"
 
-
-#define CHUNK_SIZE 16
-
-void *my_calloc(size_t nmemb, size_t size) {
-  printf("hello from calloc");
+void *calloc(size_t nmemb, size_t size) {
   return NULL;
 }
 
-void *my_malloc(size_t size) {
-  printf("hello from malloc");
+void *malloc(size_t size) {
+  // initalize the first chunk in the hunk (the head of the linked list)
+  void *hello = get_head();
+
+  // check to see if we have size in the hunk (only if trying to allocate to
+  // the tail)
+  // this gets the "to be" address. it adds the following
+  // size of the tail header, size of the data of tail, size of the to be 
+  // header, and the size of the to be data
+  // size_t theoretical = sizeof(Chunk) + [get the data size from tail header] 
+  // + sizeof(Chunk) + size
+
+
+
+
+
+  // every time that we calll 
   return NULL;
 }
 
-void my_free(void *ptr) {
-  printf("hello from free");
+void free(void *ptr) {
 }
 
-void *my_realloc(void *ptr, size_t size) {
-  printf("hello from realloc");
+void *realloc(void *ptr, size_t size) {
   return NULL;
 }

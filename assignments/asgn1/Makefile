@@ -5,7 +5,7 @@ LDFLAGS =
 SHELL=/bin/bash
 
 MAIN = test 
-OBJS = bin/test.o bin/alloc.o bin/chunk.o
+OBJS = bin/test.o bin/alloc.o bin/unk.o
 PROGS = $(MAIN)
 
 $(MAIN): $(OBJS)

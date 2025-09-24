@@ -1,0 +1,61 @@
+
+Every time that we call calloc, malloc, then we are going to add a new HEADER.
+
+Example:
+First Malloc: (I want 16 bytes)
+1) will implement the sbrk becuase the current data segment does not have 
+enough space (it has 0 space)
+
+01  --------- <-- brk
+
+will turn into:
+
+12  --------- <-- brk
+11  |				|
+10  |				|
+09  |				|
+08  |				|
+07  |				|
+06  |	empty |
+05  |				|
+04  |				|
+03  |				|
+02  |				|
+01  --------- <-- old brk
+
+
+2) will create a new header with the given address from sbrk (reference the 
+man pages..... I am pretty sure it returns the old brk address)
+
+12  --------- <-- brk
+11  |				|
+10  |				|
+09  |				|
+08  | empty |
+07  |				|
+06  |				|
+05  |				|
+04  |				|
+03  ---------
+02  | header|
+01  --------- <-- old brk
+
+
+3) then the requested quantity of data will be allocated AFTER the header
+
+12  --------- <-- brk
+11  |				|
+10  | empty |
+09  |				|
+08  |				|
+07  ---------
+06  |				|
+05  |useable|
+04  |  data |
+03  ---------
+02  | header|
+01  --------- <-- old brk
+
+
+4) the HEADER will contain the end of the USABLE DATA so that the 
+
