@@ -7,7 +7,7 @@
 #include "datastructures.h"
 
 // size of the hunk in bytes
-#define HUNK_SIZE 64000000 
+#define HUNK_SIZE 64000
 
 // TODO: put in a struct with a "bytes used"/"bytes avaliable"?
 static Chunk *global_head_ptr = NULL;
@@ -54,13 +54,13 @@ Chunk *get_head() {
 
     // TODO: make sure that the sbrk will be first floored to the nearest 
     // multiple of 16 (round up)
-    uintptr_t floor = sbrk(0);
+    uintptr_t floor = (uintptr_t)sbrk(0);
     sbrk(floor % 16);
 
     global_head_ptr = sbrk(HUNK_SIZE);
 
     // global_head_ptr->size = HUNK_SIZE - sizeof(Chunk); // TODO: this is probably wrong
-    global_head_ptr->size = (size_t)(HUNK_SIZE - (uintptr_t)Chunk);
+    global_head_ptr->size = HUNK_SIZE - sizeof(Chunk);
     global_head_ptr->is_available = true;
     global_head_ptr->prev= NULL;
     global_head_ptr->next = NULL;
@@ -110,7 +110,7 @@ Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
 
   // 2) create a new_chunk at address (available_chunk + sizeof(Chunk) + size)
   // Chunk *new_chunk = (available_chunk + 1) + size;
-  Chunk *new_chunk = (size_t)((uintptr_t)available_chunk + sizeof(Chunk) + size);
+  Chunk *new_chunk = (Chunk*)((uintptr_t)available_chunk + sizeof(Chunk) + size);
 
   // 3) populate that new header with the correct information 
   new_chunk->size = available_chunk->size - size - sizeof(Chunk);
