@@ -1,7 +1,7 @@
 #include "alloc.h"
 
 int main(int argc, char *argv[]) {
-  malloc(0);
+  my_malloc(sizeof("HELLO WORLD!"));
 
   return 0;
 }

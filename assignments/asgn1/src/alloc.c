@@ -1,5 +1,6 @@
 #include <stddef.h> 
 #include <stdio.h> 
+#include <stdbool.h> 
 #include <unistd.h> 
 
 #include "unk.h"
@@ -9,20 +10,28 @@ void *calloc(size_t nmemb, size_t size) {
   return NULL;
 }
 
-void *malloc(size_t size) {
+void *my_malloc(size_t size) {
+  // TODO: if anything returns NULL, then you should exit with a werid status.
+  // Check after every function call
   // initalize the first chunk in the hunk (the head of the linked list)
-  void *head_addr = get_head_addr();
+  Chunk *head = get_head();
+  if (head == NULL) {
+    // TODO: should libraries give perrors?
+    // or should they just return their values that indicate an error?
+    // perror("malloc: error carving available chunk");
+    return NULL;
+  }
 
-  // check to see if we have size in the hunk (only if trying to allocate to
-  // the tail)
-  // this gets the "to be" address. it adds the following
-  // size of the tail header, size of the data of tail, size of the to be 
-  // header, and the size of the to be data
-  // size_t theoretical = sizeof(Chunk) + [get the data size from tail header] 
-  // + sizeof(Chunk) + size
+  Chunk *available_chunk = find_available_chunk(head, size);
+  if (available_chunk == NULL) {
+    return NULL;
+  }
 
-  // every time that we calll 
-  return NULL;
+  if (carve_chunk(available_chunk, size, false) == NULL) {
+    return NULL;
+  }
+  
+  return available_chunk;
 }
 
 void free(void *ptr) {
