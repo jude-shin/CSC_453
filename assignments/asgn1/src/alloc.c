@@ -6,7 +6,7 @@
 
 #include "unk.h"
 
-void *calloc(size_t nmemb, size_t size) {
+void *my_calloc(size_t nmemb, size_t size) {
   // get the first chunk of the linked list
   // if this is the first time using it, initalize the list with a global var
   Chunk *head = get_head();
@@ -66,7 +66,7 @@ void *my_malloc(size_t size) {
   return (void*)((uintptr_t)available_chunk + sizeof(Chunk));
 }
 
-void free(void *ptr) {
+void my_free(void *ptr) {
   // initalize the first chunk in the hunk (the head of the linked list)
   Chunk *head = get_head();
   if (head == NULL) {
@@ -76,7 +76,7 @@ void free(void *ptr) {
   }
 }
 
-void *realloc(void *ptr, size_t size) {
+void *my_realloc(void *ptr, size_t size) {
   // initalize the first chunk in the hunk (the head of the linked list)
   Chunk *head = get_head();
   if (head == NULL) {
