@@ -4,9 +4,7 @@
 #include "unk.h"
 
 int main(int argc, char *argv[]) {
-  my_malloc(sizeof("HELLO WORLD!123456789012345"));
-  my_malloc(sizeof("HELLO WORLD!123456789012345"));
-  my_calloc(sizeof("HELLO WORLD!123456789012345"));
+  my_calloc(3, 16);
   return 0;
 }
 

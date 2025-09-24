@@ -15,7 +15,11 @@ void *my_calloc(size_t nmemb, size_t size) {
     return NULL;
   }
 
-  // round the user's alloc request to the nearest multiple of 16 
+  // simulate an array by giving space for nmemb elements of size size
+  size = nmemb*size;
+
+  // round the remainder of the total space needed up to the nearest
+  // multiple of 16
   size = block_size(size);
 
   // find the next available chunk, increasing the hunk size as needed
