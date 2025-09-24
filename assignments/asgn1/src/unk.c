@@ -13,8 +13,10 @@
 static Chunk *global_head_ptr = NULL;
 static Chunk *global_tail_ptr = NULL;
 
+/////////////
+//  CHUNK  //
+/////////////
 
-// CHunk functions
 /*
 Checks the current and next chunks, to clean up space.  If curr chunk is no
 being used, and next chunk is also not being used, keep the curr header, and 
@@ -40,26 +42,20 @@ void *merge_prev(Chunk *curr) {
   return NULL;
 }
 
-
-// Hunk functions
+////////////
+//  HUNK  //
+////////////
 
 // get the head of the hunk
 // if this is the first time you are using the hunk, then initalize it with
 // all the default data
 Chunk *get_head() {
   if (global_head_ptr == NULL) {
-    // this is the first time that I have called malloc, and I need to get
-    // the original break point
-    // this will also be the header of the linked list
-
-    // TODO: make sure that the sbrk will be first floored to the nearest 
-    // multiple of 16 (round up)
     uintptr_t floor = (uintptr_t)sbrk(0);
     sbrk(floor % 16);
 
     global_head_ptr = sbrk(HUNK_SIZE);
 
-    // global_head_ptr->size = HUNK_SIZE - sizeof(Chunk); // TODO: this is probably wrong
     global_head_ptr->size = HUNK_SIZE - sizeof(Chunk);
     global_head_ptr->is_available = true;
     global_head_ptr->prev= NULL;
@@ -124,9 +120,9 @@ Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
     global_tail_ptr = new_chunk;
   }
 
-  // TODO: memset this area
   if (initalize) {
-   int foo = 0;
+    void *data = (void*)((uintptr_t)available_chunk + sizeof(Chunk));
+    memset(data, 0, size);
   }
 
   // update the available_chunk to have the correct information in the
