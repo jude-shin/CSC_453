@@ -6,6 +6,7 @@
 #define HUNK_SIZE 64000000
 #define CHUNK_SIZE 64000
 
+// TODO: put in a struct with a "bytes used"/"bytes avaliable"?
 static void *head_addr = NULL;
 static void *tail_addr = NULL;
 
@@ -38,7 +39,7 @@ void *merge_prev(Chunk *curr) {
 
 // Hunk functions
 
-void *get_head() {
+void *get_head_addr() {
   if (head_addr == NULL) {
     // this is the first time that I have called malloc, and I need to get
     // the original break point

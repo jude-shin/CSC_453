@@ -5,12 +5,13 @@
 #include "unk.h"
 
 void *calloc(size_t nmemb, size_t size) {
+  // void *head_addr = get_head_addr();
   return NULL;
 }
 
 void *malloc(size_t size) {
   // initalize the first chunk in the hunk (the head of the linked list)
-  void *hello = get_head();
+  void *head_addr = get_head_addr();
 
   // check to see if we have size in the hunk (only if trying to allocate to
   // the tail)
@@ -19,10 +20,6 @@ void *malloc(size_t size) {
   // header, and the size of the to be data
   // size_t theoretical = sizeof(Chunk) + [get the data size from tail header] 
   // + sizeof(Chunk) + size
-
-
-
-
 
   // every time that we calll 
   return NULL;
