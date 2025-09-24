@@ -135,6 +135,6 @@ Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
 size_t block_size(size_t size) {
   // TODO: round thid block up to the nearest 16 bytes so it doesn't bite us
   // in the butt
-  size_t remainder = size % 16;
+  size_t remainder = 16 - (size % 16);
   return size + remainder;
 }

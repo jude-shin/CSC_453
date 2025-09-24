@@ -26,12 +26,8 @@ void *my_malloc(size_t size) {
     return NULL;
   }
 
-   return NULL;
-
-
-
   // make sure that the size that the user alllocates is in multiples of 16
-  // size = block_size(size);
+  size = block_size(size);
 
   // Chunk *available_chunk = find_available_chunk(head, size);
   // if (available_chunk == NULL) {
@@ -45,6 +41,7 @@ void *my_malloc(size_t size) {
   // }
   
   // return available_chunk;
+  return NULL;
 }
 
 void free(void *ptr) {
