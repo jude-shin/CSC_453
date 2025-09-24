@@ -2,6 +2,7 @@
 #define DATASTRUCTURES 
 
 #include <stdbool.h>
+#include <stddef.h>
 // hold the data structure for the linked list in here. this should hold some
 // pointer information, size, whether it is free or being used, and possibly
 // the previous chunk as well

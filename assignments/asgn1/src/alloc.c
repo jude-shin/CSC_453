@@ -29,19 +29,21 @@ void *my_malloc(size_t size) {
   // make sure that the size that the user alllocates is in multiples of 16
   size = block_size(size);
 
-  // Chunk *available_chunk = find_available_chunk(head, size);
-  // if (available_chunk == NULL) {
-  //   perror("malloc: error finding available chunk");
-  //   return NULL;
-  // }
+  // NOTE: the first time you call my_malloc, the available_chunk address
+  // should be the same address of the head
 
-  // if (carve_chunk(available_chunk, size, false) == NULL) {
-  //   perror("malloc: error carving available chunk");
-  //   return NULL;
-  // }
+  Chunk *available_chunk = find_available_chunk(head, size);
+  if (available_chunk == NULL) {
+    perror("malloc: error finding available chunk");
+    return NULL;
+  }
+
+  if (carve_chunk(available_chunk, size, false) == NULL) {
+    perror("malloc: error carving available chunk");
+    return NULL;
+  }
   
-  // return available_chunk;
-  return NULL;
+  return available_chunk;
 }
 
 void free(void *ptr) {

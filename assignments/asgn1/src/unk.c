@@ -117,6 +117,17 @@ Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
   new_chunk->is_available = true; // takes remaining available size
   new_chunk->prev = available_chunk;
   new_chunk->next = available_chunk->next;
+ 
+  // if we just split out of the tail pointer's free data portion, then we need
+  // to set the tail to the newly split and unused portion (the new chunk)
+  if (available_chunk == global_tail_ptr) {
+    global_tail_ptr = new_chunk;
+  }
+
+  // TODO: memset this area
+  if (initalize) {
+   int foo = 0;
+  }
 
   // update the available_chunk to have the correct information in the
   // header
