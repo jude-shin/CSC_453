@@ -101,7 +101,6 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
 Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
   // at this point we have a chunk that can be used for the data that we want
 
-
   // 2) create a new_chunk at address (available_chunk + sizeof(Chunk) + size)
   // TODO: pointer arithmetic is probably wrong
   Chunk *new_chunk = (available_chunk + 1) + size;
