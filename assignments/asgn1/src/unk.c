@@ -2,11 +2,12 @@
 #include <stddef.h> 
 #include <stdbool.h>  // do I even need this?
 #include <string.h>
+#include <stdint.h>
 
 #include "datastructures.h"
 
-#define HUNK_SIZE 64000000
-#define CHUNK_SIZE 64000
+// size of the hunk in bytes
+#define HUNK_SIZE 64000000 
 
 // TODO: put in a struct with a "bytes used"/"bytes avaliable"?
 static Chunk *global_head_ptr = NULL;
@@ -50,9 +51,16 @@ Chunk *get_head() {
     // this is the first time that I have called malloc, and I need to get
     // the original break point
     // this will also be the header of the linked list
+
+    // TODO: make sure that the sbrk will be first floored to the nearest 
+    // multiple of 16 (round up)
+    uintptr_t floor = sbrk(0);
+    sbrk(floor % 16);
+
     global_head_ptr = sbrk(HUNK_SIZE);
 
-    global_head_ptr->size = HUNK_SIZE - sizeof(Chunk); // TODO: this is probably wrong
+    // global_head_ptr->size = HUNK_SIZE - sizeof(Chunk); // TODO: this is probably wrong
+    global_head_ptr->size = (size_t)(HUNK_SIZE - (uintptr_t)Chunk);
     global_head_ptr->is_available = true;
     global_head_ptr->prev= NULL;
     global_head_ptr->next = NULL;
@@ -69,7 +77,6 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
   // this inequality allows us to guarentee that the space we will allocate
   // will have enough for the header, the data space, and the new header space
   // at the end
-  // TODO: pointer arithmetic is probably wrong
   if (curr->is_available && curr->size > (size + 2*sizeof(Chunk))) {
     // then we are able to allocate it!
     // this chunk is the chosen one
@@ -102,11 +109,11 @@ Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
   // at this point we have a chunk that can be used for the data that we want
 
   // 2) create a new_chunk at address (available_chunk + sizeof(Chunk) + size)
-  // TODO: pointer arithmetic is probably wrong
-  Chunk *new_chunk = (available_chunk + 1) + size;
+  // Chunk *new_chunk = (available_chunk + 1) + size;
+  Chunk *new_chunk = (size_t)((uintptr_t)available_chunk + sizeof(Chunk) + size);
 
   // 3) populate that new header with the correct information 
-  new_chunk->size = available_chunk->size - size - 2*sizeof(Chunk);
+  new_chunk->size = available_chunk->size - size - sizeof(Chunk);
   new_chunk->is_available = true; // takes remaining available size
   new_chunk->prev = available_chunk;
   new_chunk->next = available_chunk->next;
@@ -123,4 +130,11 @@ Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
   // 5) return the ptr to the available_chunk
 
   return available_chunk; // TODO: it might be more useful to return new_chunk
+}
+
+size_t block_size(size_t size) {
+  // TODO: round thid block up to the nearest 16 bytes so it doesn't bite us
+  // in the butt
+  size_t remainder = size % 16;
+  return size + remainder;
 }

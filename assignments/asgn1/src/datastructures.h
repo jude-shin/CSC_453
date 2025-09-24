@@ -21,7 +21,7 @@ The header holds the following information:
 */
 typedef struct Chunk {
   // how large the data segment of this chunk should be
-  long unsigned int size;
+  size_t size;
 
   // if the data region is being used (TODO: useful for cleanup operations)
   bool is_available;
