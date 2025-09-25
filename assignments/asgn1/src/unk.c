@@ -7,7 +7,7 @@
 #include "datastructures.h"
 
 // size of the hunk in bytes
-#define HUNK_SIZE 128
+#define HUNK_SIZE 176
 
 // TODO: put in a struct with a "bytes used"/"bytes avaliable"?
 static Chunk *global_head_ptr = NULL;
