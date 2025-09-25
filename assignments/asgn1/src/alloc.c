@@ -3,6 +3,7 @@
 #include <stdbool.h> 
 #include <stdint.h> 
 #include <unistd.h> 
+#include <string.h> 
 
 #include "unk.h"
 
@@ -99,7 +100,7 @@ void my_free(void *ptr) {
   // if it lines up, and it is currently unavailable (was allocated),
   Chunk *freeable_chunk = find_chunk(head, ptr);
   if (freeable_chunk == NULL) {
-    perror("free: no valid chunk to be freed");
+    perror("free: pinter is not valid");
   }
   if (freeable_chunk->is_available) {
     perror("free: chunk already available");
@@ -127,8 +128,52 @@ void *my_realloc(void *ptr, size_t size) {
     return NULL;
   }
 
+  // find the chunk that lines up with the ptr requested
+  Chunk *curr = find_chunk(head, ptr);
+  if (curr == NULL) {
+    perror("realloc: pointer is not valid");
+  }
+  
+  // the address of where we will copy the data
+  void *src_data = (void *)((uintptr_t)curr + sizeof(Chunk));
+  // how many bytes of data we will copy
+  size_t data_size = size;
+
+  // TODO: every chunk should have an "intended size" variable so when 
+  // merges like this happen, then we can recalculate to make sure we don't 
+  // over buffer... is it worth it? I don't really know
+  // FOR NOW: I am just keeping it the way it is
+
+  // get the new size of the chunk-to-be
+  size = curr->size + size;
   // round the user's alloc request to the nearest multiple of 16 
   size = block_size(size);
+
+  // try to merge in place to prevent copying a ton of data
+  // 
+
+  if (curr->next != NULL && curr->next->is_available) {
+    curr = merge_next(curr);
+  }
+  if (curr->size + sizeof(Chunk) + curr->next->size >= size) {
+    // don't do anything  
+    return (void*)((uintptr_t)curr + sizeof(Chunk));
+  }
+
+  if (curr->prev != NULL && curr->prev->is_available) {
+    curr = merge_prev(curr);
+    curr->is_available = true;
+  }
+
+  // whatever merges happen, we don't care at this point.
+  // we should just try to look for a new chunk with the size of the original,
+  // plus the extra that the user requested in the realloc
+  void *dst_data = my_malloc(size);
+  
+  // TODO: ask the professor about this code
+  // does it use malloc?
+  // is it safe?
+  memmove(dst_data, src_data, data_size);
   
   return NULL;
 }
