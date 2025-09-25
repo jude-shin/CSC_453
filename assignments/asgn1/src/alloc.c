@@ -103,7 +103,7 @@ void my_free(void *ptr) {
   }
 
   // then have that function return the chunk * that is to be freed
-  freeable_chunk->is_available = false;
+  freeable_chunk->is_available = true;
 
   // then you do the stuff with the free and the merge
   Chunk *merged_chunk = merge_next(freeable_chunk);

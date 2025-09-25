@@ -11,6 +11,9 @@
 
 // TODO: put in a struct with a "bytes used"/"bytes avaliable"?
 static Chunk *global_head_ptr = NULL;
+// TODO: take out the reference to the tail pointer. This is not needed.
+// remove the global variable tail
+
 static Chunk *global_tail_ptr = NULL;
 
 /////////////
@@ -134,15 +137,12 @@ Chunk *get_head() {
 }
 
 Chunk *find_freeable_chunk(Chunk *curr, void *ptr) {
-  // TODO: take out the reference to the tail pointer. This is not needed.
-  // remove the global variable tail
-
   // the address of the data section of the chunk. This is what the user should
   // be passing in. This is what we returned the user when we gave them the 
   // data with alloc in the first place.
-  void *data = (void *)((uintptr_t)curr + sizeof(Chunk));
+  void *curr_data = (void *)((uintptr_t)curr + sizeof(Chunk));
 
-  if (data == ptr && !curr->is_available) {
+  if (curr_data == ptr && !curr->is_available) {
     // we have reached a freeable chunk!
     return curr;
   }
