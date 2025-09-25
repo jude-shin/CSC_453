@@ -11,10 +11,6 @@
 
 // TODO: put in a struct with a "bytes used"/"bytes avaliable"?
 static Chunk *global_head_ptr = NULL;
-// TODO: take out the reference to the tail pointer. This is not needed.
-// remove the global variable tail
-
-static Chunk *global_tail_ptr = NULL;
 
 /////////////
 //  CHUNK  //
@@ -108,9 +104,6 @@ Chunk *get_head() {
     global_head_ptr->is_available = true;
     global_head_ptr->prev= NULL;
     global_head_ptr->next = NULL;
-
-
-    global_tail_ptr = global_head_ptr; 
   }
   return global_head_ptr;
 }
@@ -126,8 +119,6 @@ Chunk *find_chunk(Chunk *curr, void *ptr) {
     return curr;
   }
 
-  // if we are at the "tail"
-  // if (curr == global_tail_ptr) {
   if (curr->next == NULL) {
     // if we have reached here, and we didn't find a chunk with a suitable ptr 
     // then it was the users error, and we can't be bothered.
@@ -149,8 +140,6 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
     return curr;
   }
 
-  // if we are at the "tail"
-  // if (curr == global_tail_ptr) {
   if (curr->next == NULL){
     // if we have reached here, then there is no suitable space
     // in this case, we must increase the hunk with sbrk()
@@ -187,13 +176,6 @@ Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
   new_chunk->prev = available_chunk;
   new_chunk->next = available_chunk->next;
  
-  // if we just split out of the tail pointer's free data portion, then we need
-  // to set the tail to the newly split and unused portion (the new chunk)
-  // if (available_chunk == global_tail_ptr) {
-  if (available_chunk->next == NULL) {
-    global_tail_ptr = new_chunk;
-  }
-
   if (initalize) {
     void *data = (void*)((uintptr_t)available_chunk + sizeof(Chunk));
     memset(data, 0, size);
