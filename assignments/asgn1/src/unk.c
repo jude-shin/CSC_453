@@ -7,7 +7,7 @@
 #include "datastructures.h"
 
 // size of the hunk in bytes
-#define HUNK_SIZE 64000
+#define HUNK_SIZE 128
 
 // TODO: put in a struct with a "bytes used"/"bytes avaliable"?
 static Chunk *global_head_ptr = NULL;
@@ -134,7 +134,7 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
   // this inequality allows us to guarentee that the space we will allocate
   // will have enough for the header, the data space, and the new header space
   // at the end
-  if (curr->is_available && curr->size > (size + 2*sizeof(Chunk))) {
+  if (curr->is_available && curr->size > size + sizeof(Chunk)) {
     // then we are able to allocate it!
     // this chunk is the chosen one
     return curr;
