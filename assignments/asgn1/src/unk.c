@@ -115,14 +115,14 @@ Chunk *get_head() {
   return global_head_ptr;
 }
 
-Chunk *find_freeable_chunk(Chunk *curr, void *ptr) {
+Chunk *find_chunk(Chunk *curr, void *ptr) {
   // the address of the data section of the chunk. This is what the user should
   // be passing in. This is what we returned the user when we gave them the 
   // data with alloc in the first place.
   void *curr_data = (void *)((uintptr_t)curr + sizeof(Chunk));
 
-  if (curr_data == ptr && !curr->is_available) {
-    // we have reached a freeable chunk!
+  if (curr_data == ptr) {
+    // we have reached a valid chunk!
     return curr;
   }
 
@@ -135,7 +135,7 @@ Chunk *find_freeable_chunk(Chunk *curr, void *ptr) {
   }
 
   // recursively linear search through our linked list
-  return find_freeable_chunk(curr->next, ptr);
+  return find_chunk(curr->next, ptr);
 }
 
 Chunk *find_available_chunk(Chunk *curr, size_t size) {

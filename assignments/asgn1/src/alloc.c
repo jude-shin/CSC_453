@@ -97,9 +97,12 @@ void my_free(void *ptr) {
   // linear search through all of the chunks, seeing if any of the addresses 
   // line up. at the same time, check to see if the chunk is available or not.
   // if it lines up, and it is currently unavailable (was allocated),
-  Chunk *freeable_chunk = find_freeable_chunk(head, ptr);
+  Chunk *freeable_chunk = find_chunk(head, ptr);
   if (freeable_chunk == NULL) {
     perror("free: no valid chunk to be freed");
+  }
+  if (freeable_chunk->is_available) {
+    perror("free: chunk already available");
   }
 
   // then have that function return the chunk * that is to be freed
