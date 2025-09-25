@@ -106,10 +106,8 @@ void my_free(void *ptr) {
   freeable_chunk->is_available = false;
 
   // then you do the stuff with the free and the merge
-  freeable_chunk = merge_next(freeable_chunk);
-
-  // then you must merge down, and then merge up
-
+  Chunk *merged_chunk = merge_next(freeable_chunk);
+  merged_chunk = merge_prev(merged_chunk); // you can't really use this
 }
 
 void *my_realloc(void *ptr, size_t size) {
