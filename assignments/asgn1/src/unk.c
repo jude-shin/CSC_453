@@ -210,7 +210,8 @@ Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
  
   // if we just split out of the tail pointer's free data portion, then we need
   // to set the tail to the newly split and unused portion (the new chunk)
-  if (available_chunk == global_tail_ptr) {
+  // if (available_chunk == global_tail_ptr) {
+  if (available_chunk->next == NULL) {
     global_tail_ptr = new_chunk;
   }
 
