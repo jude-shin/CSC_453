@@ -43,7 +43,7 @@ Chunk *merge_next(Chunk *curr) {
   // curr is the last element
 
   if (curr->next != NULL && curr->next->is_available) {
-    curr->size = sizeof(Chunk) + curr->next->size;
+    curr->size = curr->size + sizeof(Chunk) + curr->next->size;
 
     Chunk *temp = curr->next->next;
 
