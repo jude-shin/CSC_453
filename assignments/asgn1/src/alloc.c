@@ -106,18 +106,26 @@ void my_free(void *ptr) {
   freeable_chunk->is_available = true;
 
   // then you do the stuff with the free and the merge
-  Chunk *merged_chunk = merge_next(freeable_chunk);
-  merged_chunk = merge_prev(merged_chunk); // you can't really use this
+  Chunk *merged_chunk = freeable_chunk; // var renaming for bookeeping
+  if (merged_chunk->next != NULL && merged_chunk->next->is_available) {
+    merged_chunk = merge_next(merged_chunk);
+  }
+  if (merged_chunk->prev != NULL && merged_chunk->prev->is_available) {
+    merged_chunk = merge_prev(merged_chunk);
+  }
 }
 
 void *my_realloc(void *ptr, size_t size) {
-  // initalize the first chunk in the hunk (the head of the linked list)
+  // get the first chunk of the linked list
+  // if this is the first time using it, initalize the list with a global var
   Chunk *head = get_head();
   if (head == NULL) {
-    // TODO: should libraries give perrors?
-    // or should they just return their values that indicate an error?
     perror("malloc: error getting head ptr");
     return NULL;
   }
+
+  // round the user's alloc request to the nearest multiple of 16 
+  size = block_size(size);
+  
   return NULL;
 }

@@ -42,48 +42,20 @@ Chunk *merge_next(Chunk *curr) {
   // im-perfect: (cur->next == NULL) && (cur->next->next == NULL)
   // curr is the last element
 
-  if (curr->next != NULL && curr->next->is_available) {
-    curr->size = curr->size + sizeof(Chunk) + curr->next->size;
+  if (curr->next != NULL) {
+    size_t new_size = curr->size + sizeof(Chunk) + curr->next->size;
+    curr->size = new_size;
 
     Chunk *temp = curr->next->next;
 
     curr->next = temp;
-    
+
     if (temp != NULL) {
       temp->prev = curr;
     }
   }
 
   return curr;
-
-  // if (curr->next == NULL) {
-  //   // then curr->next->next does not exsist
-  //   // we are at the last element
-  //   return curr;
-
-  //   // update the size is not needed
-  // }
-  // else if (curr->next->next == NULL && curr->next->is_available) {
-  //   // update curr->size to be sizeof(Chunk) + curr->next->size
-  //   curr->size = sizeof(Chunk) + curr->next->size;
-
-  //   // we are the second to last element
-  //   curr->next = NULL;
-
-  //   return curr;
-  // }
-  // else if (curr->next->is_available){
-  //   // update curr->size to be sizeof(Chunk) + curr->next->size
-  //   curr->size = sizeof(Chunk) + curr->next->size;
-
-  //   // update the curr->next->next->prev pointer to be to curr
-  //   curr->next->next->prev = curr;
-
-  //   // update the curr->next pointer to be to curr->next->next
-  //   curr->next = curr->next->next;
-  // }
-
-  // return curr;
 }
 
 /*
@@ -105,8 +77,15 @@ Chunk *merge_prev(Chunk *curr) {
   // im-perfect: (curr->prev == NULL) && (curr->prev->prev == NULL)
 
   // or you can just call merge_next on curr_prev
-  if (curr->prev != NULL && curr->prev->is_available) {
-    return merge_next(curr->prev);
+  if (curr->prev != NULL) {
+    size_t new_size = curr->prev->size + sizeof(Chunk) + curr->size;
+    curr->prev->size = new_size;
+
+    Chunk *temp = curr->prev->prev;
+
+    if (temp != NULL) {
+      temp->next = curr;
+    }
   }
   return curr;
 }
