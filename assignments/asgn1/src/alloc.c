@@ -162,9 +162,10 @@ void *my_realloc(void *ptr, size_t size) {
     }
   }
   
+  curr->is_available = true;
+
   if (curr->prev != NULL && curr->prev->is_available) {
     curr = merge_prev(curr);
-    curr->is_available = true;
   }
 
   // whatever merges happen, we don't care at this point.
@@ -176,6 +177,6 @@ void *my_realloc(void *ptr, size_t size) {
   // does it use malloc?
   // is it safe?
   memmove(dst_data, src_data, data_size);
-  
-  return NULL;
+
+  return dst_data;
 }
