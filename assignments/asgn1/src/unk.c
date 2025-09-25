@@ -21,12 +21,66 @@ static Chunk *global_tail_ptr = NULL;
 Checks the current and next chunks, to clean up space.  If curr chunk is no
 being used, and next chunk is also not being used, keep the curr header, and 
 turn the rest of space into the data of the curr header. 
-Repeat recursively (setting the prev header as curr in this function) 
-until the end is reached, or there is a chunk that is being used.
-return the address of the header whether it merged or not
+NOTE: this does not have to be recursive. If we update every free, then we wont
+run into this issue. 
 */
-void *merge_next(Chunk *curr) {
-  return NULL;
+Chunk *merge_next(Chunk *curr) {
+  // delete curr->next in a doubly linked list
+  // "merge the curr->next into the data segment of cur"
+  // return curr
+
+  // cases: (when we run into the end "tail")
+  // perfect: (cur->next != NULL) && (cur->next->next != NULL)
+  // curr is or is greater than the third to last element
+
+  // semi-perfect: (cur->next != NULL) && (cur->next->next == NULL)
+  // curr is the second to last element
+
+  // im-perfect: (cur->next == NULL) && (cur->next->next == NULL)
+  // curr is the last element
+
+  if (curr->next != NULL && curr->next->is_available) {
+    curr->size = sizeof(Chunk) + curr->next->size;
+
+    Chunk *temp = curr->next->next;
+
+    curr->next = temp;
+    
+    if (temp != NULL) {
+      temp->prev = curr;
+    }
+  }
+
+  return curr;
+
+  // if (curr->next == NULL) {
+  //   // then curr->next->next does not exsist
+  //   // we are at the last element
+  //   return curr;
+
+  //   // update the size is not needed
+  // }
+  // else if (curr->next->next == NULL && curr->next->is_available) {
+  //   // update curr->size to be sizeof(Chunk) + curr->next->size
+  //   curr->size = sizeof(Chunk) + curr->next->size;
+
+  //   // we are the second to last element
+  //   curr->next = NULL;
+
+  //   return curr;
+  // }
+  // else if (curr->next->is_available){
+  //   // update curr->size to be sizeof(Chunk) + curr->next->size
+  //   curr->size = sizeof(Chunk) + curr->next->size;
+
+  //   // update the curr->next->next->prev pointer to be to curr
+  //   curr->next->next->prev = curr;
+
+  //   // update the curr->next pointer to be to curr->next->next
+  //   curr->next = curr->next->next;
+  // }
+
+  // return curr;
 }
 
 /*
@@ -34,12 +88,24 @@ Checks the current and prev chunks, to clean up space.
 If curr chunk is not being used, and prev chunk is also not being used, 
 keep the prev header, and turn the rest of space into the data of the prev 
 header. 
-Repeat recursively (setting the prev header as curr in this function)
-until the end is reached, or there is a chunk that is being used.
-return the address of the header whether it merged or not
+NOTE: this does not have to be recursive. If we update every free, then we wont
+run into this issue. 
 */
-void *merge_prev(Chunk *curr) {
-  return NULL;
+Chunk *merge_prev(Chunk *curr) {
+  // delete curr-> prev in a doubly linked list
+  // "merge curr into the data segment of cur->prev"
+  // return curr->prev
+
+  // cases: (when we run into the beginning head)
+  // perfect: (curr->prev != NULL) && (curr->prev->prev != NULL)
+  // semi-perfect: (curr->prev != NULL) && (curr->prev->prev == NULL)
+  // im-perfect: (curr->prev == NULL) && (curr->prev->prev == NULL)
+
+  // or you can just call merge_next on curr_prev
+  if (curr->prev != NULL && curr->prev->is_available) {
+    return merge_next(curr->prev);
+  }
+  return curr;
 }
 
 ////////////
@@ -67,6 +133,31 @@ Chunk *get_head() {
   return global_head_ptr;
 }
 
+Chunk *find_freeable_chunk(Chunk *curr, void *ptr) {
+  // TODO: take out the reference to the tail pointer. This is not needed.
+  // remove the global variable tail
+
+  // the address of the data section of the chunk. This is what the user should
+  // be passing in. This is what we returned the user when we gave them the 
+  // data with alloc in the first place.
+  void *data = (void *)((uintptr_t)curr + sizeof(Chunk));
+
+  if (data == ptr && !curr->is_available) {
+    // we have reached a freeable chunk!
+    return curr;
+  }
+
+  // if we are at the "tail"
+  // if (curr == global_tail_ptr) {
+  if (curr->next == NULL) {
+    // if we have reached here, and we didn't find a chunk with a suitable ptr 
+    // then it was the users error, and we can't be bothered.
+    return NULL;
+  }
+
+  // recursively linear search through our linked list
+  return find_freeable_chunk(curr->next, ptr);
+}
 
 Chunk *find_available_chunk(Chunk *curr, size_t size) {
   // start from the head and recursively search
@@ -79,7 +170,9 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
     return curr;
   }
 
-  if (curr == global_tail_ptr){
+  // if we are at the "tail"
+  // if (curr == global_tail_ptr) {
+  if (curr->next == NULL){
     // if we have reached here, then there is no suitable space
     // in this case, we must increase the hunk with sbrk()
     sbrk(HUNK_SIZE);
@@ -98,6 +191,7 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
     return find_available_chunk(curr, size);
   }
   
+  // recursively linear search through our linked list
   return find_available_chunk(curr->next, size);
 }
 

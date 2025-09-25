@@ -7,6 +7,10 @@
 #include "unk.h"
 
 void *my_calloc(size_t nmemb, size_t size) {
+  // check if this is expected behavior
+  if (nmemb == 0 || size == 0) {
+    return NULL;
+  }
   // get the first chunk of the linked list
   // if this is the first time using it, initalize the list with a global var
   Chunk *head = get_head();
@@ -41,6 +45,11 @@ void *my_calloc(size_t nmemb, size_t size) {
 }
 
 void *my_malloc(size_t size) {
+  // check edge cases
+  if (size == 0) {
+    return NULL;
+  }
+
   // get the first chunk of the linked list
   // if this is the first time using it, initalize the list with a global var
   Chunk *head = get_head();
@@ -71,13 +80,36 @@ void *my_malloc(size_t size) {
 }
 
 void my_free(void *ptr) {
-  // initalize the first chunk in the hunk (the head of the linked list)
+  // get the first chunk of the linked list
+  // if this is the first time using it, initalize the list with a global var
   Chunk *head = get_head();
   if (head == NULL) {
-    // TODO: should libraries give perrors?
-    // or should they just return their values that indicate an error?
-    perror("malloc: error getting head ptr");
+    perror("free: error getting head ptr");
   }
+  
+  // NOTE: if the user supposedly wanted to free the "head", but did not end up 
+  // allocating any memory first, the head will be initalized. However, it will
+  // be initalized to "available". Trying to free an available chunk will 
+  // result in a different error.
+  // TODO: maybe you should put the catch at the front to make it unambiguous
+  
+  // start from the head
+  // linear search through all of the chunks, seeing if any of the addresses 
+  // line up. at the same time, check to see if the chunk is available or not.
+  // if it lines up, and it is currently unavailable (was allocated),
+  Chunk *freeable_chunk = find_freeable_chunk(head, ptr);
+  if (freeable_chunk == NULL) {
+    perror("free: no valid chunk to be freed");
+  }
+
+  // then have that function return the chunk * that is to be freed
+  freeable_chunk->is_available = false;
+
+  // then you do the stuff with the free and the merge
+  freeable_chunk = merge_next(freeable_chunk);
+
+  // then you must merge down, and then merge up
+
 }
 
 void *my_realloc(void *ptr, size_t size) {
