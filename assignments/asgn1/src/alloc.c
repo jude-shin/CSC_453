@@ -150,16 +150,18 @@ void *my_realloc(void *ptr, size_t size) {
   size = block_size(size);
 
   // try to merge in place to prevent copying a ton of data
-  // 
-
   if (curr->next != NULL && curr->next->is_available) {
-    curr = merge_next(curr);
+      curr = merge_next(curr);
+    if (curr->size > size + sizeof(Chunk)) {
+      // we don't have to do anything special
+      if (carve_chunk(curr, size, false) == NULL) {
+        perror("realloc: error carving chunk during in-place expansion");
+        return NULL;
+      }
+      return (void*)((uintptr_t)curr + sizeof(Chunk));
+    }
   }
-  if (curr->size + sizeof(Chunk) + curr->next->size >= size) {
-    // don't do anything  
-    return (void*)((uintptr_t)curr + sizeof(Chunk));
-  }
-
+  
   if (curr->prev != NULL && curr->prev->is_available) {
     curr = merge_prev(curr);
     curr->is_available = true;

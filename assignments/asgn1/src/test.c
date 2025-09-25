@@ -1,12 +1,13 @@
+#include <string.h>
+
 #include "alloc.h"
 
 int main(int argc, char *argv[]) {
-  void *ptr1 = my_malloc(32);
-  // void *ptr3 = my_malloc(32);
-  // void *ptr4 = my_malloc(16);
+  char *ptr1 = (char *)my_malloc(16);
+  strcpy(ptr1, "1234567812345678");
 
-  // my_free(ptr1);
-  // my_free(ptr2);
+
+  char *ptr2 = (char *)my_realloc(ptr1, 16);
 
   return 0;
 }
