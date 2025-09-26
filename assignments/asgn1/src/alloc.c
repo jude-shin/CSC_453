@@ -124,7 +124,7 @@ void *my_realloc(void *ptr, size_t size) {
   // if this is the first time using it, initalize the list with a global var
   Chunk *head = get_head();
   if (head == NULL) {
-    perror("malloc: error getting head ptr");
+    perror("realloc: error getting head ptr");
     return NULL;
   }
 
@@ -134,10 +134,8 @@ void *my_realloc(void *ptr, size_t size) {
     perror("realloc: pointer is not valid");
   }
   
-  // the address of where we will copy the data
-  void *src_data = (void *)((uintptr_t)curr + sizeof(Chunk));
-  // how many bytes of data we will copy
-  size_t data_size = size;
+  // try to merge in place to prevent copying a ton of data
+  // curr->is_available = true;
 
   // TODO: every chunk should have an "intended size" variable so when 
   // merges like this happen, then we can recalculate to make sure we don't 
@@ -145,38 +143,33 @@ void *my_realloc(void *ptr, size_t size) {
   // FOR NOW: I am just keeping it the way it is
 
   // get the new size of the chunk-to-be
-  size = curr->size + size;
-  // round the user's alloc request to the nearest multiple of 16 
-  size = block_size(size);
+  size_t data_size = size + curr->size;
 
-  // try to merge in place to prevent copying a ton of data
-  if (curr->next != NULL && curr->next->is_available) {
-      curr = merge_next(curr);
-    if (curr->size > size + sizeof(Chunk)) {
-      // we don't have to do anything special
-      if (carve_chunk(curr, size, false) == NULL) {
-        perror("realloc: error carving chunk during in-place expansion");
-        return NULL;
-      }
-      return (void*)((uintptr_t)curr + sizeof(Chunk));
-    }
+  // round the user's alloc request to the nearest multiple of 16 
+  data_size = block_size(data_size);
+
+  if (curr->next != NULL && 
+      curr->next->is_available &&
+      data_size < curr->size + sizeof(Chunk) + curr->next->size + sizeof(Chunk)) {
+    curr->is_available = true;
+    curr = merge_next(curr);
+    return (void*)((uintptr_t)curr + sizeof(Chunk));
   }
   
-  curr->is_available = true;
-
-  if (curr->prev != NULL && curr->prev->is_available) {
-    curr = merge_prev(curr);
-  }
+  // if (curr->prev != NULL && curr->prev->is_available) {
+  //   curr = merge_prev(curr);
+  // }
+  my_free(ptr);
 
   // whatever merges happen, we don't care at this point.
   // we should just try to look for a new chunk with the size of the original,
   // plus the extra that the user requested in the realloc
-  void *dst_data = my_malloc(size);
+  void *dst_data = my_malloc(data_size);
   
   // TODO: ask the professor about this code
   // does it use malloc?
   // is it safe?
-  memmove(dst_data, src_data, data_size);
+  memmove(dst_data, ptr, data_size);
 
   return dst_data;
 }
