@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
   my_free(ptr1);
   my_free(ptr3);
 
-  my_free(ptr2); // should merge with everything and become just one head
+  my_free(ptr4); // should merge with everything and become just one head
 
   // memcpy(ptr2, "1234567812345678123456781234567812345678123456781234567812345678", 64);
 

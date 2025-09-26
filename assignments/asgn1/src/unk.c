@@ -84,8 +84,12 @@ Chunk *merge_prev(Chunk *curr) {
     // }
     // else {
     // }
-      curr->prev->next = curr->next;
+
+    curr->prev->next = curr->next;
+
+    if (curr->next != NULL) {
       curr->next->prev = curr->prev;
+    }
   }
   return curr->prev;
 }
