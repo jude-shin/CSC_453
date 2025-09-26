@@ -135,7 +135,7 @@ void *my_realloc(void *ptr, size_t size) {
   }
   
   // try to merge in place to prevent copying a ton of data
-  // curr->is_available = true;
+  curr->is_available = true;
 
   // TODO: every chunk should have an "intended size" variable so when 
   // merges like this happen, then we can recalculate to make sure we don't 
@@ -156,10 +156,10 @@ void *my_realloc(void *ptr, size_t size) {
     return (void*)((uintptr_t)curr + sizeof(Chunk));
   }
   
-  // if (curr->prev != NULL && curr->prev->is_available) {
-  //   curr = merge_prev(curr);
-  // }
-  my_free(ptr);
+  if (curr->prev != NULL && curr->prev->is_available) {
+    curr = merge_prev(curr);
+  }
+  //// my_free(ptr);
 
   // whatever merges happen, we don't care at this point.
   // we should just try to look for a new chunk with the size of the original,

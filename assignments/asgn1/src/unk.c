@@ -7,7 +7,7 @@
 #include "datastructures.h"
 
 // size of the hunk in bytes
-#define HUNK_SIZE 176
+#define HUNK_SIZE 304
 
 // TODO: put in a struct with a "bytes used"/"bytes avaliable"?
 static Chunk *global_head_ptr = NULL;
@@ -183,6 +183,13 @@ Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
   new_chunk->is_available = true; // takes remaining available size
   new_chunk->prev = available_chunk;
   new_chunk->next = available_chunk->next;
+
+  // makes sure that when the available_chunk is NOT the last element,
+  // the prev pointer will point to the newly carved chunk, not the previous
+  // available_chunk
+  if (available_chunk->next != NULL) {
+    available_chunk->next->prev = new_chunk;
+  }
  
   if (initalize) {
     void *data = (void*)((uintptr_t)available_chunk + sizeof(Chunk));
@@ -199,6 +206,7 @@ Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
   // into the doubly linked list. Make sure that you check edge cases (like if 
   // the insert is at the end or the beginning)
   // 5) return the ptr to the available_chunk
+  
 
   return available_chunk; // TODO: it might be more useful to return new_chunk
 }
