@@ -77,13 +77,17 @@ Chunk *merge_prev(Chunk *curr) {
     size_t new_size = curr->prev->size + sizeof(Chunk) + curr->size;
     curr->prev->size = new_size;
 
-    Chunk *temp = curr->prev->prev;
+    // Chunk *temp = curr->prev->prev;
 
-    if (temp != NULL) {
-      temp->next = curr;
-    }
+    // if (temp != NULL) {
+    //   temp->next = curr;
+    // }
+    // else {
+    // }
+      curr->prev->next = curr->next;
+      curr->next->prev = curr->prev;
   }
-  return curr;
+  return curr->prev;
 }
 
 ////////////

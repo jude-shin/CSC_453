@@ -100,7 +100,7 @@ void my_free(void *ptr) {
   // if it lines up, and it is currently unavailable (was allocated),
   Chunk *freeable_chunk = find_chunk(head, ptr);
   if (freeable_chunk == NULL) {
-    perror("free: pinter is not valid");
+    perror("free: pointer is not valid");
   }
   if (freeable_chunk->is_available) {
     perror("free: chunk already available");
