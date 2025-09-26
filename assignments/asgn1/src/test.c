@@ -3,8 +3,6 @@
 #include "alloc.h"
 
 int main(int argc, char *argv[]) {
-  my_free(NULL);
-
   char *ptr1 = (char *)my_malloc(16);
 
   memcpy(ptr1, "1234567812345678", 16);

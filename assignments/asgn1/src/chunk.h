@@ -3,6 +3,12 @@
 
 #include <stddef.h>
 
+// Size of the hunk's that sbrk() will use
+#define HUNK_SIZE 304
+
+#define ALLIGN 16
+#define CHUNK_SIZE (sizeof(Chunk)+ALLIGN-sizeof(Chunk)%ALLIGN)
+
 /*
 A "chunk" is a header and a data portion of the overall "hunk" that 
 sbrk2 gave us in the beginning.
@@ -32,6 +38,7 @@ typedef struct Chunk {
   // hold the beginning of where the data actually starts
 } Chunk;
 
+size_t block_size(size_t size);
 Chunk *merge_next(Chunk *curr);
 Chunk *merge_prev(Chunk *curr);
 Chunk *get_head();

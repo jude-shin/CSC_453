@@ -9,10 +9,11 @@
 #include "chunk.h"
 
 void *my_calloc(size_t nmemb, size_t size) {
-  // check if this is expected behavior
-  if (nmemb == 0 || size == 0) {
-    return NULL;
-  }
+  // // check if this is expected behavior
+  // if (nmemb == 0 || size == 0) {
+  //   return NULL;
+  // }
+
   // get the first chunk of the linked list
   // if this is the first time using it, initalize the list with a global var
   Chunk *head = get_head();
@@ -180,14 +181,5 @@ void *my_realloc(void *ptr, size_t size) {
   memmove(dst_data, ptr, data_size);
 
   return dst_data;
-}
-
-size_t block_size(size_t size) {
-  size_t mod = size % 16;
-
-  if (mod != 0) {
-    size = size + (16 - mod);
-  }
-  return size;
 }
 

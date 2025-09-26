@@ -6,109 +6,46 @@
 
 #include "chunk.h"
 
-// size of the hunk in bytes
-#define HUNK_SIZE 304
 
 // TODO: put in a struct with a "bytes used"/"bytes avaliable"?
+// this can be optimized to refilter if we want to try and move the break
+// again, but have more than 50 percent space available.
+// This means a lot of small fragmentation.
+
 static Chunk *global_head_ptr = NULL;
 
-/////////////
-//  CHUNK  //
-/////////////
+size_t block_size(size_t size) {
+  size_t mod = size % 16;
 
-/*
-Checks the current and next chunks, to clean up space.  If curr chunk is no
-being used, and next chunk is also not being used, keep the curr header, and 
-turn the rest of space into the data of the curr header. 
-NOTE: this does not have to be recursive. If we update every free, then we wont
-run into this issue. 
-*/
-Chunk *merge_next(Chunk *curr) {
-  // delete curr->next in a doubly linked list
-  // "merge the curr->next into the data segment of cur"
-  // return curr
-
-  // cases: (when we run into the end "tail")
-  // perfect: (cur->next != NULL) && (cur->next->next != NULL)
-  // curr is or is greater than the third to last element
-
-  // semi-perfect: (cur->next != NULL) && (cur->next->next == NULL)
-  // curr is the second to last element
-
-  // im-perfect: (cur->next == NULL) && (cur->next->next == NULL)
-  // curr is the last element
-
-  if (curr->next != NULL) {
-    size_t new_size = curr->size + sizeof(Chunk) + curr->next->size;
-    curr->size = new_size;
-
-    Chunk *temp = curr->next->next;
-
-    curr->next = temp;
-
-    if (temp != NULL) {
-      temp->prev = curr;
-    }
+  if (mod != 0) {
+    size = size + (16 - mod);
   }
-
-  return curr;
+  return size;
 }
 
-/*
-Checks the current and prev chunks, to clean up space.
-If curr chunk is not being used, and prev chunk is also not being used, 
-keep the prev header, and turn the rest of space into the data of the prev 
-header. 
-NOTE: this does not have to be recursive. If we update every free, then we wont
-run into this issue. 
-*/
-Chunk *merge_prev(Chunk *curr) {
-  // delete curr-> prev in a doubly linked list
-  // "merge curr into the data segment of cur->prev"
-  // return curr->prev
-
-  // cases: (when we run into the beginning head)
-  // perfect: (curr->prev != NULL) && (curr->prev->prev != NULL)
-  // semi-perfect: (curr->prev != NULL) && (curr->prev->prev == NULL)
-  // im-perfect: (curr->prev == NULL) && (curr->prev->prev == NULL)
-
-  // or you can just call merge_next on curr_prev
-  if (curr->prev != NULL) {
-    size_t new_size = curr->prev->size + sizeof(Chunk) + curr->size;
-    curr->prev->size = new_size;
-
-    // Chunk *temp = curr->prev->prev;
-
-    // if (temp != NULL) {
-    //   temp->next = curr;
-    // }
-    // else {
-    // }
-
-    curr->prev->next = curr->next;
-
-    if (curr->next != NULL) {
-      curr->next->prev = curr->prev;
-    }
-  }
-  return curr->prev;
-}
-
-////////////
-//  HUNK  //
-////////////
-
-// get the head of the hunk
-// if this is the first time you are using the hunk, then initalize it with
-// all the default data
+// Get the head (first Chunk) of the linked list.
+// If this is the first time you are using one of the four functions, initalize
+// the datastructure to the defaults, and then return the newly created Chunk.
+// @return A Chunk* to the first element in the linked list
 Chunk *get_head() {
   if (global_head_ptr == NULL) {
+    // Make sure that the program break starts at an even multiple of 16.
+    // Every allocation after this point should be in a multiple of 16 as well
+    // to maintain pointer consistency.
     uintptr_t floor = (uintptr_t)sbrk(0);
-    sbrk(floor % 16);
-
+    if (sbrk(floor % 16)) {
+      return NULL;
+    }
+  
+    // Move the break to the inital "heap" size.
     global_head_ptr = sbrk(HUNK_SIZE);
-
-    global_head_ptr->size = HUNK_SIZE - sizeof(Chunk);
+    if (global_head_ptr == NULL) {
+      return NULL;
+    }
+  
+    // The usable space in any chunk does not include the size of the header
+    // (or Chunk struct)
+    global_head_ptr->size = HUNK_SIZE - CHUNK_SIZE;
     global_head_ptr->is_available = true;
     global_head_ptr->prev= NULL;
     global_head_ptr->next = NULL;
@@ -116,11 +53,76 @@ Chunk *get_head() {
   return global_head_ptr;
 }
 
+// Merges two chunks together into one element of the linked list, updating the
+// next and prev pointers accordingly. curr->next gets absorbed into curr's 
+// data section if curr is not the last element in the linked list.
+// @param curr A Chunk* of the target Chunk
+// @return A Chunk* to the newly merged Chunk (curr)
+Chunk *merge_next(Chunk *curr) {
+  // If we are at the tail, there is no "next" chunk to merge, and we can 
+  // break early, returning curr's Chunk*.
+  if (curr->next != NULL) {
+    // The new size must also include the size of the Header of the next chunk.
+    // The next chunk will be "skipped" making the data in that header
+    // useless.
+    size_t new_size = curr->size + CHUNK_SIZE + curr->next->size;
+    curr->size = new_size;
+  
+    // Curr's next should now point to the next->next Chunk, effectively 
+    // "skipping" the next Chunk
+    Chunk *temp = curr->next->next;
+    curr->next = temp;
+
+    // If the next chunk is the tail of the linked list, then we can't update
+    // it's previous pointer (it will be null, not a Chunk struct).
+    // However, if it does exist, update the previous pointer.
+    if (temp != NULL) {
+      temp->prev = curr;
+    }
+  }
+  return curr;
+}
+
+// Merges two chunks together into one element of the linked list, updating the
+// next and prev pointers accordingly. 
+// curr gets absorbed into curr->next's data section if curr is not the first
+// element in the linked list.
+// @param curr A Chunk* of the target Chunk
+// @return A Chunk* to the newly merged Chunk (curr->prev or curr)
+Chunk *merge_prev(Chunk *curr) {
+  // If we are at the tail, there is no "next" chunk to merge, and we can 
+  // break early, returning curr's Chunk*.
+  if (curr->prev != NULL) {
+    // The new size must also include the size of the Header of the curr chunk.
+    // The current chunk will be "skipped" making the data in that header
+    // useless.
+    size_t new_size = curr->prev->size + CHUNK_SIZE + curr->size;
+    curr->prev->size = new_size;
+
+    // The previous pointer should point to the curr->next, essentially
+    // "skipping" the curr node
+    curr->prev->next = curr->next;
+    
+    // If the next chunk is the tail of the linked list, then we can't update
+    // it's previous pointer (it will be null, not a Chunk struct).
+    // However, if it does exist, update the previous pointer.
+    if (curr->next != NULL) {
+      curr->next->prev = curr->prev;
+    }
+
+    // We merged A
+
+    return curr->prev;
+  }
+  return curr;
+}
+
+
 Chunk *find_chunk(Chunk *curr, void *ptr) {
   // the address of the data section of the chunk. This is what the user should
   // be passing in. This is what we returned the user when we gave them the 
   // data with alloc in the first place.
-  void *curr_data = (void *)((uintptr_t)curr + sizeof(Chunk));
+  void *curr_data = (void *)((uintptr_t)curr + CHUNK_SIZE);
 
   if (curr_data == ptr) {
     // we have reached a valid chunk!
@@ -142,7 +144,7 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
   // this inequality allows us to guarentee that the space we will allocate
   // will have enough for the header, the data space, and the new header space
   // at the end
-  if (curr->is_available && curr->size > size + sizeof(Chunk)) {
+  if (curr->is_available && curr->size > size + CHUNK_SIZE) {
     // then we are able to allocate it!
     // this chunk is the chosen one
     return curr;
@@ -174,12 +176,12 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
 Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
   // at this point we have a chunk that can be used for the data that we want
 
-  // 2) create a new_chunk at address (available_chunk + sizeof(Chunk) + size)
+  // 2) create a new_chunk at address (available_chunk + CHUNK_SIZE + size)
   // Chunk *new_chunk = (available_chunk + 1) + size;
-  Chunk *new_chunk = (Chunk*)((uintptr_t)available_chunk + sizeof(Chunk) + size);
+  Chunk *new_chunk = (Chunk*)((uintptr_t)available_chunk + CHUNK_SIZE + size);
 
   // 3) populate that new header with the correct information 
-  new_chunk->size = available_chunk->size - size - sizeof(Chunk);
+  new_chunk->size = available_chunk->size - size - CHUNK_SIZE;
   new_chunk->is_available = true; // takes remaining available size
   new_chunk->prev = available_chunk;
   new_chunk->next = available_chunk->next;
@@ -192,7 +194,7 @@ Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
   }
  
   if (initalize) {
-    void *data = (void*)((uintptr_t)available_chunk + sizeof(Chunk));
+    void *data = (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
     memset(data, 0, size);
   }
 
