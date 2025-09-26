@@ -132,6 +132,7 @@ void *my_realloc(void *ptr, size_t size) {
   Chunk *curr = find_chunk(head, ptr);
   if (curr == NULL) {
     perror("realloc: pointer is not valid");
+    return NULL;
   }
   
   // try to merge in place to prevent copying a ton of data
@@ -153,6 +154,12 @@ void *my_realloc(void *ptr, size_t size) {
       data_size < curr->size + sizeof(Chunk) + curr->next->size + sizeof(Chunk)) {
     curr->is_available = true;
     curr = merge_next(curr);
+
+    if (carve_chunk(curr, size, true) == NULL) {
+      perror("realloc: error carving curr chunk for in place copy");
+      return NULL;
+    }
+
     return (void*)((uintptr_t)curr + sizeof(Chunk));
   }
   
