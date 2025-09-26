@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "unk.h"
 #include "datastructures.h"
 
 // size of the hunk in bytes
@@ -211,11 +212,3 @@ Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
   return available_chunk; // TODO: it might be more useful to return new_chunk
 }
 
-size_t block_size(size_t size) {
-  size_t mod = size % 16;
-
-  if (mod != 0) {
-    size = size + (16 - mod);
-  }
-  return size;
-}

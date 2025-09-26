@@ -5,6 +5,7 @@
 #include <unistd.h> 
 #include <string.h> 
 
+#include "alloc.h"
 #include "unk.h"
 
 void *my_calloc(size_t nmemb, size_t size) {
@@ -180,3 +181,13 @@ void *my_realloc(void *ptr, size_t size) {
 
   return dst_data;
 }
+
+size_t block_size(size_t size) {
+  size_t mod = size % 16;
+
+  if (mod != 0) {
+    size = size + (16 - mod);
+  }
+  return size;
+}
+
