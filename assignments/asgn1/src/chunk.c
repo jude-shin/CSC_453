@@ -4,8 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "unk.h"
-#include "datastructures.h"
+#include "chunk.h"
 
 // size of the hunk in bytes
 #define HUNK_SIZE 304

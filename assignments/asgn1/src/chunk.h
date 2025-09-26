@@ -1,11 +1,7 @@
-#ifndef DATASTRUCTURES 
-#define DATASTRUCTURES 
+#ifndef CHUNK
+#define CHUNK
 
-#include <stdbool.h>
 #include <stddef.h>
-// hold the data structure for the linked list in here. this should hold some
-// pointer information, size, whether it is free or being used, and possibly
-// the previous chunk as well
 
 /*
 A "chunk" is a header and a data portion of the overall "hunk" that 
@@ -36,6 +32,11 @@ typedef struct Chunk {
   // hold the beginning of where the data actually starts
 } Chunk;
 
-
+Chunk *merge_next(Chunk *curr);
+Chunk *merge_prev(Chunk *curr);
+Chunk *get_head();
+Chunk *find_chunk(Chunk *curr, void *ptr);
+Chunk *find_available_chunk(Chunk *curr, size_t size);
+Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize);
 
 #endif
