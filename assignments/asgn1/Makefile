@@ -1,10 +1,10 @@
 CC = gcc
 CFLAGS= -Wall -pedantic -g
 LD = gcc
-LDFLAGS =
+LDFLAGS = -g
 SHELL=/bin/bash
 
-MAIN = test 
+MAIN = my_test
 OBJS = bin/test.o bin/alloc.o bin/chunk.o
 PROGS = $(MAIN)
 
@@ -14,6 +14,9 @@ $(MAIN): $(OBJS)
 bin/%.o: src/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-clean :
+clean:
 	rm bin/*.o $(PROGS)
+
+run: $(MAIN) 
+	./$(MAIN)
 
