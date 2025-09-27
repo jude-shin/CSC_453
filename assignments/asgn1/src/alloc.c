@@ -44,7 +44,7 @@ void *my_calloc(size_t nmemb, size_t size) {
   }
  
   // return the pointer that is useful to the user (not the chunk pointer)
-  return (void*)((uintptr_t)available_chunk + sizeof(Chunk));
+  return (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
 }
 
 void *my_malloc(size_t size) {
@@ -79,7 +79,7 @@ void *my_malloc(size_t size) {
   }
  
   // return the pointer that is useful to the user (not the chunk pointer)
-  return (void*)((uintptr_t)available_chunk + sizeof(Chunk));
+  return (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
 }
 
 void my_free(void *ptr) {
@@ -153,7 +153,7 @@ void *my_realloc(void *ptr, size_t size) {
 
   if (curr->next != NULL && 
       curr->next->is_available &&
-      data_size < curr->size + sizeof(Chunk) + curr->next->size + sizeof(Chunk)) {
+      data_size < curr->size + CHUNK_SIZE + curr->next->size + CHUNK_SIZE) {
     curr->is_available = true;
     curr = merge_next(curr);
 
@@ -162,7 +162,7 @@ void *my_realloc(void *ptr, size_t size) {
       return NULL;
     }
 
-    return (void*)((uintptr_t)curr + sizeof(Chunk));
+    return (void*)((uintptr_t)curr + CHUNK_SIZE);
   }
   
   if (curr->prev != NULL && curr->prev->is_available) {

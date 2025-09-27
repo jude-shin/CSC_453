@@ -7,7 +7,7 @@ int main(int argc, char *argv[]) {
 
   memcpy(ptr1, "1234567812345678", 16);
 
-  // char *realloced_ptr = (char *)my_realloc(ptr1, 32); 
+  char *realloced_ptr = (char *)my_realloc(ptr1, 32); 
 
   return 0;
 }

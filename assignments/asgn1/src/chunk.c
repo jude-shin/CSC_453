@@ -119,8 +119,8 @@ Chunk *find_chunk(Chunk *curr, void *ptr) {
   // data with alloc in the first place.
   void *curr_data = (void *)((uintptr_t)curr + CHUNK_SIZE);
 
+  // We have found a valid chunk!
   if (curr_data == ptr) {
-    // we have reached a valid chunk!
     return curr;
   }
 
