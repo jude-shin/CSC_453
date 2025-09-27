@@ -8,39 +8,43 @@
 #include "alloc.h"
 #include "chunk.h"
 
+// Allocates nmemb*size bytes of memory, setting all of the data inside to 0.
+// @param nmemb Number of elements to be allocated.
+// @param size Size of each element to be allocated.
+// @return void* to the usable data portion.
 void *my_calloc(size_t nmemb, size_t size) {
-  // TODO: is this expected behavior?
+  // Edge Cases
+  // TODO: is this expected behavior? 
   if (nmemb == 0 || size == 0) {
     return NULL;
   }
 
-  // get the first chunk of the linked list
-  // if this is the first time using it, initalize the list with a global var
+  // Get the first chunk of the linked list. This is stored as a global var.
+  // If this is the first time using it, initalize the list with the defaults.
   Chunk *head = get_head();
   if (head == NULL) {
     perror("calloc: error getting head ptr");
     return NULL;
   }
 
-  // simulate an array by giving space for nmemb elements of size size
-  size = nmemb*size;
+  // Simulate an array by giving space for nmemb elements of size size.
+  size_t data_size = nmemb*size;
 
-  // round the remainder of the total space needed up to the nearest
-  // multiple of ALLIGN 
-  size = block_size(size);
+  // Round the data size to the nearest multiple of ALLIGN
+  data_size = block_size(data_size);
 
-  // find the next available chunk, increasing the hunk size as needed
-  Chunk *available_chunk = find_available_chunk(head, size);
+  // Find the next available chunk, increasing the hunk size as needed.
+  Chunk *available_chunk = find_available_chunk(head, data_size);
   if (available_chunk == NULL) {
     perror("calloc: error finding available chunk");
     return NULL;
   }
 
-  // split the available data portion into a new chunk, and mark the allocated
-  // chunk as being used
+  // Split the available data portion into a new chunk, and mark the allocated
+  // chunk as being used. Overwrite with zeros.
   carve_chunk(available_chunk, size, true);
  
-  // return the pointer that is useful to the user (not the chunk pointer)
+  // Return the pointer that is useful to the user (not the chunk pointer).
   return (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
 }
 
@@ -51,35 +55,35 @@ void *my_malloc(size_t size) {
     return NULL;
   }
 
-  // get the first chunk of the linked list
-  // if this is the first time using it, initalize the list with a global var
+  // Get the first chunk of the linked list. This is stored as a global var.
+  // If this is the first time using it, initalize the list with the defaults.
   Chunk *head = get_head();
   if (head == NULL) {
     perror("malloc: error getting head ptr");
     return NULL;
   }
 
-  // round the user's alloc request to the nearest multiple of ALLIGN
-  size = block_size(size);
+  // Round the size request to the nearest multiple of ALLIGN.
+  size_t data_size = block_size(size);
 
-  // find the next available chunk, increasing the hunk size as needed
-  Chunk *available_chunk = find_available_chunk(head, size);
+  // Find the next available chunk, increasing the hunk size as needed.
+  Chunk *available_chunk = find_available_chunk(head, data_size);
   if (available_chunk == NULL) {
     perror("malloc: error finding available chunk");
     return NULL;
   }
 
-  // split the available data portion into a new chunk, and mark the allocated
-  // chunk as being used
-  carve_chunk(available_chunk, size, false);
+  // Split the available data portion into a new chunk, and mark the allocated
+  // chunk as being used. Overwrite does not happen.
+  carve_chunk(available_chunk, data_size, false);
  
-  // return the pointer that is useful to the user (not the chunk pointer)
+  // Return the pointer that is useful to the user (not the chunk pointer).
   return (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
 }
 
 void my_free(void *ptr) {
-  // get the first chunk of the linked list
-  // if this is the first time using it, initalize the list with a global var
+  // Get the first chunk of the linked list. This is stored as a global var.
+  // If this is the first time using it, initalize the list with the defaults.
   Chunk *head = get_head();
   if (head == NULL) {
     perror("free: error getting head ptr");
@@ -91,26 +95,30 @@ void my_free(void *ptr) {
   // result in a different error.
   // TODO: maybe you should put the catch at the front to make it unambiguous
   
-  // start from the head
-  // linear search through all of the chunks, seeing if any of the addresses 
-  // line up. at the same time, check to see if the chunk is available or not.
-  // if it lines up, and it is currently unavailable (was allocated),
+  // Start from the head and linear search through all of the chunks, seeing if
+  // any of the addresses line up. 
   Chunk *freeable_chunk = find_chunk(head, ptr);
   if (freeable_chunk == NULL) {
     perror("free: pointer is not valid");
   }
+  // Only accept the chunk if it is allocated (if it is being used)
   if (freeable_chunk->is_available) {
     perror("free: chunk already available");
   }
-
-  // then have that function return the chunk * that is to be freed
+  
   freeable_chunk->is_available = true;
 
-  // then you do the stuff with the free and the merge
-  Chunk *merged_chunk = freeable_chunk; // var renaming for bookeeping
+  // Check to see if you can merge adjacent chunks that might also be 
+  // available.
+  Chunk *merged_chunk = freeable_chunk;
+  // Merge the freeable_chunk->next Chunk into the freeable_chunk.
+  // Keeping the current freeable_chunk.
   if (merged_chunk->next != NULL && merged_chunk->next->is_available) {
     merged_chunk = merge_next(merged_chunk);
   }
+  // Merge the freeable_chunk Chunk into the freeable_chunk->prev.
+  // Keeping the previous chunk if available, otherwise, we keep the 
+  // freeable_chunk.
   if (merged_chunk->prev != NULL && merged_chunk->prev->is_available) {
     merged_chunk = merge_prev(merged_chunk);
   }
@@ -127,50 +135,48 @@ void *my_realloc(void *ptr, size_t size) {
     return NULL; // NOTE footer(3) says "these" are equivalent
   }
 
-  // get the first chunk of the linked list
-  // if this is the first time using it, initalize the list with a global var
+  // Get the first chunk of the linked list. This is stored as a global var.
+  // If this is the first time using it, initalize the list with the defaults.
   Chunk *head = get_head();
   if (head == NULL) {
     perror("realloc: error getting head ptr");
     return NULL;
   }
 
-  // find the chunk that lines up with the ptr requested
+  // Start from the head and linear search through all of the chunks, seeing if
+  // any of the addresses line up. 
   Chunk *curr = find_chunk(head, ptr);
   if (curr == NULL) {
     perror("realloc: pointer is not valid");
     return NULL;
   }
-  
-  // try to merge in place to prevent copying a ton of data
-  curr->is_available = true;
 
-  // get the new size of the chunk-to-be
+  // The new size of the chunk-to-be.
   size_t data_size = size + curr->size;
 
-  // round the user's alloc request to the nearest multiple of ALLIGN 
+  // Round the size request to the nearest multiple of ALLIGN.
   data_size = block_size(data_size);
 
+  // Try to merge in place to prevent copying a ton of data if the Chunk next 
+  // to the chunk is able to hold another chunk.
   if (curr->next != NULL && 
       curr->next->is_available &&
       data_size < curr->size + CHUNK_SIZE + curr->next->size + CHUNK_SIZE) {
     curr->is_available = true;
     curr = merge_next(curr);
-
     carve_chunk(curr, size, true);
-
     return (void*)((uintptr_t)curr + CHUNK_SIZE);
   }
   
-  if (curr->prev != NULL && curr->prev->is_available) {
-    curr = merge_prev(curr);
-  }
-
-  // whatever merges happen, we don't care at this point.
-  // we should just try to look for a new chunk with the size of the original,
-  // plus the extra that the user requested in the realloc
-  void *dst_data = my_malloc(data_size);
+  // If copy in place did not work out, then free the current chunk, giving
+  // a chance for the adjacent chunks to merge.
+  my_free(curr);
   
+  // Find a new home for the data with malloc.
+  void *dst_data = my_malloc(data_size);
+ 
+  // Copy the data over to the new location, no matter where the new
+  // data was allocated.
   memmove(dst_data, ptr, data_size);
 
   return dst_data;

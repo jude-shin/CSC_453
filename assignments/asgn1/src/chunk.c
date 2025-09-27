@@ -123,6 +123,8 @@ Chunk *merge_prev(Chunk *curr) {
 // @param ptr The given pointer which the user provides.
 // @return A Chunk* to the associated data ptr. NULL if no suitable poiner is 
 // found.
+// TODO: rename this to match_chunk or something that doesn't get confused with 
+// find_available_chunk
 Chunk *find_chunk(Chunk *curr, void *ptr) {
   // The address of the data section of the given Chunk we are checking.
   // The address of the Chunk plus the size that the Chunk header takes up.
