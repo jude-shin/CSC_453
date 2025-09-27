@@ -177,8 +177,10 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
   return find_available_chunk(curr->next, size);
 }
 
-Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
+// Splits a chunk that has the correct size into two portions.
+void carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
   // at this point we have a chunk that can be used for the data that we want
+  // TODO: check the size here?
 
   // 2) create a new_chunk at address (available_chunk + CHUNK_SIZE + size)
   // Chunk *new_chunk = (available_chunk + 1) + size;
@@ -212,8 +214,5 @@ Chunk *carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
   // into the doubly linked list. Make sure that you check edge cases (like if 
   // the insert is at the end or the beginning)
   // 5) return the ptr to the available_chunk
-  
-
-  return available_chunk; // TODO: it might be more useful to return new_chunk
 }
 

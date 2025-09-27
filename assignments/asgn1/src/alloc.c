@@ -45,7 +45,7 @@ void *my_calloc(size_t nmemb, size_t size) {
 }
 
 void *my_malloc(size_t size) {
-  // check edge cases
+  // Edge Cases
   if (size == 0) {
     return NULL;
   }
@@ -116,6 +116,16 @@ void my_free(void *ptr) {
 }
 
 void *my_realloc(void *ptr, size_t size) {
+  // Edge Cases
+  if (ptr == NULL) {
+    return my_malloc(size);
+  }
+  else if (size == 0) {
+    my_free(ptr);
+    // TODO what to return?
+    return NULL; // NOTE footer(3) says "these" are equivalent
+  }
+
   // get the first chunk of the linked list
   // if this is the first time using it, initalize the list with a global var
   Chunk *head = get_head();
@@ -133,11 +143,6 @@ void *my_realloc(void *ptr, size_t size) {
   
   // try to merge in place to prevent copying a ton of data
   curr->is_available = true;
-
-  // TODO: every chunk should have an "intended size" variable so when 
-  // merges like this happen, then we can recalculate to make sure we don't 
-  // over buffer... is it worth it? I don't really know
-  // FOR NOW: I am just keeping it the way it is
 
   // get the new size of the chunk-to-be
   size_t data_size = size + curr->size;
@@ -159,7 +164,6 @@ void *my_realloc(void *ptr, size_t size) {
   if (curr->prev != NULL && curr->prev->is_available) {
     curr = merge_prev(curr);
   }
-  //// my_free(ptr);
 
   // whatever merges happen, we don't care at this point.
   // we should just try to look for a new chunk with the size of the original,
