@@ -9,9 +9,9 @@
 static Chunk *global_head_ptr = NULL;
 
 // Round up the requested size (called from the user in the malloc, calloc, or
-// realloc) to the nearest ALLIGN bytes
+// realloc) to the nearest ALLIGN bytes.
 // @param size User requested size in bytes.
-// @return Bytes requested rounded to the nearest multiple of ALLIGN
+// @return Bytes requested rounded to the nearest multiple of ALLIGN.
 size_t block_size(size_t size) {
   size_t mod = size % ALLIGN;
   if (mod != 0) {
@@ -23,15 +23,13 @@ size_t block_size(size_t size) {
 // Get the head (first Chunk) of the linked list.
 // If this is the first time you are using one of the four functions, initalize
 // the datastructure to the defaults, and then return the newly created Chunk.
-// @return A Chunk* to the first element in the linked list
+// @return A Chunk* to the first element in the linked list.
 Chunk *get_head() {
   if (global_head_ptr == NULL) {
     // Make sure that the program break starts at an even multiple of ALLIGN.
-    // Every allocation after this point should be in a multiple of ALLIGN as well
-    // to maintain pointer consistency.
+    // Every allocation after this point should be in a multiple of ALLIGN 
+    // as well to maintain pointer consistency.
     uintptr_t floor = (uintptr_t)sbrk(0);
-    size_t offset = ALLIGN - floor % ALLIGN;
-
     if (sbrk(floor % ALLIGN) == (void *)-1) {
       return NULL;
     }
@@ -55,8 +53,8 @@ Chunk *get_head() {
 // Merges two chunks together into one element of the linked list, updating the
 // next and prev pointers accordingly. curr->next gets absorbed into curr's 
 // data section if curr is not the last element in the linked list.
-// @param curr A Chunk* of the target Chunk
-// @return A Chunk* to the newly merged Chunk (curr)
+// @param curr A Chunk* of the target Chunk.
+// @return A Chunk* to the newly merged Chunk (curr).
 Chunk *merge_next(Chunk *curr) {
   // If we are at the tail, there is no "next" chunk to merge, and we can 
   // break early, returning curr's Chunk*.
@@ -86,8 +84,8 @@ Chunk *merge_next(Chunk *curr) {
 // next and prev pointers accordingly. 
 // curr gets absorbed into curr->next's data section if curr is not the first
 // element in the linked list.
-// @param curr A Chunk* of the target Chunk
-// @return A Chunk* to the newly merged Chunk (curr->prev or curr)
+// @param curr A Chunk* of the target Chunk.
+// @return A Chunk* to the newly merged Chunk (curr->prev or curr).
 Chunk *merge_prev(Chunk *curr) {
   // If we are at the tail, there is no "next" chunk to merge, and we can 
   // break early, returning curr's Chunk*.
@@ -99,7 +97,7 @@ Chunk *merge_prev(Chunk *curr) {
     curr->prev->size = new_size;
 
     // The previous pointer should point to the curr->next, essentially
-    // "skipping" the curr node
+    // "skipping" the curr node.
     curr->prev->next = curr->next;
     
     // If the next chunk is the tail of the linked list, then we can't update
@@ -109,31 +107,39 @@ Chunk *merge_prev(Chunk *curr) {
       curr->next->prev = curr->prev;
     }
 
-    // We merged A
     return curr->prev;
   }
+  // There is no previous chunk to return, so just return the current without 
+  // doing anything special.
   return curr;
 }
 
 
+// Gets the Chunk that is associated with the data pointer (the pointer that 
+// the user will be referencing in their programs through a linear recursive
+// search.
+// @param curr A Chunk* whose data section is to be checked with the given 
+// pointer.
+// @param ptr The given pointer which the user provides.
+// @return A Chunk* to the associated data ptr. NULL if no suitable poiner is 
+// found.
 Chunk *find_chunk(Chunk *curr, void *ptr) {
-  // the address of the data section of the chunk. This is what the user should
-  // be passing in. This is what we returned the user when we gave them the 
-  // data with alloc in the first place.
+  // The address of the data section of the given Chunk we are checking.
+  // The address of the Chunk plus the size that the Chunk header takes up.
   void *curr_data = (void *)((uintptr_t)curr + CHUNK_SIZE);
 
-  // We have found a valid chunk!
+  // We have found a valid chunk if the addresses match.
   if (curr_data == ptr) {
     return curr;
   }
 
+  // If the tail is reached and the curr_data address has not matched at 
+  // this point, then return NULL to indicate so. It is not our problem.
   if (curr->next == NULL) {
-    // if we have reached here, and we didn't find a chunk with a suitable ptr 
-    // then it was the users error, and we can't be bothered.
     return NULL;
   }
 
-  // recursively linear search through our linked list
+  // Recursively linear search through our linked list.
   return find_chunk(curr->next, ptr);
 }
 
