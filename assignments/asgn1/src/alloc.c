@@ -26,7 +26,7 @@ void *my_calloc(size_t nmemb, size_t size) {
   size = nmemb*size;
 
   // round the remainder of the total space needed up to the nearest
-  // multiple of 16
+  // multiple of ALLIGN 
   size = block_size(size);
 
   // find the next available chunk, increasing the hunk size as needed
@@ -61,7 +61,7 @@ void *my_malloc(size_t size) {
     return NULL;
   }
 
-  // round the user's alloc request to the nearest multiple of 16 
+  // round the user's alloc request to the nearest multiple of ALLIGN
   size = block_size(size);
 
   // find the next available chunk, increasing the hunk size as needed
@@ -148,7 +148,7 @@ void *my_realloc(void *ptr, size_t size) {
   // get the new size of the chunk-to-be
   size_t data_size = size + curr->size;
 
-  // round the user's alloc request to the nearest multiple of 16 
+  // round the user's alloc request to the nearest multiple of ALLIGN 
   data_size = block_size(data_size);
 
   if (curr->next != NULL && 

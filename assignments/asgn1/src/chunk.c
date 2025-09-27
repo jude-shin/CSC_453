@@ -6,19 +6,13 @@
 
 #include "chunk.h"
 
-
-// TODO: put in a struct with a "bytes used"/"bytes avaliable"?
-// this can be optimized to refilter if we want to try and move the break
-// again, but have more than 50 percent space available.
-// This means a lot of small fragmentation.
-
 static Chunk *global_head_ptr = NULL;
 
 size_t block_size(size_t size) {
-  size_t mod = size % 16;
+  size_t mod = size % ALLIGN;
 
   if (mod != 0) {
-    size = size + (16 - mod);
+    size = size + (ALLIGN - mod);
   }
   return size;
 }
@@ -29,11 +23,13 @@ size_t block_size(size_t size) {
 // @return A Chunk* to the first element in the linked list
 Chunk *get_head() {
   if (global_head_ptr == NULL) {
-    // Make sure that the program break starts at an even multiple of 16.
-    // Every allocation after this point should be in a multiple of 16 as well
+    // Make sure that the program break starts at an even multiple of ALLIGN.
+    // Every allocation after this point should be in a multiple of ALLIGN as well
     // to maintain pointer consistency.
     uintptr_t floor = (uintptr_t)sbrk(0);
-    if (sbrk(floor % 16)) {
+    size_t offset = ALLIGN - floor % ALLIGN;
+
+    if (sbrk(floor % ALLIGN) == (void *)-1) {
       return NULL;
     }
   
@@ -42,7 +38,7 @@ Chunk *get_head() {
     if (global_head_ptr == NULL) {
       return NULL;
     }
-  
+
     // The usable space in any chunk does not include the size of the header
     // (or Chunk struct)
     global_head_ptr->size = HUNK_SIZE - CHUNK_SIZE;
@@ -111,7 +107,6 @@ Chunk *merge_prev(Chunk *curr) {
     }
 
     // We merged A
-
     return curr->prev;
   }
   return curr;
