@@ -8,10 +8,11 @@
 #include "alloc.h"
 #include "chunk.h"
 
-// Allocates nmemb*size bytes of memory, setting all of the data inside to 0.
+// Allocates a chunk of memory, setting all of the data inside to 0. Gives a
+// convinient way to allocate memory for an array.
 // @param nmemb Number of elements to be allocated.
 // @param size Size of each element to be allocated.
-// @return void* to the usable data portion.
+// @return A void* to the usable data portion.
 void *my_calloc(size_t nmemb, size_t size) {
   // Edge Cases
   // TODO: is this expected behavior? 
@@ -48,6 +49,9 @@ void *my_calloc(size_t nmemb, size_t size) {
   return (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
 }
 
+// Allocates a chunk of memory, data inside is not guarenteed.
+// @param size Size of bytes to be allocated.
+// @return A void* to the usable data portion.
 void *my_malloc(size_t size) {
   // Edge Cases
   // TODO: is this an expected requirement?
@@ -81,6 +85,10 @@ void *my_malloc(size_t size) {
   return (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
 }
 
+// De-Allocates the chunk of memory given my malloc, calloc, or realloc.
+// Allows for the chunks of memory to be used elsewhere.
+// @param ptr The pointer to the previously alloced portion of memory.
+// @return void.
 void my_free(void *ptr) {
   // Get the first chunk of the linked list. This is stored as a global var.
   // If this is the first time using it, initalize the list with the defaults.
@@ -124,6 +132,12 @@ void my_free(void *ptr) {
   }
 }
 
+// Increases the size of a previously alloced portion of memory. Data inside
+// is not guarenteed, and in-place copying is favored.
+// @param ptr The pointer to the previously alloced portion of memory.
+// @param size Size of bytes to be added onto the previously allocated chunk
+// of memory.
+// @return A void* to the usable data portion.
 void *my_realloc(void *ptr, size_t size) {
   // Edge Cases
   if (ptr == NULL) {
