@@ -8,9 +8,12 @@
 
 static Chunk *global_head_ptr = NULL;
 
+// Round up the requested size (called from the user in the malloc, calloc, or
+// realloc) to the nearest ALLIGN bytes
+// @param size User requested size in bytes.
+// @return Bytes requested rounded to the nearest multiple of ALLIGN
 size_t block_size(size_t size) {
   size_t mod = size % ALLIGN;
-
   if (mod != 0) {
     size = size + (ALLIGN - mod);
   }
