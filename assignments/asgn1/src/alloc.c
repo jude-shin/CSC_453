@@ -38,10 +38,7 @@ void *my_calloc(size_t nmemb, size_t size) {
 
   // split the available data portion into a new chunk, and mark the allocated
   // chunk as being used
-  if (carve_chunk(available_chunk, size, true) == NULL) {
-    perror("calloc: error carving available chunk");
-    return NULL;
-  }
+  carve_chunk(available_chunk, size, true);
  
   // return the pointer that is useful to the user (not the chunk pointer)
   return (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
@@ -73,10 +70,7 @@ void *my_malloc(size_t size) {
 
   // split the available data portion into a new chunk, and mark the allocated
   // chunk as being used
-  if (carve_chunk(available_chunk, size, false) == NULL) {
-    perror("malloc: error carving available chunk");
-    return NULL;
-  }
+  carve_chunk(available_chunk, size, false);
  
   // return the pointer that is useful to the user (not the chunk pointer)
   return (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
@@ -157,10 +151,7 @@ void *my_realloc(void *ptr, size_t size) {
     curr->is_available = true;
     curr = merge_next(curr);
 
-    if (carve_chunk(curr, size, true) == NULL) {
-      perror("realloc: error carving curr chunk for in place copy");
-      return NULL;
-    }
+    carve_chunk(curr, size, true);
 
     return (void*)((uintptr_t)curr + CHUNK_SIZE);
   }
