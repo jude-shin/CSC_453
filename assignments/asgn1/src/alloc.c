@@ -41,10 +41,16 @@ void *my_calloc(size_t nmemb, size_t size) {
     return NULL;
   }
 
-  // Split the available data portion into a new chunk, and mark the allocated
-  // chunk as being used. Overwrite with zeros.
-  carve_chunk(available_chunk, size, true);
- 
+  // Split the available data portion into a new chunk.
+  Chunk *new_chunk = carve_chunk(available_chunk, size);
+
+  // Mark the first chunk as being allocated (Chunk who got the desired size).
+  new_chunk->is_available = false;
+
+  // Set all the data to be zeros.
+  void *data = (void*)((uintptr_t)new_chunk + CHUNK_SIZE);
+  memset(data, 0, data_size);
+
   // Return the pointer that is useful to the user (not the chunk pointer).
   return (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
 }
@@ -77,9 +83,15 @@ void *my_malloc(size_t size) {
     return NULL;
   }
 
-  // Split the available data portion into a new chunk, and mark the allocated
-  // chunk as being used. Overwrite does not happen.
-  carve_chunk(available_chunk, data_size, false);
+  // Split the available data portion into a new chunk.
+  Chunk *new_chunk = carve_chunk(available_chunk, data_size);
+  if (new_chunk == NULL) {
+    perror("malloc: error carving chunk");
+    return NULL;
+  }
+
+  // Mark the first chunk as being allocated (Chunk who got the desired size).
+  new_chunk->is_available = false;
  
   // Return the pointer that is useful to the user (not the chunk pointer).
   return (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
@@ -175,12 +187,18 @@ void *my_realloc(void *ptr, size_t size) {
   // to the chunk is able to hold another chunk.
   if (curr->next != NULL && 
       curr->next->is_available &&
-      data_size < curr->size + CHUNK_SIZE + curr->next->size + CHUNK_SIZE) {
-    // TODO: do I acutally need to set it to available?
-    curr->is_available = true;
+      curr->size >= data_size + CHUNK_SIZE + ALLIGN) { // TODO: test this
+
+    // Make the chunk bigger by merging the next Chunk into the curr Chunk's
+    // data section.
     curr = merge_next(curr);
-    carve_chunk(curr, size, true);
-    return (void*)((uintptr_t)curr + CHUNK_SIZE);
+    
+    // Size was checked beforehand, so this will never error. 
+    Chunk *new_chunk = carve_chunk(curr, data_size);
+
+    new_chunk->is_available = true;
+
+    return (void*)((uintptr_t)new_chunk + CHUNK_SIZE);
   }
   
   // If copy in place did not work out, then free the current chunk, giving

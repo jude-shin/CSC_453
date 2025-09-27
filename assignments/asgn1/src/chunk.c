@@ -185,46 +185,40 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
   return find_available_chunk(curr->next, size);
 }
 
-// Splits a chunk that has enough space into two portions, creating a new Chunk
-// in the process. Set the 
-// @param available_chunk A Chunk that is going to be split.
-// @
-// TODO: finish the comments
-void carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
-  // TODO: is_available should match whatever the original was
-  // at this point we have a chunk that can be used for the data that we want
+// Splits a chunk that has enough space into two portions, creating a Chunk
+// in the process. The newly created chunk will be set to available.
+// @param curr A Chunk that is going to be split.
+// @param size The size of the new chunk. 
+// @return A Chunk* to the chunk whose size was split to the spesification. 
+Chunk *carve_chunk(Chunk *curr, size_t size) {
+  // The size of the curr Chunk we are going to carve must be able to hold the 
+  // desired size, the header, and the smallest data segment possible.
+  if (curr->size < size + CHUNK_SIZE + ALLIGN) {
+    return NULL;
+  }
 
-  // 2) create a new_chunk at address (available_chunk + CHUNK_SIZE + size)
-  // Chunk *new_chunk = (available_chunk + 1) + size;
-  Chunk *new_chunk = (Chunk*)((uintptr_t)available_chunk + CHUNK_SIZE + size);
+  // Create a remainder_chunk at address offset size bytes away, allocating 
+  // the remaining bytes as it's size. Copy the availability from the current.
+  // Update the prev and next pointers.
+  Chunk *remainder_chunk = (Chunk*)((uintptr_t)curr + CHUNK_SIZE + size);
+  remainder_chunk->size = curr->size - size - CHUNK_SIZE;
+  remainder_chunk->is_available = true; 
+  remainder_chunk->prev = curr;
+  remainder_chunk->next = curr->next;
 
-  // 3) populate that new header with the correct information 
-  new_chunk->size = available_chunk->size - size - CHUNK_SIZE;
-  new_chunk->is_available = true; // takes remaining available size
-  new_chunk->prev = available_chunk;
-  new_chunk->next = available_chunk->next;
-
-  // makes sure that when the available_chunk is NOT the last element,
-  // the prev pointer will point to the newly carved chunk, not the previous
-  // available_chunk
-  if (available_chunk->next != NULL) {
-    available_chunk->next->prev = new_chunk;
+  // If the current Chunk is not the tail, then it has a "next" chunk. In that
+  // case, update the "next"s prev pointer.
+  if (curr->next != NULL) {
+    curr->next->prev = remainder_chunk;
   }
  
-  if (initalize) {
-    void *data = (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
-    memset(data, 0, size);
-  }
+  // Update the current chunk to have the desired size. Update the next 
+  // pointers accordingly. Note: the prev pointer will stay the same.
+  curr->size = size;
+  // curr->prev = curr->prev; // stays the same
+  curr->next = remainder_chunk;
 
-  // update the available_chunk to have the correct information in the
-  // header
-  available_chunk->size = size;
-  available_chunk->is_available = false;
-  // available_chunk->prev = available_chunk->prev; // stays the same
-  available_chunk->next = new_chunk;
-  // 4) adjust the next and previous pointers to "insert" the new_chunk
-  // into the doubly linked list. Make sure that you check edge cases (like if 
-  // the insert is at the end or the beginning)
-  // 5) return the ptr to the available_chunk
+  // The curr now has the new size! Return our beautiful work.
+  return curr;
 }
 
