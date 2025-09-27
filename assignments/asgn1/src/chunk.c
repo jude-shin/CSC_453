@@ -126,8 +126,8 @@ Chunk *merge_prev(Chunk *curr) {
 // TODO: rename this to match_chunk or something that doesn't get confused with 
 // find_available_chunk
 Chunk *find_chunk(Chunk *curr, void *ptr) {
-  // The address of the data section of the given Chunk we are checking.
-  // The address of the Chunk plus the size that the Chunk header takes up.
+  // The address of the Chunk plus the size that the Chunk header takes up will
+  // give us an address to the data section of the chunk we are looking at.
   void *curr_data = (void *)((uintptr_t)curr + CHUNK_SIZE);
 
   // We have found a valid chunk if the addresses match.
@@ -145,42 +145,53 @@ Chunk *find_chunk(Chunk *curr, void *ptr) {
   return find_chunk(curr->next, ptr);
 }
 
+// Finds the earliest available Chunk through a linear recursive search.
+// This function looks for Chunks that are not being used. Another requirement
+// is having enough space in the Chunks data section to allow for the size 
+// requested, and a "minimum" chunk (just the size of the Chunk header and the
+// ALLIGN size).
+// @param curr The current Chunk* which will be checked for the requirements
+// mentioned above.
+// @param size The size of the space we are looking for.
+// @return A Chunk* to the Chunk which meets the requirements mentioned above.
 Chunk *find_available_chunk(Chunk *curr, size_t size) {
-  // start from the head and recursively search
-  // this inequality allows us to guarentee that the space we will allocate
-  // will have enough for the header, the data space, and the new header space
-  // at the end
+  // We have found a valid match.
   if (curr->is_available && curr->size > size + CHUNK_SIZE) {
-    // then we are able to allocate it!
-    // this chunk is the chosen one
+  // if (curr->is_available && curr->size >= size + CHUNK_SIZE + ALLIGN) {
     return curr;
   }
-
+  
+  // If the tail is reached and the curr_data address has not matched at 
+  // this point, then there is no suitable space.
   if (curr->next == NULL){
-    // if we have reached here, then there is no suitable space
-    // in this case, we must increase the hunk with sbrk()
+    // Increase the hunk to make more space.
     sbrk(HUNK_SIZE);
 
     if (curr->is_available) {
-      // then we want to add another HUNK_SIZE space to the tail
+      // If the tail is not being used, then tack the HUNK_SIZE to the end of
+      // it without creating a new Chunk.
       curr->size = curr->size + HUNK_SIZE;
-
-      // then call the find_available_chunk on the tail again.
-      // if there is space the second time around, horray!
-      // if not, that means that the requested malloc is greater than the
-      // HUNK_SIZE, so we will just do it again. We CANNOT assume that the
-      // requested malloc size will be less than the HUNK_SIZE
     }
+
     // NOTE: the tail should always be available
+    // TODO: test this theory
+    // Call the find_available_chunk on the tail again.
+    // If there is enough space, then it will be allocated. If not, then this
+    // branch will be executed till there is enough space in the Hunk.
     return find_available_chunk(curr, size);
   }
   
-  // recursively linear search through our linked list
+  // Recursively linear search through our linked list.
   return find_available_chunk(curr->next, size);
 }
 
-// Splits a chunk that has the correct size into two portions.
+// Splits a chunk that has enough space into two portions, creating a new Chunk
+// in the process. Set the 
+// @param available_chunk A Chunk that is going to be split.
+// @
+// TODO: finish the comments
 void carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
+  // TODO: is_available should match whatever the original was
   // at this point we have a chunk that can be used for the data that we want
 
   // 2) create a new_chunk at address (available_chunk + CHUNK_SIZE + size)

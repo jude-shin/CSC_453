@@ -176,6 +176,7 @@ void *my_realloc(void *ptr, size_t size) {
   if (curr->next != NULL && 
       curr->next->is_available &&
       data_size < curr->size + CHUNK_SIZE + curr->next->size + CHUNK_SIZE) {
+    // TODO: do I acutally need to set it to available?
     curr->is_available = true;
     curr = merge_next(curr);
     carve_chunk(curr, size, true);
