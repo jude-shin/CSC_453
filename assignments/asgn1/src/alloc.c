@@ -9,10 +9,10 @@
 #include "chunk.h"
 
 void *my_calloc(size_t nmemb, size_t size) {
-  // // check if this is expected behavior
-  // if (nmemb == 0 || size == 0) {
-  //   return NULL;
-  // }
+  // TODO: is this expected behavior?
+  if (nmemb == 0 || size == 0) {
+    return NULL;
+  }
 
   // get the first chunk of the linked list
   // if this is the first time using it, initalize the list with a global var
@@ -46,6 +46,7 @@ void *my_calloc(size_t nmemb, size_t size) {
 
 void *my_malloc(size_t size) {
   // Edge Cases
+  // TODO: is this an expected requirement?
   if (size == 0) {
     return NULL;
   }
@@ -170,9 +171,6 @@ void *my_realloc(void *ptr, size_t size) {
   // plus the extra that the user requested in the realloc
   void *dst_data = my_malloc(data_size);
   
-  // TODO: ask the professor about this code
-  // does it use malloc?
-  // is it safe?
   memmove(dst_data, ptr, data_size);
 
   return dst_data;

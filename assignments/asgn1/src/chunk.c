@@ -1,6 +1,6 @@
 #include <unistd.h> 
 #include <stddef.h> 
-#include <stdbool.h>  // do I even need this?
+#include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
 
@@ -180,7 +180,6 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
 // Splits a chunk that has the correct size into two portions.
 void carve_chunk(Chunk *available_chunk, size_t size, bool initalize) {
   // at this point we have a chunk that can be used for the data that we want
-  // TODO: check the size here?
 
   // 2) create a new_chunk at address (available_chunk + CHUNK_SIZE + size)
   // Chunk *new_chunk = (available_chunk + 1) + size;
