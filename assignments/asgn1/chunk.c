@@ -156,8 +156,9 @@ Chunk *find_chunk(Chunk *curr, void *ptr) {
 // @return A Chunk* to the Chunk which meets the requirements mentioned above.
 Chunk *find_available_chunk(Chunk *curr, size_t size) {
   // We have found a valid match.
-  if (curr->is_available && curr->size > size + CHUNK_SIZE) {
-  // if (curr->is_available && curr->size >= size + CHUNK_SIZE + ALLIGN) {
+  // TODO: ?
+  // if (curr->is_available && curr->size > size + CHUNK_SIZE) {
+  if (curr->is_available && curr->size >= size + CHUNK_SIZE + ALLIGN) {
     return curr;
   }
   

@@ -2,11 +2,17 @@ CC = gcc
 CFLAGS= -Wall -g -fpic
 SHELL=/bin/bash
 
-test: tryme.o
-	$(CC) -L ./lib64 -o tryme tryme.o -lmalloc 
+# tryme: intel-all tryme.o
+# 	$(CC) -L ./lib64 -o tryme tryme.o -lmalloc 
+# 
+# tryme.o:
+# 	$(CC) $(CFLAGS) -c -o tryme.o tryme.c
 
-tryme.o:
-	$(CC) $(CFLAGS) -c -o tryme.o tryme.c
+testme: intel-all testme.o
+	$(CC) -L ./lib64 -o testme testme.o -lmalloc 
+
+testme.o:
+	$(CC) $(CFLAGS) -c -o testme.o testme.c
 
 intel-all: lib/libmalloc.so lib64/libmalloc.so
 
@@ -29,4 +35,4 @@ lib64:
 	$(CC) $(CFLAGS) -m64 -c $< -o $@
 
 clean:
-	rm -f *.o lib/* lib64/* test tryme
+	rm -f *.o lib/* lib64/* testme tryme

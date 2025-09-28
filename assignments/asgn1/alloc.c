@@ -60,12 +60,12 @@ void *calloc(size_t nmemb, size_t size) {
         buffer, 
         sizeof(buffer),
         "MALLOC: calloc(%d, %d) => (ptr=%p, size=%d)", 
-        nmemb,
-        size, 
+        (int)nmemb,
+        (int)size, 
         (void*)((uintptr_t)available_chunk + CHUNK_SIZE), 
-        new_chunk->size);
+        (int)new_chunk->size);
 
-    fputs(buffer, STDOUT_FILENO);
+    fputs(buffer, stdout);
   }
 
   // Return the pointer that is useful to the user (not the chunk pointer).
@@ -112,21 +112,21 @@ void *malloc(size_t size) {
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
-    char buffer[70];
+    char buffer[39];
 
     snprintf(
         buffer, 
         sizeof(buffer),
         "MALLOC: malloc(%d) => (ptr=%p, size=%d)", 
-        size, 
+        (int)size, 
         (void*)((uintptr_t)available_chunk + CHUNK_SIZE), 
-        new_chunk->size);
+        (int)new_chunk->size);
 
-    fputs(buffer, STDOUT_FILENO);
+    fputs(buffer, stdout);
   }
  
   // Return the pointer that is useful to the user (not the chunk pointer).
-  return (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
+  return (void*)((uintptr_t)new_chunk + CHUNK_SIZE);
 }
 
 // De-Allocates the chunk of memory given my malloc, calloc, or realloc.
@@ -136,6 +136,7 @@ void *malloc(size_t size) {
 void free(void *ptr) {
   // Edge Cases
   if (ptr == NULL){
+    perror("help me please");
     return;
   }
 
@@ -244,11 +245,11 @@ void *realloc(void *ptr, size_t size) {
           sizeof(buffer),
           "MALLOC: realloc(%p, %d) => (ptr=%p, size=%d)", 
           ptr,
-          size, 
+          (int)size, 
           (void*)((uintptr_t)curr + CHUNK_SIZE),
-          data_size);
+          (int)data_size);
 
-      fputs(buffer, STDOUT_FILENO);
+      fputs(buffer, stdout);
     }
 
     //return (void*)((uintptr_t)new_chunk + CHUNK_SIZE); //TODO check this
@@ -275,11 +276,11 @@ void *realloc(void *ptr, size_t size) {
         sizeof(buffer),
         "MALLOC: realloc(%p, %d) => (ptr=%p, size=%d)", 
         ptr,
-        size, 
+        (int)size, 
         dst_data,
-        data_size);
+        (int)data_size);
 
-    fputs(buffer, STDOUT_FILENO);
+    fputs(buffer, stdout);
   }
 
   return dst_data;
