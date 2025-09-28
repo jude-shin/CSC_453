@@ -6,6 +6,8 @@
 #include <unistd.h> 
 #include <string.h> 
 
+#include <pp.h>
+
 #include "alloc.h"
 #include "chunk.h"
 
@@ -15,6 +17,7 @@
 // @param size Size of each element to be allocated.
 // @return A void* to the usable data portion.
 void *calloc(size_t nmemb, size_t size) {
+  pp(stdout, "here is calloc\n");
   // Edge Cases
   // TODO: is this expected behavior? 
   if (nmemb == 0 || size == 0) {
@@ -54,6 +57,7 @@ void *calloc(size_t nmemb, size_t size) {
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
+
     char buffer[82];
 
     snprintf(
@@ -76,6 +80,12 @@ void *calloc(size_t nmemb, size_t size) {
 // @param size Size of bytes to be allocated.
 // @return A void* to the usable data portion.
 void *malloc(size_t size) {
+  sleep(5);
+
+  pp(stdout, "here is malloc\n");
+  pp(stdout, "size: %d\n", size);
+
+  // Edge Cases
   // Edge Cases
   // TODO: is this an expected requirement?
   if (size == 0) {
@@ -89,9 +99,25 @@ void *malloc(size_t size) {
     perror("malloc: error getting head ptr");
     return NULL;
   }
+  pp(stdout, "head: %p\n", head);
+  pp(stdout, "head-size: %d\n", head->size);
+  pp(stdout, "head-is_available: %d\n", head->is_available);
+
+  if (head->next != NULL) {
+    pp(stdout, "headNext: %p\n", head->next);
+    pp(stdout, "headNext-size: %d\n", head->next->size);
+    pp(stdout, "headNext-is_available: %d\n", head->next->is_available);
+
+    if (head->next->next != NULL) {
+      pp(stdout, "headNextNext: %p\n", head->next->next);
+      pp(stdout, "headNextNext-size: %d\n", head->next->next->size);
+      pp(stdout, "headNextNext-is_available: %d\n", head->next->next->is_available);
+    }
+  }
 
   // Round the size request to the nearest multiple of ALLIGN.
   size_t data_size = block_size(size);
+  pp(stdout, "data_size: %d\n\n", data_size);
 
   // Find the next available chunk, increasing the hunk size as needed.
   Chunk *available_chunk = find_available_chunk(head, data_size);
@@ -134,9 +160,10 @@ void *malloc(size_t size) {
 // @param ptr The pointer to the previously alloced portion of memory.
 // @return void.
 void free(void *ptr) {
+  pp(stdout, "here is free\n");
+
   // Edge Cases
   if (ptr == NULL){
-    perror("help me please");
     return;
   }
 
@@ -189,6 +216,8 @@ void free(void *ptr) {
 // of memory.
 // @return A void* to the usable data portion.
 void *realloc(void *ptr, size_t size) {
+  pp(stdout, "here is malloc\n");
+
   // Edge Cases
   if (ptr == NULL) {
     return malloc(size);

@@ -10,7 +10,7 @@
 
 /*
 A "chunk" is a header and a data portion of the overall "hunk" that 
-sbrk2 gave us in the beginning.
+sbrk gave us in the beginning.
 This follows a doubly linked list data structure with some extra info.
 The header holds the following information: 
   How large the usable data segment of this chunk is.

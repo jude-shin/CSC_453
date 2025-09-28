@@ -1,6 +1,9 @@
-CC = gcc
-CFLAGS= -Wall -g -fpic
+CC=gcc
+CFLAGS=-Wall -g -fpic
 SHELL=/bin/bash
+
+INCLUDE_PP=-I /home/pn-cs453/Given/Asgn1/include 
+LIBRARY_PP=-L /home/pn-cs453/Given/Asgn1/lib64
 
 # tryme: intel-all tryme.o
 # 	$(CC) -L ./lib64 -o tryme tryme.o -lmalloc 
@@ -8,13 +11,13 @@ SHELL=/bin/bash
 # tryme.o:
 # 	$(CC) $(CFLAGS) -c -o tryme.o tryme.c
 
-testme: intel-all testme.o
-	$(CC) -L ./lib64 -o testme testme.o -lmalloc 
+god: intel-all god.o
+	$(CC) -o god -L ./lib64 $(LIBRARY_PP) god.o -lmalloc -lpp 
 
-testme.o:
-	$(CC) $(CFLAGS) -c -o testme.o testme.c
+god.o: god.c
+	$(CC) $(CFLAGS) -c -o god.o $(INCLUDE_PP) god.c
 
-intel-all: lib/libmalloc.so lib64/libmalloc.so
+intel-all: lib64/libmalloc.so
 
 lib/libmalloc.so: lib alloc32.o chunk32.o
 	$(CC) $(CFLAGS) -m32 -shared -o $@ alloc32.o chunk32.o
@@ -29,10 +32,10 @@ lib64:
 	mkdir lib64
 
 %32.o: %.c
-	$(CC) $(CFLAGS) -m32 -c $< -o $@
+	$(CC) $(CFLAGS) -m32 $(INCLUDE_PP) -c $< -o $@
 
 %64.o: %.c
-	$(CC) $(CFLAGS) -m64 -c $< -o $@
+	$(CC) $(CFLAGS) -m64 $(INCLUDE_PP) -c $< -o $@
 
 clean:
-	rm -f *.o lib/* lib64/* testme tryme
+	rm -f *.o lib/* lib64/* testme tryme god

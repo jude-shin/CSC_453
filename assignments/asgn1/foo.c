@@ -1,15 +1,15 @@
-#include<string.h>
-#include<stdlib.h>
-#include<stdio.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 int main(int argc, char *argv[]) {
-  // void *s = NULL;
-  // s = malloc(7);
+  char *original_string = "Hello, World!";
+  char *duplicated_string = strdup(original_string);
 
-  char *s = NULL;
-  s = strdup("Try Me");
-  puts(s);
-  free(s);
+  if (duplicated_string != NULL) {
+    free(duplicated_string);
+  }
+
   return 0;
 }
 

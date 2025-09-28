@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 
+#include <pp.h>
 #include "chunk.h"
 
 static Chunk *global_head_ptr = NULL;
@@ -29,14 +30,14 @@ Chunk *get_head() {
     // Make sure that the program break starts at an even multiple of ALLIGN.
     // Every allocation after this point should be in a multiple of ALLIGN 
     // as well to maintain pointer consistency.
-    uintptr_t floor = (uintptr_t)sbrk(0);
-    if (sbrk(floor % ALLIGN) == (void *)-1) {
+    void *floor = sbrk(0);
+    if (floor == (void *)-1 || sbrk((uintptr_t)floor % ALLIGN) == (void *)-1) {
       return NULL;
     }
   
     // Move the break to the inital "heap" size.
     global_head_ptr = sbrk(HUNK_SIZE);
-    if (global_head_ptr == NULL) {
+    if (global_head_ptr == (void *)-1) {
       return NULL;
     }
 
@@ -166,12 +167,18 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
   // this point, then there is no suitable space.
   if (curr->next == NULL){
     // Increase the hunk to make more space.
-    sbrk(HUNK_SIZE);
+    if (sbrk(HUNK_SIZE) == (void *)-1) {
+      pp(stdout, "shoot, we couldn't sbrk\n");
+      return NULL;
+    }
 
     if (curr->is_available) {
       // If the tail is not being used, then tack the HUNK_SIZE to the end of
       // it without creating a new Chunk.
       curr->size = curr->size + HUNK_SIZE;
+    }
+    else {
+      pp(stdout, "what the hell is happending the tail should never be !is_available");
     }
 
     // NOTE: the tail should always be available
