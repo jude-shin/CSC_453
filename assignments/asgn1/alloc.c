@@ -1,6 +1,7 @@
 #include <stddef.h> 
 #include <stdio.h> 
 #include <stdbool.h> 
+#include <stdlib.h> 
 #include <stdint.h> 
 #include <unistd.h> 
 #include <string.h> 
@@ -50,6 +51,10 @@ void *calloc(size_t nmemb, size_t size) {
   // Set all the data to be zeros.
   void *data = (void*)((uintptr_t)new_chunk + CHUNK_SIZE);
   memset(data, 0, data_size);
+
+  if (getenv("DEBUG_MALLOC") != NULL){
+    MALLOC
+  }
 
   // Return the pointer that is useful to the user (not the chunk pointer).
   return (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
@@ -102,6 +107,11 @@ void *malloc(size_t size) {
 // @param ptr The pointer to the previously alloced portion of memory.
 // @return void.
 void free(void *ptr) {
+  // Edge Cases
+  if (ptr == NULL){
+    return;
+  }
+
   // Get the first chunk of the linked list. This is stored as a global var.
   // If this is the first time using it, initalize the list with the defaults.
   Chunk *head = get_head();
