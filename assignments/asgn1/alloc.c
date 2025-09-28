@@ -52,8 +52,20 @@ void *calloc(size_t nmemb, size_t size) {
   void *data = (void*)((uintptr_t)new_chunk + CHUNK_SIZE);
   memset(data, 0, data_size);
 
+  // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
-    MALLOC
+    char buffer[82];
+
+    snprintf(
+        buffer, 
+        sizeof(buffer),
+        "MALLOC: calloc(%d, %d) => (ptr=%p, size=%d)", 
+        nmemb,
+        size, 
+        (void*)((uintptr_t)available_chunk + CHUNK_SIZE), 
+        new_chunk->size);
+
+    fputs(buffer, STDOUT_FILENO);
   }
 
   // Return the pointer that is useful to the user (not the chunk pointer).
@@ -97,6 +109,21 @@ void *malloc(size_t size) {
 
   // Mark the first chunk as being allocated (Chunk who got the desired size).
   new_chunk->is_available = false;
+
+  // Debugging output if env var is present.
+  if (getenv("DEBUG_MALLOC") != NULL){
+    char buffer[70];
+
+    snprintf(
+        buffer, 
+        sizeof(buffer),
+        "MALLOC: malloc(%d) => (ptr=%p, size=%d)", 
+        size, 
+        (void*)((uintptr_t)available_chunk + CHUNK_SIZE), 
+        new_chunk->size);
+
+    fputs(buffer, STDOUT_FILENO);
+  }
  
   // Return the pointer that is useful to the user (not the chunk pointer).
   return (void*)((uintptr_t)available_chunk + CHUNK_SIZE);
@@ -208,7 +235,24 @@ void *realloc(void *ptr, size_t size) {
 
     new_chunk->is_available = true;
 
-    return (void*)((uintptr_t)new_chunk + CHUNK_SIZE);
+    // Debugging output if env var is present.
+    if (getenv("DEBUG_MALLOC") != NULL){
+      char buffer[95];
+
+      snprintf(
+          buffer, 
+          sizeof(buffer),
+          "MALLOC: realloc(%p, %d) => (ptr=%p, size=%d)", 
+          ptr,
+          size, 
+          (void*)((uintptr_t)curr + CHUNK_SIZE),
+          data_size);
+
+      fputs(buffer, STDOUT_FILENO);
+    }
+
+    //return (void*)((uintptr_t)new_chunk + CHUNK_SIZE); //TODO check this
+    return (void*)((uintptr_t)curr + CHUNK_SIZE);
   }
   
   // If copy in place did not work out, then free the current chunk, giving
@@ -221,6 +265,22 @@ void *realloc(void *ptr, size_t size) {
   // Copy the data over to the new location, no matter where the new
   // data was allocated.
   memmove(dst_data, ptr, data_size);
+
+  // Debugging output if env var is present.
+  if (getenv("DEBUG_MALLOC") != NULL){
+    char buffer[95];
+
+    snprintf(
+        buffer, 
+        sizeof(buffer),
+        "MALLOC: realloc(%p, %d) => (ptr=%p, size=%d)", 
+        ptr,
+        size, 
+        dst_data,
+        data_size);
+
+    fputs(buffer, STDOUT_FILENO);
+  }
 
   return dst_data;
 }
