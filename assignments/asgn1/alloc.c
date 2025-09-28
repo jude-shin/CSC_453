@@ -3,7 +3,6 @@
 #include <stdbool.h> 
 #include <stdlib.h> 
 #include <stdint.h> 
-#include <unistd.h> 
 #include <string.h> 
 
 #include <pp.h>
@@ -80,8 +79,6 @@ void *calloc(size_t nmemb, size_t size) {
 // @param size Size of bytes to be allocated.
 // @return A void* to the usable data portion.
 void *malloc(size_t size) {
-  sleep(5);
-
   pp(stdout, "here is malloc\n");
   pp(stdout, "size: %d\n", size);
 
