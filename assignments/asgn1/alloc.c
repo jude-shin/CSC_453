@@ -13,7 +13,7 @@
 // @param nmemb Number of elements to be allocated.
 // @param size Size of each element to be allocated.
 // @return A void* to the usable data portion.
-void *my_calloc(size_t nmemb, size_t size) {
+void *calloc(size_t nmemb, size_t size) {
   // Edge Cases
   // TODO: is this expected behavior? 
   if (nmemb == 0 || size == 0) {
@@ -58,7 +58,7 @@ void *my_calloc(size_t nmemb, size_t size) {
 // Allocates a chunk of memory, data inside is not guarenteed.
 // @param size Size of bytes to be allocated.
 // @return A void* to the usable data portion.
-void *my_malloc(size_t size) {
+void *malloc(size_t size) {
   // Edge Cases
   // TODO: is this an expected requirement?
   if (size == 0) {
@@ -101,7 +101,7 @@ void *my_malloc(size_t size) {
 // Allows for the chunks of memory to be used elsewhere.
 // @param ptr The pointer to the previously alloced portion of memory.
 // @return void.
-void my_free(void *ptr) {
+void free(void *ptr) {
   // Get the first chunk of the linked list. This is stored as a global var.
   // If this is the first time using it, initalize the list with the defaults.
   Chunk *head = get_head();
@@ -150,13 +150,13 @@ void my_free(void *ptr) {
 // @param size Size of bytes to be added onto the previously allocated chunk
 // of memory.
 // @return A void* to the usable data portion.
-void *my_realloc(void *ptr, size_t size) {
+void *realloc(void *ptr, size_t size) {
   // Edge Cases
   if (ptr == NULL) {
-    return my_malloc(size);
+    return malloc(size);
   }
   else if (size == 0) {
-    my_free(ptr);
+    free(ptr);
     // TODO what to return?
     return NULL; // NOTE footer(3) says "these" are equivalent
   }
@@ -203,10 +203,10 @@ void *my_realloc(void *ptr, size_t size) {
   
   // If copy in place did not work out, then free the current chunk, giving
   // a chance for the adjacent chunks to merge.
-  my_free(curr);
+  free(curr);
   
   // Find a new home for the data with malloc.
-  void *dst_data = my_malloc(data_size);
+  void *dst_data = malloc(data_size);
  
   // Copy the data over to the new location, no matter where the new
   // data was allocated.

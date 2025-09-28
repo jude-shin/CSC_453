@@ -1,4 +1,3 @@
 make .env file
 create .a and .so archives
-rename the functions to be the appropriate ones (without things like my_...)
 test on csl machines
