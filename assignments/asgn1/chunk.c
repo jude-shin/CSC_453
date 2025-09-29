@@ -1,9 +1,7 @@
 #include <unistd.h> 
 #include <stddef.h> 
 #include <stdbool.h>
-#include <string.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #include "chunk.h"
 
@@ -215,6 +213,3 @@ Chunk *carve_chunk(Chunk *curr, size_t size) {
   // The curr now has the new size! Return our beautiful work.
   return curr;
 }
-
-
-
