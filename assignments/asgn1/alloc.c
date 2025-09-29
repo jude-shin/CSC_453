@@ -4,6 +4,7 @@
 #include <stdlib.h> 
 #include <stdint.h> 
 #include <string.h> 
+
 #include <pp.h>
 
 #include "alloc.h"
@@ -60,13 +61,10 @@ void *calloc(size_t nmemb, size_t size) {
     snprintf(
         buffer, 
         sizeof(buffer),
-        // "MALLOC: calloc(%020d, %020d) => (ptr=0x%018lx, size=%020d)\n", 
-        "MALLOC: calloc(%020d, %020d) => (prev=0x%018lx, ptr=0x%018lx, next=0x%018lx, size=%020d)\n", 
+        "MALLOC: calloc(%020d, %020d) => (ptr=0x%018lx, size=%020d)\n", 
         (int)nmemb,
         (int)size, 
-        (uintptr_t)available_chunk->prev,
         (uintptr_t)available_chunk + CHUNK_SIZE,
-        (uintptr_t)available_chunk->next,
         (int)new_chunk->size);
 
     fputs(buffer, stdout);
@@ -122,12 +120,9 @@ void *malloc(size_t size) {
     snprintf(
         buffer, 
         sizeof(buffer),
-        // "MALLOC: malloc(%020d) => (ptr=0x%018lx, size=%020d)\n", 
-        "MALLOC: malloc(%020d) => \n(prev=0x%018lx, ptr=0x%018lx, next=0x%018lx, size=%020d)\n", 
+        "MALLOC: malloc(%020d) => (ptr=0x%018lx, size=%020d)\n", 
         (int)size, 
-        (uintptr_t)available_chunk->prev,
         (uintptr_t)available_chunk + CHUNK_SIZE,
-        (uintptr_t)available_chunk->next,
         (int)new_chunk->size);
 
     fputs(buffer, stdout);
@@ -183,7 +178,6 @@ void free(void *ptr) {
     snprintf(
         buffer, 
         sizeof(buffer),
-        // "MALLOC: malloc(%020d) => (ptr=0x%018lx, size=%020d)\n", 
         "MALLOC: free(0x%018lx)\n", 
         (uintptr_t)ptr);
 
@@ -267,13 +261,10 @@ void *realloc(void *ptr, size_t size) {
       snprintf(
           buffer, 
           sizeof(buffer),
-          // "MALLOC: realloc(0x%018lx, %020d) => (ptr=0x%018lx, size=%020d)\n", 
-          "MALLOC: realloc(0x%018lx, %020d) => \n(prev=0x%018lx, ptr=0x%018lx, next=0x%018lx, size=%020d)\n", 
+          "MALLOC: realloc(0x%018lx, %020d) => (ptr=0x%018lx, size=%020d)\n", 
           (uintptr_t)ptr,
           (int)size, 
-          (uintptr_t)new_chunk->prev,
           (uintptr_t)new_chunk + CHUNK_SIZE,
-          (uintptr_t)new_chunk->next,
           (int)data_size);
 
       fputs(buffer, stdout);
