@@ -17,7 +17,6 @@
 // @return A void* to the usable data portion.
 void *calloc(size_t nmemb, size_t size) {
   // Edge Cases
-  // TODO: is this expected behavior? 
   if (nmemb == 0 || size == 0) {
     return NULL;
   }
@@ -44,7 +43,7 @@ void *calloc(size_t nmemb, size_t size) {
   }
 
   // Split the available data portion into a new chunk.
-  Chunk *new_chunk = carve_chunk(available_chunk, size);
+  Chunk *new_chunk = carve_chunk(available_chunk, data_size);
 
   // Mark the first chunk as being allocated (Chunk who got the desired size).
   new_chunk->is_available = false;
@@ -64,7 +63,7 @@ void *calloc(size_t nmemb, size_t size) {
         (int)nmemb,
         (int)size, 
         available_chunk + CHUNK_SIZE,
-        (int)new_chunk->size);
+        (int)new_chunk->data_size);
 
     write(STDOUT_FILENO, buffer, strlen(buffer));
   }

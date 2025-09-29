@@ -1,4 +1,4 @@
-CC=gcc
+CC=/bin/gcc
 CFLAGS=-Wall -g -fPIC
 
 god: god.o libmalloc.so
