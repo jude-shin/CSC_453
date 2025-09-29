@@ -4,7 +4,6 @@
 #include <stdlib.h> 
 #include <stdint.h> 
 #include <string.h> 
-
 #include <pp.h>
 
 #include "alloc.h"
@@ -16,7 +15,6 @@
 // @param size Size of each element to be allocated.
 // @return A void* to the usable data portion.
 void *calloc(size_t nmemb, size_t size) {
-  pp(stdout, "here is calloc\n");
   // Edge Cases
   // TODO: is this expected behavior? 
   if (nmemb == 0 || size == 0) {
@@ -57,15 +55,15 @@ void *calloc(size_t nmemb, size_t size) {
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
 
-    char buffer[82];
+    char buffer[136];
 
     snprintf(
         buffer, 
         sizeof(buffer),
-        "MALLOC: calloc(%d, %d) => (ptr=%p, size=%d)", 
+        "MALLOC: calloc(%020d, %020d) => (ptr=0x%018lx, size=%020d)\n", 
         (int)nmemb,
         (int)size, 
-        (void*)((uintptr_t)available_chunk + CHUNK_SIZE), 
+        (uintptr_t)available_chunk + CHUNK_SIZE,
         (int)new_chunk->size);
 
     fputs(buffer, stdout);
@@ -79,9 +77,6 @@ void *calloc(size_t nmemb, size_t size) {
 // @param size Size of bytes to be allocated.
 // @return A void* to the usable data portion.
 void *malloc(size_t size) {
-  pp(stdout, "here is malloc\n");
-  pp(stdout, "size: %d\n", size);
-
   // Edge Cases
   // Edge Cases
   // TODO: is this an expected requirement?
@@ -96,25 +91,9 @@ void *malloc(size_t size) {
     perror("malloc: error getting head ptr");
     return NULL;
   }
-  pp(stdout, "head: %p\n", head);
-  pp(stdout, "head-size: %d\n", head->size);
-  pp(stdout, "head-is_available: %d\n", head->is_available);
-
-  if (head->next != NULL) {
-    pp(stdout, "headNext: %p\n", head->next);
-    pp(stdout, "headNext-size: %d\n", head->next->size);
-    pp(stdout, "headNext-is_available: %d\n", head->next->is_available);
-
-    if (head->next->next != NULL) {
-      pp(stdout, "headNextNext: %p\n", head->next->next);
-      pp(stdout, "headNextNext-size: %d\n", head->next->next->size);
-      pp(stdout, "headNextNext-is_available: %d\n", head->next->next->is_available);
-    }
-  }
 
   // Round the size request to the nearest multiple of ALLIGN.
   size_t data_size = block_size(size);
-  pp(stdout, "data_size: %d\n\n", data_size);
 
   // Find the next available chunk, increasing the hunk size as needed.
   Chunk *available_chunk = find_available_chunk(head, data_size);
@@ -135,14 +114,14 @@ void *malloc(size_t size) {
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
-    char buffer[39];
+    char buffer[118];
 
     snprintf(
         buffer, 
         sizeof(buffer),
-        "MALLOC: malloc(%d) => (ptr=%p, size=%d)", 
+        "MALLOC: malloc(%020d) => (ptr=0x%018lx, size=%020d)\n", 
         (int)size, 
-        (void*)((uintptr_t)available_chunk + CHUNK_SIZE), 
+        (uintptr_t)available_chunk + CHUNK_SIZE,
         (int)new_chunk->size);
 
     fputs(buffer, stdout);
@@ -157,8 +136,6 @@ void *malloc(size_t size) {
 // @param ptr The pointer to the previously alloced portion of memory.
 // @return void.
 void free(void *ptr) {
-  pp(stdout, "here is free\n");
-
   // Edge Cases
   if (ptr == NULL){
     return;
@@ -213,8 +190,6 @@ void free(void *ptr) {
 // of memory.
 // @return A void* to the usable data portion.
 void *realloc(void *ptr, size_t size) {
-  pp(stdout, "here is malloc\n");
-
   // Edge Cases
   if (ptr == NULL) {
     return malloc(size);
@@ -264,15 +239,15 @@ void *realloc(void *ptr, size_t size) {
 
     // Debugging output if env var is present.
     if (getenv("DEBUG_MALLOC") != NULL){
-      char buffer[95];
+    char buffer[136];
 
       snprintf(
           buffer, 
           sizeof(buffer),
-          "MALLOC: realloc(%p, %d) => (ptr=%p, size=%d)", 
-          ptr,
+          "MALLOC: realloc(0x%018lx, %020d) => (ptr=0x%018lx, size=%020d)\n", 
+          (uintptr_t)ptr,
           (int)size, 
-          (void*)((uintptr_t)curr + CHUNK_SIZE),
+          (uintptr_t)curr + CHUNK_SIZE,
           (int)data_size);
 
       fputs(buffer, stdout);
@@ -295,15 +270,15 @@ void *realloc(void *ptr, size_t size) {
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
-    char buffer[95];
+    char buffer[137];
 
     snprintf(
         buffer, 
         sizeof(buffer),
-        "MALLOC: realloc(%p, %d) => (ptr=%p, size=%d)", 
-        ptr,
+        "MALLOC: realloc(0x%018lx, %020d) => (ptr=0x%018lx, size=%020d)\n", 
+        (uintptr_t)ptr,
         (int)size, 
-        dst_data,
+        (uintptr_t)dst_data,
         (int)data_size);
 
     fputs(buffer, stdout);
