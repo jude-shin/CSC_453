@@ -199,8 +199,7 @@ void *realloc(void *ptr, size_t size) {
   }
   else if (size == 0) {
     free(ptr);
-    // TODO what to return?
-    return NULL; // NOTE footer(3) says "these" are equivalent
+    return NULL;
   }
 
   // Get the first chunk of the linked list. This is stored as a global var.

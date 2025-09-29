@@ -1,2 +1,4 @@
 Jude Shin (jshin53)
-
+No special instructions for running my program.
+I had some issues with making my libraries. It should be noted that in my
+Makefile I use CC=/bin/gcc instead of CC=gcc.

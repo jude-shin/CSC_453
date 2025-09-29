@@ -3,38 +3,29 @@
 
 #include <stddef.h>
 
-// Size of the hunk's that sbrk() will use
-#define HUNK_SIZE 6400
+// Size of the hunk's that sbrk() will use in bytes.
+#define HUNK_SIZE 64000
+// Size of our allignment in bytes
 #define ALLIGN 16
+// Size of our chunk struct in bytes rounded up to a multiple of ALLIGN
 #define CHUNK_SIZE (sizeof(Chunk)+(ALLIGN-sizeof(Chunk)%ALLIGN))
 
-/*
-A "chunk" is a header and a data portion of the overall "hunk" that 
-sbrk gave us in the beginning.
-This follows a doubly linked list data structure with some extra info.
-The header holds the following information: 
-  How large the usable data segment of this chunk is.
-  TODO: If the chunk is currently being used (if it is freed or not).
-    why are we doing this?
-  A pointer to the previous chunk (which is the same as the beginning of it's 
-  header) if there is one.
-  A pointer to the next chunk (which is the same as the beginning of it's 
-  header) if there is one.
-*/
+// A "chunk" is a header with some information about the hunk of memory we are
+// managing. This follows a doubly linked list data structure with some extra 
+// information.
 typedef struct Chunk {
-  // how large the data segment of this chunk should be
+  // How large the data segment of this chunk should be.
   size_t size;
 
-  // if the data region is being used (TODO: useful for cleanup operations)
+  // If the data region is being used. (If it is freed or not).
   bool is_available;
 
-  // points to the header (chunk) beginnings, not the data portion
+  // Points to the header (chunk) beginnings, not the data portion.
+  // The prev and next pointers will point to NULL if the current Chunk is the
+  // head or the tail respectfully
   struct Chunk *prev;
   struct Chunk *next;
 
-  // NOTE: where does the data region of this chunk start?
-  // we should know this: current chunk pointer plust the size(chunk) should
-  // hold the beginning of where the data actually starts
 } Chunk;
 
 size_t block_size(size_t size);
