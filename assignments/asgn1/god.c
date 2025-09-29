@@ -4,10 +4,15 @@
 #include<pp.h>
 
 int main(int argc, char *argv[]) {
-  char *s = NULL;
-  s = strdup("Try Me");
-  puts(s);
-  free(s);
+
+  char *line = NULL;
+  size_t len = 0;
+  printf("123456789\n"); 
+
+  getline(&line, &len, stdin);
+  free(line);
+
+
   return 0;
 }
 

@@ -55,15 +55,18 @@ void *calloc(size_t nmemb, size_t size) {
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
 
-    char buffer[136];
+    char buffer[171];
 
     snprintf(
         buffer, 
         sizeof(buffer),
-        "MALLOC: calloc(%020d, %020d) => (ptr=0x%018lx, size=%020d)\n", 
+        // "MALLOC: calloc(%020d, %020d) => (ptr=0x%018lx, size=%020d)\n", 
+        "MALLOC: calloc(%020d, %020d) => (prev=0x%018lx, ptr=0x%018lx, next=0x%018lx, size=%020d)\n", 
         (int)nmemb,
         (int)size, 
+        (uintptr_t)available_chunk->prev,
         (uintptr_t)available_chunk + CHUNK_SIZE,
+        (uintptr_t)available_chunk->next,
         (int)new_chunk->size);
 
     fputs(buffer, stdout);
@@ -114,14 +117,17 @@ void *malloc(size_t size) {
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
-    char buffer[118];
+    char buffer[150];
 
     snprintf(
         buffer, 
         sizeof(buffer),
-        "MALLOC: malloc(%020d) => (ptr=0x%018lx, size=%020d)\n", 
+        // "MALLOC: malloc(%020d) => (ptr=0x%018lx, size=%020d)\n", 
+        "MALLOC: malloc(%020d) => \n(prev=0x%018lx, ptr=0x%018lx, next=0x%018lx, size=%020d)\n", 
         (int)size, 
+        (uintptr_t)available_chunk->prev,
         (uintptr_t)available_chunk + CHUNK_SIZE,
+        (uintptr_t)available_chunk->next,
         (int)new_chunk->size);
 
     fputs(buffer, stdout);
@@ -146,6 +152,7 @@ void free(void *ptr) {
   Chunk *head = get_head();
   if (head == NULL) {
     perror("free: error getting head ptr");
+    return;
   }
   
   // NOTE: if the user supposedly wanted to free the "head", but did not end up 
@@ -159,13 +166,29 @@ void free(void *ptr) {
   Chunk *freeable_chunk = find_chunk(head, ptr);
   if (freeable_chunk == NULL) {
     perror("free: pointer is not valid");
+    return;
   }
   // Only accept the chunk if it is allocated (if it is being used)
   if (freeable_chunk->is_available) {
     perror("free: chunk already available");
+    return;
   }
   
   freeable_chunk->is_available = true;
+
+  // Debugging output if env var is present.
+  if (getenv("DEBUG_MALLOC") != NULL){
+    char buffer[118];
+
+    snprintf(
+        buffer, 
+        sizeof(buffer),
+        // "MALLOC: malloc(%020d) => (ptr=0x%018lx, size=%020d)\n", 
+        "MALLOC: free(0x%018lx)\n", 
+        (uintptr_t)ptr);
+
+    fputs(buffer, stdout);
+  }
 
   // Check to see if you can merge adjacent chunks that might also be 
   // available.
@@ -239,27 +262,30 @@ void *realloc(void *ptr, size_t size) {
 
     // Debugging output if env var is present.
     if (getenv("DEBUG_MALLOC") != NULL){
-    char buffer[136];
+    char buffer[173];
 
       snprintf(
           buffer, 
           sizeof(buffer),
-          "MALLOC: realloc(0x%018lx, %020d) => (ptr=0x%018lx, size=%020d)\n", 
+          // "MALLOC: realloc(0x%018lx, %020d) => (ptr=0x%018lx, size=%020d)\n", 
+          "MALLOC: realloc(0x%018lx, %020d) => \n(prev=0x%018lx, ptr=0x%018lx, next=0x%018lx, size=%020d)\n", 
           (uintptr_t)ptr,
           (int)size, 
-          (uintptr_t)curr + CHUNK_SIZE,
+          (uintptr_t)new_chunk->prev,
+          (uintptr_t)new_chunk + CHUNK_SIZE,
+          (uintptr_t)new_chunk->next,
           (int)data_size);
 
       fputs(buffer, stdout);
     }
 
-    //return (void*)((uintptr_t)new_chunk + CHUNK_SIZE); //TODO check this
-    return (void*)((uintptr_t)curr + CHUNK_SIZE);
+    return (void*)((uintptr_t)new_chunk + CHUNK_SIZE); //TODO check this
+    // return (void*)((uintptr_t)curr + CHUNK_SIZE);
   }
   
   // If copy in place did not work out, then free the current chunk, giving
   // a chance for the adjacent chunks to merge.
-  free(curr);
+  free((void*)((uintptr_t)curr + CHUNK_SIZE));
   
   // Find a new home for the data with malloc.
   void *dst_data = malloc(data_size);
@@ -270,7 +296,7 @@ void *realloc(void *ptr, size_t size) {
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
-    char buffer[137];
+    char buffer[118];
 
     snprintf(
         buffer, 
