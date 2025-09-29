@@ -118,7 +118,7 @@ Chunk *merge_prev(Chunk *curr) {
 
 // Gets the Chunk that is associated with the data pointer (the pointer that 
 // the user will be referencing in their programs through a linear recursive
-// search.
+// search. This can be in a range of the allocated space.
 // @param curr A Chunk* whose data section is to be checked with the given 
 // pointer.
 // @param ptr The given pointer which the user provides.

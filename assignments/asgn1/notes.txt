@@ -1,3 +1,0 @@
-make .env file
-create .a and .so archives
-test on csl machines

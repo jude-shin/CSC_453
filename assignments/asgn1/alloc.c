@@ -141,18 +141,12 @@ void free(void *ptr) {
     perror("free: error getting head ptr");
     return;
   }
-  
-  // NOTE: if the user supposedly wanted to free the "head", but did not end up 
-  // allocating any memory first, the head will be initalized. However, it will
-  // be initalized to "available". Trying to free an available chunk will 
-  // result in a different error.
-  // TODO: maybe you should put the catch at the front to make it unambiguous
-  
+
   // Start from the head and linear search through all of the chunks, seeing if
   // any of the addresses line up. 
   Chunk *freeable_chunk = find_chunk(head, ptr);
+  // No chunk was found, and this was an error on the users part. Not our prob.
   if (freeable_chunk == NULL) {
-    // perror("free: pointer is not valid");
     return;
   }
   // Only accept the chunk if it is allocated (if it is being used)
@@ -220,8 +214,8 @@ void *realloc(void *ptr, size_t size) {
   // Start from the head and linear search through all of the chunks, seeing if
   // any of the addresses line up. 
   Chunk *curr = find_chunk(head, ptr);
+  // No chunk was found, and this was an error on the users part. Not our prob.
   if (curr == NULL) {
-    // perror("realloc: pointer is not valid");
     return NULL;
   }
 
@@ -255,8 +249,6 @@ void *realloc(void *ptr, size_t size) {
     // data section.
     curr = merge_next(curr);
 
-  // ========================================================================
-
     size_t remainder = curr->size - data_size;
 
     // If we can fit another block in the remaining space, make it
@@ -270,7 +262,6 @@ void *realloc(void *ptr, size_t size) {
       new_chunk->size = data_size;
     }
   }
-  // ========================================================================
   else {
     // If copy in place did not work out, then free the current chunk, giving
     // a chance for the adjacent chunks to merge.
@@ -286,7 +277,6 @@ void *realloc(void *ptr, size_t size) {
     // data was allocated.
     memmove(dst_data, ptr, size);
   }
-
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
@@ -306,4 +296,3 @@ void *realloc(void *ptr, size_t size) {
 
   return (void*)((uintptr_t)new_chunk + CHUNK_SIZE);
 }
-

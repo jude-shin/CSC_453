@@ -1,12 +1,6 @@
 CC=/bin/gcc
 CFLAGS=-Wall -g -fPIC
 
-god: god.o alloc.o chunk.o
-	$(CC) -o god god.o alloc.o chunk.o
-
-god.o: god.c
-	$(CC) $(CFLAGS) -c -o god.o god.c
-
 # ===================================================
 
 .PHONY: malloc
@@ -53,6 +47,6 @@ chunk64.o: chunk.c
 # ===================================================
 
 clean:
-	rm -f *.o lib/* lib64/* libmalloc.a libmalloc.so core.* DETAILS.bak god
+	rm -f *.o lib/* lib64/* libmalloc.a libmalloc.so core.* DETAILS.bak
 
 
