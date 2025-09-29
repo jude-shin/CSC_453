@@ -261,7 +261,7 @@ void *realloc(void *ptr, size_t size) {
     curr = merge_next(curr);
     
     // Size was checked beforehand, so this will never error. 
-    Chunk *new_chunk = carve_chunk(curr, data_size);
+    new_chunk = carve_chunk(curr, data_size);
 
     new_chunk->is_available = true;
   }
