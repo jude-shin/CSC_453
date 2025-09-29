@@ -3,8 +3,8 @@ CFLAGS=-Wall -g -fpic
 
 .PHONY: malloc
 
-god: god.o libmalloc.a
-	$(CC) -o god -L. god.o libmalloc.a 
+god: god.o libmalloc.so
+	$(CC) -o god -L. god.o -lmalloc
 
 god.o: god.c
 	$(CC) $(CFLAGS) -c -o god.o god.c

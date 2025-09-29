@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "chunk.h"
 
@@ -174,6 +175,9 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
       // If the tail is not being used, then tack the HUNK_SIZE to the end of
       // it without creating a new Chunk.
       curr->size = curr->size + HUNK_SIZE;
+    }
+    else {
+      return NULL;
     }
 
     // NOTE: the tail should always be available

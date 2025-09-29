@@ -5,6 +5,8 @@
 #include <stdint.h> 
 #include <string.h> 
 
+#include <unistd.h>
+
 #include "alloc.h"
 #include "chunk.h"
 
@@ -53,19 +55,19 @@ void *calloc(size_t nmemb, size_t size) {
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
-
-    char buffer[171];
+    //char buffer[117] = {0};
+    char buffer[13] = {0};
 
     snprintf(
         buffer, 
         sizeof(buffer),
-        "MALLOC: calloc(%020d, %020d) => (ptr=0x%018lx, size=%020d)\n", 
+        "MALLOC: calloc(%d, %d) => (ptr=%p, size=%d)\n", 
         (int)nmemb,
         (int)size, 
-        (uintptr_t)available_chunk + CHUNK_SIZE,
+        available_chunk + CHUNK_SIZE,
         (int)new_chunk->size);
 
-    fputs(buffer, stdout);
+    write(STDOUT_FILENO, buffer, strlen(buffer));
   }
 
   // Return the pointer that is useful to the user (not the chunk pointer).
@@ -112,17 +114,18 @@ void *malloc(size_t size) {
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
-    char buffer[150];
+    // char buffer[95] = {0};
+    char buffer[13] = {0};
 
     snprintf(
         buffer, 
         sizeof(buffer),
-        "MALLOC: malloc(%020d) => (ptr=0x%018lx, size=%020d)\n", 
+        "MALLOC: malloc(%d) => (ptr=%p, size=%d)\n", 
         (int)size, 
-        (uintptr_t)available_chunk + CHUNK_SIZE,
+        available_chunk + CHUNK_SIZE,
         (int)new_chunk->size);
 
-    fputs(buffer, stdout);
+    write(STDOUT_FILENO, buffer, strlen(buffer));
   }
  
   // Return the pointer that is useful to the user (not the chunk pointer).
@@ -170,15 +173,16 @@ void free(void *ptr) {
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
-    char buffer[118];
+    // char buffer[36] = {0};
+    char buffer[13] = {0};
 
     snprintf(
         buffer, 
         sizeof(buffer),
-        "MALLOC: free(0x%018lx)\n", 
-        (uintptr_t)ptr);
+        "MALLOC: free(%p)\n", 
+        ptr);
 
-    fputs(buffer, stdout);
+    write(STDOUT_FILENO, buffer, strlen(buffer));
   }
 
   // Check to see if you can merge adjacent chunks that might also be 
@@ -253,18 +257,20 @@ void *realloc(void *ptr, size_t size) {
 
     // Debugging output if env var is present.
     if (getenv("DEBUG_MALLOC") != NULL){
-    char buffer[173];
+    //char buffer[118] = {0};
+    char buffer[13] = {0};
+
 
       snprintf(
           buffer, 
           sizeof(buffer),
-          "MALLOC: realloc(0x%018lx, %020d) => (ptr=0x%018lx, size=%020d)\n", 
-          (uintptr_t)ptr,
+          "MALLOC: realloc(%p, %d) => (ptr=%p, size=%d)\n", 
+          ptr,
           (int)size, 
-          (uintptr_t)new_chunk + CHUNK_SIZE,
+          new_chunk + CHUNK_SIZE,
           (int)data_size);
 
-      fputs(buffer, stdout);
+      write(STDOUT_FILENO, buffer, strlen(buffer));
     }
 
     return (void*)((uintptr_t)new_chunk + CHUNK_SIZE); //TODO check this
@@ -284,18 +290,19 @@ void *realloc(void *ptr, size_t size) {
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
-    char buffer[118];
+    // char buffer[118] = {0};
+    char buffer[13] = {0};
 
     snprintf(
         buffer, 
         sizeof(buffer),
-        "MALLOC: realloc(0x%018lx, %020d) => (ptr=0x%018lx, size=%020d)\n", 
-        (uintptr_t)ptr,
+        "MALLOC: realloc(%p, %d) => (ptr=%p, size=%d)\n", 
+        ptr,
         (int)size, 
-        (uintptr_t)dst_data,
+        dst_data,
         (int)data_size);
 
-    fputs(buffer, stdout);
+    write(STDOUT_FILENO, buffer, strlen(buffer));
   }
 
   return dst_data;
