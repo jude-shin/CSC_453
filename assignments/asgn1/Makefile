@@ -1,6 +1,5 @@
 CC=gcc
 CFLAGS=-Wall -g -fpic
-SHELL=/bin/bash
 
 INCLUDE_PP=-I /home/pn-cs453/Given/Asgn1/include 
 LIBRARY_PP=-L /home/pn-cs453/Given/Asgn1/lib64

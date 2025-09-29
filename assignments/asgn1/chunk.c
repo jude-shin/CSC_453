@@ -177,9 +177,6 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
       // it without creating a new Chunk.
       curr->size = curr->size + HUNK_SIZE;
     }
-    else {
-      pp(stdout, "what the hell is happending the tail should never be !is_available");
-    }
 
     // NOTE: the tail should always be available
     // TODO: test this theory
