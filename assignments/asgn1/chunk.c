@@ -124,15 +124,15 @@ Chunk *merge_prev(Chunk *curr) {
 // @param ptr The given pointer which the user provides.
 // @return A Chunk* to the associated data ptr. NULL if no suitable poiner is 
 // found.
-// TODO: rename this to match_chunk or something that doesn't get confused with 
-// find_available_chunk
 Chunk *find_chunk(Chunk *curr, void *ptr) {
   // The address of the Chunk plus the size that the Chunk header takes up will
   // give us an address to the data section of the chunk we are looking at.
-  void *curr_data = (void *)((uintptr_t)curr + CHUNK_SIZE);
+  void *curr_data_start = (void *)((uintptr_t)curr + CHUNK_SIZE);
+  void *curr_data_stop = (void *)((uintptr_t)curr_data_start + curr->size);
 
-  // We have found a valid chunk if the addresses match.
-  if (curr_data == ptr) {
+  // We have found a valid chunk if the addresses fall under the range of the
+  // data segment.
+  if (curr_data_start <= ptr && ptr <= curr_data_stop) {
     return curr;
   }
 
@@ -228,4 +228,6 @@ Chunk *carve_chunk(Chunk *curr, size_t size) {
   // The curr now has the new size! Return our beautiful work.
   return curr;
 }
+
+
 
