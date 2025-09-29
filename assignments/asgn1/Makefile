@@ -5,17 +5,27 @@ SHELL=/bin/bash
 INCLUDE_PP=-I /home/pn-cs453/Given/Asgn1/include 
 LIBRARY_PP=-L /home/pn-cs453/Given/Asgn1/lib64
 
-# tryme: intel-all tryme.o
-# 	$(CC) -L ./lib64 -o tryme tryme.o -lmalloc 
-# 
-# tryme.o:
-# 	$(CC) $(CFLAGS) -c -o tryme.o tryme.c
+.PHONY: malloc
 
-god: intel-all god.o
-	$(CC) -o god -L ./lib64 $(LIBRARY_PP) god.o -lmalloc -lpp 
+god: god.o libmalloc.a
+	$(CC) -o god -L ./ $(LIBRARY_PP) god.o libmalloc.a -lpp 
 
 god.o: god.c
 	$(CC) $(CFLAGS) -c -o god.o $(INCLUDE_PP) god.c
+
+malloc: libmalloc.a libmalloc.so
+
+libmalloc.a: alloc.o chunk.o
+	ar r libmalloc.a alloc.o chunk.o
+
+libmalloc.so: alloc.o chunk.o
+	$(CC) $(CFLAGS) -shared -o $@ alloc.o chunk.o
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(INCLUDE_PP) -c $< -o $@
+
+
+# ===================================================
 
 intel-all: lib/libmalloc.so lib64/libmalloc.so
 
@@ -37,5 +47,8 @@ lib64:
 %64.o: %.c
 	$(CC) $(CFLAGS) -m64 $(INCLUDE_PP) -c $< -o $@
 
+
+# ===================================================
+
 clean:
-	rm -f *.o lib/* lib64/* testme tryme god
+	rm -f *.o lib/* lib64/* libmalloc.a libmalloc.so testme god
