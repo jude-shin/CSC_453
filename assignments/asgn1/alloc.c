@@ -61,7 +61,7 @@ void *calloc(size_t nmemb, size_t size) {
     snprintf(
         buffer, 
         sizeof(buffer),
-        "MALLOC: calloc(%020d, %020d) => (ptr=0x%018lx, size=%020d)\n", 
+        "MALLOC: calloc(%020d, %020d) => (ptr=0x%018x, size=%020d)\n", 
         (int)nmemb,
         (int)size, 
         (uintptr_t)available_chunk + CHUNK_SIZE,
@@ -120,7 +120,7 @@ void *malloc(size_t size) {
     snprintf(
         buffer, 
         sizeof(buffer),
-        "MALLOC: malloc(%020d) => (ptr=0x%018lx, size=%020d)\n", 
+        "MALLOC: malloc(%020d) => (ptr=0x%018x, size=%020d)\n", 
         (int)size, 
         (uintptr_t)available_chunk + CHUNK_SIZE,
         (int)new_chunk->size);
@@ -178,7 +178,7 @@ void free(void *ptr) {
     snprintf(
         buffer, 
         sizeof(buffer),
-        "MALLOC: free(0x%018lx)\n", 
+        "MALLOC: free(0x%018x)\n", 
         (uintptr_t)ptr);
 
     fputs(buffer, stdout);
@@ -261,7 +261,7 @@ void *realloc(void *ptr, size_t size) {
       snprintf(
           buffer, 
           sizeof(buffer),
-          "MALLOC: realloc(0x%018lx, %020d) => (ptr=0x%018lx, size=%020d)\n", 
+          "MALLOC: realloc(0x%018x, %020d) => (ptr=0x%018x, size=%020d)\n", 
           (uintptr_t)ptr,
           (int)size, 
           (uintptr_t)new_chunk + CHUNK_SIZE,
@@ -292,7 +292,7 @@ void *realloc(void *ptr, size_t size) {
     snprintf(
         buffer, 
         sizeof(buffer),
-        "MALLOC: realloc(0x%018lx, %020d) => (ptr=0x%018lx, size=%020d)\n", 
+        "MALLOC: realloc(0x%018x, %020d) => (ptr=0x%018x, size=%020d)\n", 
         (uintptr_t)ptr,
         (int)size, 
         (uintptr_t)dst_data,

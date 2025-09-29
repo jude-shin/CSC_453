@@ -17,7 +17,7 @@ god: intel-all god.o
 god.o: god.c
 	$(CC) $(CFLAGS) -c -o god.o $(INCLUDE_PP) god.c
 
-intel-all: lib64/libmalloc.so
+intel-all: lib/libmalloc.so lib64/libmalloc.so
 
 lib/libmalloc.so: lib alloc32.o chunk32.o
 	$(CC) $(CFLAGS) -m32 -shared -o $@ alloc32.o chunk32.o
