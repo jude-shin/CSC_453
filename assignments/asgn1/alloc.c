@@ -157,7 +157,7 @@ void free(void *ptr) {
   // any of the addresses line up. 
   Chunk *freeable_chunk = find_chunk(head, ptr);
   if (freeable_chunk == NULL) {
-    perror("free: pointer is not valid");
+    // perror("free: pointer is not valid");
     return;
   }
   // Only accept the chunk if it is allocated (if it is being used)
@@ -226,7 +226,7 @@ void *realloc(void *ptr, size_t size) {
   // any of the addresses line up. 
   Chunk *curr = find_chunk(head, ptr);
   if (curr == NULL) {
-    perror("realloc: pointer is not valid");
+    // perror("realloc: pointer is not valid");
     return NULL;
   }
 

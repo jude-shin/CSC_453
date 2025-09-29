@@ -3,12 +3,19 @@
 #include<stdio.h>
 
 int main(int argc, char *argv[]) {
-  char *line = NULL;
-  size_t len = 0;
-  printf("123456789\n");
+  void *one = malloc(64);
+  one = realloc(one, 128);
 
-  getline(&line, &len, stdin);
-  free(line);
+  void *two = malloc(64); 
+  two = realloc(two, 128);
+
+  void *three = malloc(64);
+  three = realloc(three, 128);
+
+
+  free(one);
+  free(two);
+  free(three);
   return 0;
 }
 

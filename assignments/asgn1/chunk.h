@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 // Size of the hunk's that sbrk() will use
-#define HUNK_SIZE 64000
+#define HUNK_SIZE 6400
 #define ALLIGN 16
 #define CHUNK_SIZE (sizeof(Chunk)+(ALLIGN-sizeof(Chunk)%ALLIGN))
 
