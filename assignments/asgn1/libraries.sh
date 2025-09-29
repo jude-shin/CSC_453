@@ -1,0 +1,1 @@
+LD_LIBRARY_PATH=//home/pn-cs453/Given/Asgn1/lib64://home/jshin53/csc_453/assignments/asgn1://home/jshin53/csc_453/assignments/asgn1/lib64://home/jshin53/csc_453/assignments/asgn1/lib://home/jude/fall_2025/csc_453/assignments/asgn1/lib64://home/jude/fall_2025/csc_453/assignments/asgn1/lib:$LD_LIBRARY_PATH
