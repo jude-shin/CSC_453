@@ -55,8 +55,7 @@ void *calloc(size_t nmemb, size_t size) {
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
-    //char buffer[117] = {0};
-    char buffer[13] = {0};
+    char buffer[117] = {0};
 
     snprintf(
         buffer, 
@@ -114,8 +113,7 @@ void *malloc(size_t size) {
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
-    // char buffer[95] = {0};
-    char buffer[13] = {0};
+    char buffer[95] = {0};
 
     snprintf(
         buffer, 
@@ -173,8 +171,7 @@ void free(void *ptr) {
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
-    // char buffer[36] = {0};
-    char buffer[13] = {0};
+    char buffer[36] = {0};
 
     snprintf(
         buffer, 
@@ -257,8 +254,7 @@ void *realloc(void *ptr, size_t size) {
 
     // Debugging output if env var is present.
     if (getenv("DEBUG_MALLOC") != NULL){
-    //char buffer[118] = {0};
-    char buffer[13] = {0};
+    char buffer[118] = {0};
 
 
       snprintf(
@@ -290,8 +286,7 @@ void *realloc(void *ptr, size_t size) {
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){
-    // char buffer[118] = {0};
-    char buffer[13] = {0};
+    char buffer[118] = {0};
 
     snprintf(
         buffer, 
