@@ -77,7 +77,6 @@ void *calloc(size_t nmemb, size_t size) {
 // @return A void* to the usable data portion.
 void *malloc(size_t size) {
   // Edge Cases
-  // Edge Cases
   // TODO: is this an expected requirement?
   if (size == 0) {
     return NULL;
