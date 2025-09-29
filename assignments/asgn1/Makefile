@@ -1,13 +1,15 @@
 CC=gcc
-CFLAGS=-Wall -g -fpic
-
-.PHONY: malloc
+CFLAGS=-Wall -g -fPIC
 
 god: god.o libmalloc.so
 	$(CC) -o god -L. god.o -lmalloc
 
 god.o: god.c
 	$(CC) $(CFLAGS) -c -o god.o god.c
+
+# ===================================================
+
+.PHONY: malloc
 
 malloc: libmalloc.a libmalloc.so
 
@@ -19,7 +21,6 @@ libmalloc.so: alloc.o chunk.o
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
-
 
 # ===================================================
 
@@ -37,14 +38,21 @@ lib:
 lib64: 
 	mkdir lib64
 
-%32.o: %.c
-	$(CC) $(CFLAGS) -m32 -c -o $@ $< 
+alloc32.o: alloc.c
+	$(CC) $(CFLAGS) -m32 -c -o alloc32.o alloc.c
 
-%64.o: %.c
-	$(CC) $(CFLAGS) -m64 -c -o $@ $<
+chunk32.o: chunk.c
+	$(CC) $(CFLAGS) -m32 -c -o chunk32.o chunk.c
 
+alloc64.o: alloc.c
+	$(CC) $(CFLAGS) -m64 -c -o alloc64.o alloc.c
+
+chunk64.o: chunk.c
+	$(CC) $(CFLAGS) -m64 -c -o chunk64.o chunk.c
 
 # ===================================================
 
 clean:
 	rm -f *.o lib/* lib64/* libmalloc.a libmalloc.so testme god
+
+
