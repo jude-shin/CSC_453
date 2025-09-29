@@ -236,7 +236,7 @@ void *realloc(void *ptr, size_t size) {
     size_t remainder = curr->size - data_size;
   
     // If we can fit another block in the remaining space, make it
-    if (remainder <= CHUNK_SIZE + ALLIGN) {
+    if (remainder >= CHUNK_SIZE + ALLIGN) {
       // Size was checked beforehand, so this will never error. 
       new_chunk = carve_chunk(curr, data_size);
     }
@@ -255,10 +255,12 @@ void *realloc(void *ptr, size_t size) {
     // data section.
     curr = merge_next(curr);
 
+  // ========================================================================
+
     size_t remainder = curr->size - data_size;
 
     // If we can fit another block in the remaining space, make it
-    if (remainder <= CHUNK_SIZE + ALLIGN) {
+    if (remainder >= CHUNK_SIZE + ALLIGN) {
       // Size was checked beforehand, so this will never error. 
       new_chunk = carve_chunk(curr, data_size);
     }
@@ -267,9 +269,8 @@ void *realloc(void *ptr, size_t size) {
       new_chunk = curr;
       new_chunk->size = data_size;
     }
-
-    // new_chunk->is_available = true;
   }
+  // ========================================================================
   else {
     // If copy in place did not work out, then free the current chunk, giving
     // a chance for the adjacent chunks to merge.
@@ -285,6 +286,7 @@ void *realloc(void *ptr, size_t size) {
     // data was allocated.
     memmove(dst_data, ptr, size);
   }
+
 
   // Debugging output if env var is present.
   if (getenv("DEBUG_MALLOC") != NULL){

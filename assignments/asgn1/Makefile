@@ -1,8 +1,8 @@
 CC=/bin/gcc
 CFLAGS=-Wall -g -fPIC
 
-god: god.o libmalloc.so
-	$(CC) -o god -L. god.o -lmalloc
+god: god.o alloc.o chunk.o
+	$(CC) -o god god.o alloc.o chunk.o
 
 god.o: god.c
 	$(CC) $(CFLAGS) -c -o god.o god.c

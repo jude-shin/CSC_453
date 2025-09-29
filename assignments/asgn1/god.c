@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[]) {
   void *one = malloc(64);
-  one = realloc(one, 128);
+  one = realloc(one, 32);
 
   void *two = malloc(64); 
   two = realloc(two, 128);

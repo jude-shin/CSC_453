@@ -174,9 +174,6 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
       // it without creating a new Chunk.
       curr->size = curr->size + HUNK_SIZE;
     }
-    // else {
-    //   return NULL;
-    // }
 
     // Call the find_available_chunk on the tail again.
     // If there is enough space, then it will be allocated. If not, then this
