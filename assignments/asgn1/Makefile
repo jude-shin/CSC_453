@@ -47,6 +47,4 @@ chunk64.o: chunk.c
 # ===================================================
 
 clean:
-	rm -f *.o lib/* lib64/* libmalloc.a libmalloc.so core.* DETAILS.bak
-
-
+	rm -f *.o lib/* lib64/* libmalloc.a libmalloc.so core.* DETAILS*
