@@ -62,7 +62,7 @@ void *calloc(size_t nmemb, size_t size) {
         "MALLOC: calloc(%d, %d) => (ptr=%p, size=%d)\n", 
         (int)nmemb,
         (int)size, 
-        available_chunk + CHUNK_SIZE,
+        (void*)((uintptr_t)available_chunk + CHUNK_SIZE),
         (int)new_chunk->size);
 
     write(STDOUT_FILENO, buffer, strlen(buffer));
@@ -77,7 +77,6 @@ void *calloc(size_t nmemb, size_t size) {
 // @return A void* to the usable data portion.
 void *malloc(size_t size) {
   // Edge Cases
-  // TODO: is this an expected requirement?
   if (size == 0) {
     return NULL;
   }
@@ -102,10 +101,6 @@ void *malloc(size_t size) {
 
   // Split the available data portion into a new chunk.
   Chunk *new_chunk = carve_chunk(available_chunk, data_size);
-  if (new_chunk == NULL) {
-    perror("malloc: error carving chunk");
-    return NULL;
-  }
 
   // Mark the first chunk as being allocated (Chunk who got the desired size).
   new_chunk->is_available = false;
@@ -119,7 +114,7 @@ void *malloc(size_t size) {
         sizeof(buffer),
         "MALLOC: malloc(%d) => (ptr=%p, size=%d)\n", 
         (int)size, 
-        available_chunk + CHUNK_SIZE,
+        (void*)((uintptr_t)available_chunk + CHUNK_SIZE),
         (int)new_chunk->size);
 
     write(STDOUT_FILENO, buffer, strlen(buffer));
@@ -253,32 +248,42 @@ void *realloc(void *ptr, size_t size) {
   }
   else if (curr->next != NULL && 
     curr->next->is_available &&
-    curr->size >= data_size + CHUNK_SIZE + ALLIGN) {
+    data_size <= curr->size + CHUNK_SIZE + curr->next->size) {
     // COPY IN PLACE (make chunk larger)
 
     // Make the chunk bigger by merging the next Chunk into the curr Chunk's
     // data section.
     curr = merge_next(curr);
-    
-    // Size was checked beforehand, so this will never error. 
-    new_chunk = carve_chunk(curr, data_size);
 
-    new_chunk->is_available = true;
+    size_t remainder = curr->size - data_size;
+
+    // If we can fit another block in the remaining space, make it
+    if (remainder <= CHUNK_SIZE + ALLIGN) {
+      // Size was checked beforehand, so this will never error. 
+      new_chunk = carve_chunk(curr, data_size);
+    }
+    // If we can't fit another bloc in the remaining space, just fragment it
+    else {
+      new_chunk = curr;
+      new_chunk->size = data_size;
+    }
+
+    // new_chunk->is_available = true;
   }
   else {
     // If copy in place did not work out, then free the current chunk, giving
     // a chance for the adjacent chunks to merge.
     free((void*)((uintptr_t)curr + CHUNK_SIZE));
-    
+
     // Find a new home for the data with malloc.
     void *dst_data = malloc(data_size);
 
     // Get the header for this piece of data.
     new_chunk = (void *)((uintptr_t)dst_data - CHUNK_SIZE);
- 
+
     // Copy the data over to the new location, no matter where the new
     // data was allocated.
-    memmove(dst_data, ptr, data_size);
+    memmove(dst_data, ptr, size);
   }
 
   // Debugging output if env var is present.
@@ -291,7 +296,7 @@ void *realloc(void *ptr, size_t size) {
         "MALLOC: realloc(%p, %d) => (ptr=%p, size=%d)\n", 
         ptr,
         (int)size, 
-        new_chunk + CHUNK_SIZE,
+        (void*)((uintptr_t)new_chunk + CHUNK_SIZE),
         (int)data_size);
 
     write(STDOUT_FILENO, buffer, strlen(buffer));

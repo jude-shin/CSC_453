@@ -157,8 +157,6 @@ Chunk *find_chunk(Chunk *curr, void *ptr) {
 // @return A Chunk* to the Chunk which meets the requirements mentioned above.
 Chunk *find_available_chunk(Chunk *curr, size_t size) {
   // We have found a valid match.
-  // TODO: ?
-  // if (curr->is_available && curr->size > size + CHUNK_SIZE) {
   if (curr->is_available && curr->size >= size + CHUNK_SIZE + ALLIGN) {
     return curr;
   }
@@ -176,12 +174,10 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
       // it without creating a new Chunk.
       curr->size = curr->size + HUNK_SIZE;
     }
-    else {
-      return NULL;
-    }
+    // else {
+    //   return NULL;
+    // }
 
-    // NOTE: the tail should always be available
-    // TODO: test this theory
     // Call the find_available_chunk on the tail again.
     // If there is enough space, then it will be allocated. If not, then this
     // branch will be executed till there is enough space in the Hunk.
@@ -198,12 +194,6 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
 // @param size The size of the new chunk. 
 // @return A Chunk* to the chunk whose size was split to the spesification. 
 Chunk *carve_chunk(Chunk *curr, size_t size) {
-  // The size of the curr Chunk we are going to carve must be able to hold the 
-  // desired size, the header, and the smallest data segment possible.
-  if (curr->size < size + CHUNK_SIZE + ALLIGN) {
-    return NULL;
-  }
-
   // Create a remainder_chunk at address offset size bytes away, allocating 
   // the remaining bytes as it's size. Copy the availability from the current.
   // Update the prev and next pointers.
