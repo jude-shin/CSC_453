@@ -4,7 +4,6 @@
 #include <string.h>
 #include <stdint.h>
 
-#include <pp.h>
 #include "chunk.h"
 
 static Chunk *global_head_ptr = NULL;
@@ -168,7 +167,6 @@ Chunk *find_available_chunk(Chunk *curr, size_t size) {
   if (curr->next == NULL){
     // Increase the hunk to make more space.
     if (sbrk(HUNK_SIZE) == (void *)-1) {
-      pp(stdout, "shoot, we couldn't sbrk\n");
       return NULL;
     }
 

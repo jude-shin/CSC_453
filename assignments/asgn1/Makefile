@@ -1,16 +1,13 @@
 CC=gcc
 CFLAGS=-Wall -g -fpic
 
-INCLUDE_PP=-I /home/pn-cs453/Given/Asgn1/include 
-LIBRARY_PP=-L /home/pn-cs453/Given/Asgn1/lib64
-
 .PHONY: malloc
 
 god: god.o libmalloc.a
-	$(CC) -o god -L ./ $(LIBRARY_PP) god.o libmalloc.a -lpp 
+	$(CC) -o god -L. god.o libmalloc.a 
 
 god.o: god.c
-	$(CC) $(CFLAGS) -c -o god.o $(INCLUDE_PP) god.c
+	$(CC) $(CFLAGS) -c -o god.o god.c
 
 malloc: libmalloc.a libmalloc.so
 
@@ -21,7 +18,7 @@ libmalloc.so: alloc.o chunk.o
 	$(CC) $(CFLAGS) -shared -o $@ alloc.o chunk.o
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(INCLUDE_PP) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 
 # ===================================================
@@ -41,10 +38,10 @@ lib64:
 	mkdir lib64
 
 %32.o: %.c
-	$(CC) $(CFLAGS) -m32 $(INCLUDE_PP) -c $< -o $@
+	$(CC) $(CFLAGS) -m32 -c $< -o $@
 
 %64.o: %.c
-	$(CC) $(CFLAGS) -m64 $(INCLUDE_PP) -c $< -o $@
+	$(CC) $(CFLAGS) -m64 -c $< -o $@
 
 
 # ===================================================
