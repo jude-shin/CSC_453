@@ -230,7 +230,7 @@ void *realloc(void *ptr, size_t size) {
   if (data_size <= curr->size) {
     // COPY IN PLACE (make chunk smaller)
 
-    // Either fragment the data, or create a new usable chunk.
+    // Try to fragment the data.
     new_chunk = fragment_chunk(curr, data_size);
   }
   else if (curr->next != NULL && 
@@ -242,7 +242,7 @@ void *realloc(void *ptr, size_t size) {
     // data section.
     curr = merge_next(curr);
 
-    // Either fragment the data, or create a new usable chunk.
+    // Try to fragment the data.
     new_chunk = fragment_chunk(curr, data_size);
   }
   else {

@@ -218,8 +218,7 @@ Chunk *carve_chunk(Chunk *curr, size_t size) {
 }
 
 // Checks the remaining size in the current chunk to see if there is space to 
-// make a new node. If another chunk can fit, then it will carve it out. If 
-// it cannot fit, then it fragments the data segment.
+// make a new node. If another chunk can fit, then it will carve it out.
 // @param curr A Chunk that is going to be evaluated for fragmentation or 
 // carving
 // @param data_size The size that is required of the current Chunk of memory
@@ -230,11 +229,7 @@ Chunk *fragment_chunk(Chunk* curr, size_t data_size) {
   // If we can fit another block in the remaining space, make it
   if (remainder >= CHUNK_SIZE + ALLIGN) {
     // Size was checked beforehand, so this will never error. 
-    return carve_chunk(curr, data_size);
+    curr = carve_chunk(curr, data_size);
   }
-  // If we can't fit another bloc in the remaining space, just fragment it
-  else {
-    curr->size = data_size;
-    return curr;
-  }
+  return curr;
 }
