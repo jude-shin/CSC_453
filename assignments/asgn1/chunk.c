@@ -5,6 +5,9 @@
 
 #include "chunk.h"
 
+// The only global variable. We need to keep track of the one and only "Hunk"
+// of memory. This is the head of the doubly linked list that stores all of 
+// the chunks.
 static Chunk *global_head_ptr = NULL;
 
 // Round up the requested size (called from the user in the malloc, calloc, or

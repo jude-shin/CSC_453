@@ -173,11 +173,13 @@ void free(void *ptr) {
   // Check to see if you can merge adjacent chunks that might also be 
   // available.
   Chunk *merged_chunk = freeable_chunk;
+
   // Merge the freeable_chunk->next Chunk into the freeable_chunk.
   // Keeping the current freeable_chunk.
   if (merged_chunk->next != NULL && merged_chunk->next->is_available) {
     merged_chunk = merge_next(merged_chunk);
   }
+
   // Merge the freeable_chunk Chunk into the freeable_chunk->prev.
   // Keeping the previous chunk if available, otherwise, we keep the 
   // freeable_chunk.
@@ -213,6 +215,7 @@ void *realloc(void *ptr, size_t size) {
   // Start from the head and linear search through all of the chunks, seeing if
   // any of the addresses line up. 
   Chunk *curr = find_chunk(head, ptr);
+
   // No chunk was found, and this was an error on the users part. Not our prob.
   if (curr == NULL) {
     return NULL;
