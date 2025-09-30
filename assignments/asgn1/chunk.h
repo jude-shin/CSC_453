@@ -28,14 +28,23 @@ typedef struct Chunk {
 
 } Chunk;
 
-// 
+// Rounds up a requested size to the ALLIGN macro
 size_t block_size(size_t size);
+// Merge curr->next into curr's data portion (returning the curr pointer)
 Chunk *merge_next(Chunk *curr);
+// Merge curr into curr->prev's data portion (returning the curr->prev pointer)
 Chunk *merge_prev(Chunk *curr);
+// Return the head of the doubly linked list. If the list is not yet initalized
+// , then initalize it and then return it.
 Chunk *get_head();
+// Return the Chunk* whose data section includes ptr. 
 Chunk *find_chunk(Chunk *curr, void *ptr);
+// Return the Chunk* who is available and whose size is big enough to allocate
+// the requested size.
 Chunk *find_available_chunk(Chunk *curr, size_t size);
+// Take one Chunk and split it into two, returning the first Chunk.
 Chunk *carve_chunk(Chunk *available_chunk, size_t size);
+// carve_chunk out of the curr Chunk if the space in curr can fit.
 Chunk *fragment_chunk(Chunk* curr, size_t data_size);
 
 #endif
