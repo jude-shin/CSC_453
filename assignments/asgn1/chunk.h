@@ -35,5 +35,6 @@ Chunk *get_head();
 Chunk *find_chunk(Chunk *curr, void *ptr);
 Chunk *find_available_chunk(Chunk *curr, size_t size);
 Chunk *carve_chunk(Chunk *available_chunk, size_t size);
+Chunk *fragment_chunk(Chunk* curr, size_t data_size);
 
 #endif

@@ -229,18 +229,9 @@ void *realloc(void *ptr, size_t size) {
   // to the chunk is able to hold another chunk.
   if (data_size <= curr->size) {
     // COPY IN PLACE (make chunk smaller)
-    size_t remainder = curr->size - data_size;
-  
-    // If we can fit another block in the remaining space, make it
-    if (remainder >= CHUNK_SIZE + ALLIGN) {
-      // Size was checked beforehand, so this will never error. 
-      new_chunk = carve_chunk(curr, data_size);
-    }
-    // If we can't fit another bloc in the remaining space, just fragment it
-    else {
-      new_chunk = curr;
-      new_chunk->size = data_size;
-    }
+
+    // Either fragment the data, or create a new usable chunk.
+    new_chunk = fragment_chunk(curr, data_size);
   }
   else if (curr->next != NULL && 
     curr->next->is_available &&
@@ -251,18 +242,8 @@ void *realloc(void *ptr, size_t size) {
     // data section.
     curr = merge_next(curr);
 
-    size_t remainder = curr->size - data_size;
-
-    // If we can fit another block in the remaining space, make it
-    if (remainder >= CHUNK_SIZE + ALLIGN) {
-      // Size was checked beforehand, so this will never error. 
-      new_chunk = carve_chunk(curr, data_size);
-    }
-    // If we can't fit another bloc in the remaining space, just fragment it
-    else {
-      new_chunk = curr;
-      new_chunk->size = data_size;
-    }
+    // Either fragment the data, or create a new usable chunk.
+    new_chunk = fragment_chunk(curr, data_size);
   }
   else {
     // If copy in place did not work out, then free the current chunk, giving
