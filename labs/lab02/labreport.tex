@@ -19,19 +19,12 @@
 \bigskip
 \centerline{\Large\bf Lab 2: {\sc Minix} Scavenger Hunt}\par
 \bigskip
-
-This is the template I passed out in the lab (well, slightly 
-modified).  It works reasonably well to have each step of the
-lab be a {\textbackslash section} and each component below it
-a {\textbackslash subsection}.  For the ``problem set'' labs
-an {\tt enumerate} environment is probably more appropriate.
-
-I am running {\sc Minix 3.1.8} through an {\sc Oracle VirtualBox Manager} with the host machine running vanilla {\sc Arch Linux}.
+I am running {\sc Minix 3.1.8} through with Oracle's {\sc VirtualBox Manager}. The host machine is running vanilla {\sc Arch Linux}.
 
 \setcounter{section}{0}
 \section{Get a MINIX system}
 \subsection{Approach}
-The procedure is to choose a virtual machine, download a version of {\sc Minix} as a virtual hard disk file, and finally, configuring the virtual machine to use that virtual hard disk file. I chose {\sc VirtualBox}, as I already had it installed, and it was recommended. I downloaded the .gz file and used {\tt gunzip} to decompress it. Finally, I went into the settings for the virtual machine I created, removed the auto-generated virtual hard disk, and replaced it with the .vmdk file that I decompressed. 
+The procedure is to choose a virtual machine, download a version of {\sc Minix} as a virtual hard disk file, and finally, configuring the virtual machine to use that virtual hard disk file. I chose {\sc VirtualBox}, as I already had it installed, and it was recommended. I downloaded the .gz file and used {\tt gunzip(1)} to decompress it. Finally, I went into the settings for the virtual machine I created, removed the auto-generated virtual hard disk, and replaced it with the .vmdk file that I decompressed. 
 
 \subsection{Problems Encountered}
 When I eventually found the location of the virtual hard disks in the VMs settings, I ran into issues with the controller compatibility for those virtual hard disks. I started getting errors when I would spin up the {\sc Minix} VM saying that the super block could not be read. 
@@ -71,7 +64,7 @@ The procedure is to create a user account. I used {\tt adduser(8)} to create the
 When I initally tried creating a user "jshin53", I assumed that that there would be a group named "users". There was not.
 
 \subsection{Solutions}
-The list of groups on the system are located in {\tt /etc/group}. I ran {\tt cat(1)} on the file and I just chose the group "other". The full command that I used was {\tt adduser jshin53 other /home/jshin53}.
+The list of groups on the system are located in {\tt /etc/group}. I ran {\tt cat(1)} on the file and I just chose the group "other". The full command that I used was ``{\tt \$ adduser jshin53 other /home/jshin53}''.
 
 \subsection{Lessons Learned}
 I learned that a lot of the system wide files are in {\tt /etc}. I also learned that groups are one of the ways that unix systems manage the privilages users get.
@@ -81,7 +74,7 @@ I learned that a lot of the system wide files are in {\tt /etc}. I also learned 
 The procedure for this task is to first make an empty file to store the data as a pretend floppy disk. Then, register the virtual floppydisk through the {\sc VirtualBox}. Formatting the drive is optional in this case because we are using a virtual floppydisk. Finally, before mounting the floppy disk, formtat {\tt /dev/fd0} to a filesystem. Mount and unmount using the {\tt mount(1)} and {\tt umount} commands respectively.
 
 \subsection{Problems Encountered}
-I did not know how mkfs worked, even after reading the man pages.
+I did not know how {\tt mkfs(1)} worked, even after reading the man pages.
 
 \subsection{Solutions}
 I read the footnotes. Suprisingly they are put there for a reason.
@@ -91,7 +84,7 @@ Formatting
 
 \section{Accessing your data from outside {\sc Minix}}
 \subsection{Approach}
-The procedure follows like mounting any filesystem on a linux machine. {\tt mount(1)} the loopback device of type {\tt minix} on the virtual disk as {\tt /mnt/floppy}. Read or write to files in {\tt /mnt/floppy}, {\tt umount(1)} it, and then access through the other device. The same procedure is used in minix as it is used in the host (linux) machine.
+The procedure follows like mounting any filesystem on a linux machine. {\tt mount(1)} the loopback device of type {\tt minix} on the virtual disk as {\tt /mnt/floppy}. To read or write to files in {\tt /mnt/floppy}, first {\tt umount(1)} it, and then access through the other device. The same procedure is used in minix as it is used in the host (linux) machine.
 
 \subsection{Problems Encountered}
 There were no problems encountered; the command was simple and laied out clearly in the lab manual.
@@ -104,10 +97,10 @@ There were no lessons to be learned in this task. It was just a good refresher o
 
 \section{Clean up and shut down}
 \subsection{Approach}
-The procedure is very trivial, as it is the same command that I use on my daily driver: {\tt shutdown(8)}. {\tt shutdown now} will cleanly flush the cache and leave the machine in a neat state for when it is booted up again.
+The procedure is very trivial, as it is the same command that I use on my daily driver: {\tt shutdown(8)}. ``{\tt \$ shutdown now}'' will cleanly flush the cache and leave the machine in a neat state for when it is booted up again.
 
 \subsection{Problems Encountered}
-After using su to elevate my privilages, I used the command shutdown now. Afterwards, I was in this weird shell like state with a blinking cursor ``{\tt d0p0s0>}''. I could execute commands like {\tt ls} and {\tt help}, which made me think that I was not fully shutdown. I didn't know if it had to do with the virtual machine either.
+After using su to elevate my privilages, I used the command ``{\tt \$ shutdown now}. Afterwards, I was in this weird shell like state with a blinking cursor ``{\tt d0p0s0>}''. I could execute commands like {\tt ls} and {\tt help}, which made me think that I was not fully shutdown. I didn't know if it had to do with the virtual machine either.
 
 \subsection{Solutions}
 Professor Nico informed me thatk
