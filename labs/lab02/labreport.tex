@@ -24,7 +24,7 @@ I am running {\sc Minix 3.1.8} through with Oracle's {\sc VirtualBox Manager}. T
 \setcounter{section}{0}
 \section{Get a MINIX system}
 \subsection{Approach}
-The procedure is to choose a virtual machine, download a version of {\sc Minix} as a virtual hard disk file, and finally, configuring the virtual machine to use that virtual hard disk file. I chose {\sc VirtualBox}, as I already had it installed, and it was recommended. I downloaded the .gz file and used {\tt gunzip(1)} to decompress it. Finally, I went into the settings for the virtual machine I created, removed the auto-generated virtual hard disk, and replaced it with the .vmdk file that I decompressed. 
+The procedure is to choose a virtual machine, download a version of {\sc Minix} as a virtual hard disk file, and finally, configure the virtual machine to use the virtual hard disk file. I chose {\sc VirtualBox}, as I already had it installed, and it was recommended. I downloaded the {\tt .gz} file then used {\tt gunzip(1)} to decompress it. Finally, I went into the settings for the virtual machine I created, removed the auto-generated virtual hard disk, and replaced it with the {\tt .vmdk} file that I just decompressed. 
 
 \subsection{Problems Encountered}
 When I eventually found the location of the virtual hard disks in the VMs settings, I ran into issues with the controller compatibility for those virtual hard disks. I started getting errors when I would spin up the {\sc Minix} VM saying that the super block could not be read. 
@@ -38,17 +38,17 @@ mount: Can't mount /dev/c0d0p0s0 on /: Invalid argument\\
 \end{tabbing}}
 
 \subsection{Solutions}
-I originally didn't change the default controller to an IDE controller (the default was SATA and at the time it seemed right to me). I did read earlier that we wanted the version of {\sc VirtualBox} with IDE-Controller, so I tried that out and it worked like a charm.
+I originally didn't change the default controller to an IDE controller (the default was SATA and at the time it seemed right to me). I did read earlier that we wanted the version of {\sc VirtualBox} with IDE-Controller, so I tried that out and it still did not work. For some reason, I had to first delete all of the controllers (even the disk reader); only then could I attach the IDE-Controller with the {\tt .vmdk} file.
 
 \subsection{Lessons Learned}
-There were no lessons to be learned in this task. This was more of a hunt to find the right configuration.
+There were no lessons to be learned in this task. This was more of a hunt to find the right configuration that would work for {\sc VirtualBox}.
 
 \section{Log In}
 \subsection{Approach}
-The procedure is to just log into minix in any way. The only user that I assumed would be on a system would be root, as that is what most unix systems default to.
+The procedure is to just log into {\sc Minix}. The only user that I assumed would be on a system would be root, as that is what most unix systems default to. I used {\tt root} as the login name, and the logged me in immediately.
 
 \subsection{Problems Encountered}
-There were no problems encountered. Suprisingly, root had no password.
+There were no problems encountered. Unsuprisingly, root had no password.
 
 \subsection{Solutions}
 There were no solutions, as there were no problems encountered.
@@ -58,54 +58,55 @@ There were no lessons to be learned in this task.
 
 \section{Create a user account}
 \subsection{Approach}
-The procedure is to create a user account. I used {\tt adduser(8)} to create the user "jshin53", added it to the group "other", and set the home directory to be under "/home/jshin53". I then changed the password to a very secure password using {\tt passwd(1)}.
+The procedure is to create a user account using a couple of commands; I used {\tt adduser(8)} to create the user ``jshin53'', added it to the group ``other'', and set the home directory to be under ``/home/jshin53"''; all of this was done as {\tt root}. I then changed the password to a very secure password using {\tt passwd(1)}.
 
 \subsection{Problems Encountered}
-When I initally tried creating a user "jshin53", I assumed that that there would be a group named "users". There was not.
+When I initally tried creating a user ``jshin53'', I assumed that that there would be a group named ``users''; there, in fact, was not.
 
 \subsection{Solutions}
-The list of groups on the system are located in {\tt /etc/group}. I ran {\tt cat(1)} on the file and I just chose the group "other". The full command that I used was ``{\tt \$ adduser jshin53 other /home/jshin53}''.
+The list of groups on the system are located in {\tt /etc/group}. I ran {\tt cat(1)} on the {\tt /etc/group} and I just chose to use the group "other". The full command that I used was ``{\tt \$ adduser jshin53 other /home/jshin53}''.
 
 \subsection{Lessons Learned}
-I learned that a lot of the system wide files are in {\tt /etc}. I also learned that groups are one of the ways that unix systems manage the privilages users get.
+I learned that a lot of the system wide files are in {\tt /etc}. I also learned that groups are one of the ways that unix systems manage the privilege users get. As of a few days ago, I just thought the privilege management was restricted to "regular users" and "super users" (with things like {\tt sudo}, and {\tt root}); It is handy to be able to restrict certain users by their group.
 
 \section{Create a {\sc Minix} disk image and use it to store data}
 \subsection{Approach}
-The procedure for this task is to first make an empty file to store the data as a pretend floppy disk. Then, register the virtual floppydisk through the {\sc VirtualBox}. Formatting the drive is optional in this case because we are using a virtual floppydisk. Finally, before mounting the floppy disk, formtat {\tt /dev/fd0} to a filesystem. Mount and unmount using the {\tt mount(1)} and {\tt umount} commands respectively.
+The procedure for this task is to first make an empty file to store the data as a ``pretend'' floppy disk. Then, register the virtual floppy disk through {\sc VirtualBox}. Formatting the drive using {\tt format(1)} is optional in this case because we are using a virtual floppy disk. Finally, before mounting the floppy disk, format {\tt /dev/fd0} to a file system. Mount and unmount using the {\tt mount(1)} and {\tt umount(1)} commands respectively.
 
 \subsection{Problems Encountered}
-I did not know how {\tt mkfs(1)} worked, even after reading the man pages.
+I did not know how {\tt mkfs(1)} or {\tt format(1)} worked, even after reading their man pages.
 
 \subsection{Solutions}
-I read the footnotes. Suprisingly they are put there for a reason.
+Professor Nico was the one who informed me that I could skip the formatting stage because this was a virtual drive, so I promptly stopped researching the {\tt format(1)} command. I re-read the footnotes of the lab manual for the usage of {\tt mkfs(1)} carefully. Surprisingly they are put there for a reason. 
 
 \subsection{Lessons Learned}
-Formatting
+I learned how to formally make a file system using {\tt mkfs(1)}. I have used it for making file systems for thumb drives, but never formally looked into what it was doing.
 
 \section{Accessing your data from outside {\sc Minix}}
 \subsection{Approach}
-The procedure follows like mounting any filesystem on a linux machine. {\tt mount(1)} the loopback device of type {\tt minix} on the virtual disk as {\tt /mnt/floppy}. To read or write to files in {\tt /mnt/floppy}, first {\tt umount(1)} it, and then access through the other device. The same procedure is used in minix as it is used in the host (linux) machine.
+TODO:
+The procedure follows like mounting any file system on a Linux machine. Use {\tt mount(1)} with the loop-back device (created in the previous step) as {\tt /mnt/floppy}. To read or write to files in {\tt /mnt/floppy}, first {\tt mount(1)} it, and then access through the other device. When you are done reading or writing to the file, it is best practice to {\tt umount(1)} the drive to ensure that nothing is going on in the background. The same procedure is used in {\sc Minix} as it is used in the host (Linux) machine to write or read from that drive.
 
 \subsection{Problems Encountered}
-There were no problems encountered; the command was simple and laied out clearly in the lab manual.
+There were no problems encountered; the command was simple and laid out clearly in the lab manual.
 
 \subsection{Solutions}
 There were no solutions, as there were no problems encountered.
 
 \subsection{Lessons Learned}
-There were no lessons to be learned in this task. It was just a good refresher on how to mount drives on linux machines (like usb, external ssd, or floppydisks).
+There were no lessons to be learned in this task. It was just a good refresher on how to mount drives on Linux machines (like usb, external ssd, floppy disks, or loop-back devices).
 
 \section{Clean up and shut down}
 \subsection{Approach}
 The procedure is very trivial, as it is the same command that I use on my daily driver: {\tt shutdown(8)}. ``{\tt \$ shutdown now}'' will cleanly flush the cache and leave the machine in a neat state for when it is booted up again.
 
 \subsection{Problems Encountered}
-After using su to elevate my privilages, I used the command ``{\tt \$ shutdown now}. Afterwards, I was in this weird shell like state with a blinking cursor ``{\tt d0p0s0>}''. I could execute commands like {\tt ls} and {\tt help}, which made me think that I was not fully shutdown. I didn't know if it had to do with the virtual machine either.
+After using su to elevate my privileges, I used the command ``{\tt \$ shutdown now}''. Afterwards, I was in this weird shell like state with a blinking cursor ``{\tt d0p0s0>}''. I could execute commands like {\tt ls} and {\tt help}, which made me think that I was not fully shutdown. I didn't know if it had to do with the virtual machine either.
 
 \subsection{Solutions}
-Professor Nico informed me thatk
+Professor Nico informed me that this mode is the {\sc Minix} bootloader. Nothing bad has happened, and I can pull the plug on the program safely; it is not running the operating system itself.
 
 \subsection{Lessons Learned}
-There is a difference between
+I learned that the bootloader allows you to choose different kernels (if you have different versions). It also allows you to customize other parts of the boot process.
 
 \end{document}
