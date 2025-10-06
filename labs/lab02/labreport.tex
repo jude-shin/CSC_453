@@ -46,10 +46,10 @@ There were no lessons to be learned in this task. This was more of a hunt to fin
 
 \section{Log In}
 \subsection{Approach}
-The procedure is to just log into {\sc Minix}. The only user that I assumed would be on a system would be root, as that is what most unix systems default to. I used {\tt root} as the login name, and the logged me in immediately (indicating that no password was required).
+The procedure is to just log into {\sc Minix}. The only user that I assumed would be on a system would be root, as that is what most Unix systems default to. I used {\tt root} as the login name, and the logged me in immediately (indicating that no password was required).
 
 \subsection{Problems Encountered}
-There were no problems encountered. Unsuprisingly, root had no password, making this step easy.
+There were no problems encountered. Unsurprisingly, root had no password, making this step easy.
 
 \subsection{Solutions}
 There were no solutions, as there were no problems encountered.
@@ -62,7 +62,7 @@ There were no lessons to be learned in this task.
 The procedure is to create a user account using a couple of commands; I used {\tt adduser(8)} to create the user ``jshin53'', added it to the group ``other'', and set the home directory to be under ``/home/jshin53"''. I then changed the password to a very secure password using {\tt passwd(1)}. All of this was done as {\tt root} in order to elevate permissions.
 
 \subsection{Problems Encountered}
-When I initally tried creating a user ``jshin53'', I assumed that that there would be a group named ``users''; there, in fact, was not.
+When I initially tried creating a user ``jshin53'', I assumed that that there would be a group named ``users''; there, in fact, was not.
 
 \subsection{Solutions}
 The list of groups on the system are located in {\tt /etc/group}. I ran {\tt cat(1)} on the {\tt /etc/group} and I just chose to use the group "other". The full command that I used was ``{\tt \$ adduser jshin53 other /home/jshin53}''.
@@ -87,7 +87,7 @@ nogroup:*:99:
 \end{verbatim}
 
 \subsection{Lessons Learned}
-I learned that a lot of the system wide files are in {\tt /etc}. I also learned that groups are one of the ways that unix systems manage the privilege users get. As of a few days ago, I just thought the privilege management was restricted to "regular users" and "super users" (like {\tt root} users, and the command {\tt sudo(8)}); It is handy to be able to restrict certain collections of users by their {\tt group}.
+I learned that a lot of the system wide files are in {\tt /etc}. I also learned that groups are one of the ways that Unix systems manage the privilege users get. As of a few days ago, I just thought the privilege management was restricted to "regular users" and "super users" (like {\tt root} users, and the command {\tt sudo(8)}); It is handy to be able to restrict certain collections of users by their {\tt group}.
 
 \section{Create a {\sc Minix} disk image and use it to store data}
 \subsection{Approach}
@@ -97,7 +97,7 @@ The procedure for this task is to first make an empty file to store the data as 
 I did not know how {\tt mkfs(1)} or {\tt format(1)} worked, even after reading their man pages. The command {\tt mkfs /dev/fd0} did not work.
 
 \subsection{Solutions}
-Professor Nico was the one who informed me that I could skip the formatting stage because this was a virtual drive, so I promptly stopped researching the {\tt format(1)} command. I re-read the footnotes of the lab manual for the usage of {\tt mkfs(1)} carefully. Surprisingly they are put there for a reason; {\tt mkfs.mfs} (for the {\sc Minix} file system) was what ended up making the file system correctly.
+Professor Nico was the one who informed me that I could skip the formatting stage because this was a virtual drive, so I promptly stopped researching the {\tt format(1)} command. I re-read the footnotes of the lab manual for the usage of {\tt mkfs(1)} carefully. Surprisingly they are put there for a reason; {\tt mkfs.mfs} (for the {\sc Minix} file system) was what ended up making the file system correctly. The full command I used to format the drive on the {\sc Minix} installation was ``{\tt mkfd.mfs /dev/fd0}''.
 
 \subsection{Lessons Learned}
 I learned how to formally make a file system using {\tt mkfs(1)}. I have used it when making file systems for thumb drives, but never formally looked into what it was doing.
@@ -135,7 +135,7 @@ There were no lessons to be learned in this task. It was just a good refresher o
 The procedure is very trivial, as it is the same command that I use on my daily driver: {\tt shutdown(8)}. ``{\tt \$ shutdown now}'' will cleanly flush the cache and leave the machine in a neat state for when it is booted up again.
 
 \subsection{Problems Encountered}
-After using su to act as {\tt root} (which has elevated privilege), I used the command ``{\tt \# shutdown now}''. Afterwards, I was in this weird shell like state with a blinking cursor ``{\tt d0p0s0>}''. I could execute commands like {\tt ls} and {\tt help}, which made me think that I was not fully shutdown. I didn't know if it had to do with the virtual machine either.
+After using {\tt su(1)} to act as {\tt root} (which has elevated privilege), I used the command ``{\tt \# shutdown now}''. Afterwards, I was in this weird shell like state with a blinking cursor ``{\tt d0p0s0>}''. I could execute commands like {\tt ls} and {\tt help}, which made me think that I was not fully shutdown. I didn't know if it had to do with the virtual machine either.
 
 \subsection{Solutions}
 Professor Nico informed me that this mode is the {\sc Minix} bootloader. Nothing bad has happened, and I can pull the plug on the program safely; it is not running the operating system itself.
