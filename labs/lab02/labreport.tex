@@ -39,7 +39,7 @@ mount: Can't mount /dev/c0d0p0s0 on /: Invalid argument
 \end{verbatim}
 
 \subsection{Solutions}
-I originally didn't change the default controller to an IDE controller (the default was SATA and at the time it seemed right to me). I did read earlier that we wanted the version of {\sc VirtualBox} with IDE-Controller, so I tried that out and it still did not work. For some reason, I had to first delete all of the controllers (even the one that contained disk reader); only then could I attach the IDE-Controller with the {\tt .vmdk} file. Figuring this step out was the part that took the most time in this entire lab. 
+I originally didn't change the default controller to an IDE controller (the default was a SATA controller and at the time it seemed right to me). I did read earlier that we wanted the version of {\sc VirtualBox} with IDE controller, so I tried that out and it still did not work. For some reason, I had to first delete all of the controllers (even the one that contained disk reader); only then could I attach the IDE controller with the {\tt .vmdk} file. Figuring this step out was the part that took the most time in this entire lab. 
 
 \subsection{Lessons Learned}
 There were no lessons to be learned in this task. This was more of a hunt to find the right controller configuration that would work for {\sc VirtualBox}.
