@@ -1,11 +1,3 @@
-# binary files 
-*.o
-*.out
-
-# libraries
-*.a
-*.so
-
 # random
 *.jpg
 *.pdf

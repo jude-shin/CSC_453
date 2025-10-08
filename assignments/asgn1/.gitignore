@@ -1,0 +1,7 @@
+# binary files 
+*.o
+*.out
+
+# libraries
+*.a
+*.so
