@@ -4,8 +4,8 @@ LD = /bin/gcc
 LDFLAGS = -Wall -g -L lib64
 
 TEST_LWP_LIB = lib64/libPLN.so 
-# LWP_LIB = liblwp.so
-LWP_LIB = $(TEST_LWP_LIB)
+LWP_LIB = liblwp.so
+# LWP_LIB = $(TEST_LWP_LIB)
 
 TEST_PROGS	= snakes nums hungry
 SNAKE_OBJS = bin/randomsnakes.o bin/util.o
@@ -14,7 +14,7 @@ HUNGRY_OBJS = bin/hungrysnakes.o bin/util.o
 NUM_OBJS = bin/numbersmain.o
 TEST_OBJS = $(SNAKE_OBJS) $(HUNGRY_OBJS) $(NUM_OBJS) 
 
-EXTRA_CLEAN = core $(TEST_PROGS)
+EXTRA_CLEAN = core $(TEST_PROGS) liblwp.so
 
 .PHONY: all allclean clean libmalloc.so
 
@@ -47,7 +47,7 @@ bin/numbersmain.o: demos/numbersmain.c include/lwp.h
 bin/util.o: demos/util.c include/lwp.h include/util.h include/snakes.h
 	$(CC) $(CFLAGS) -c demos/util.c -o $@
 
-libmalloc.so: bin/lwp.o
+liblwp.so: bin/lwp.o
 	$(CC) $(CFLAGS) -shared -o $@ bin/lwp.o 
 
 bin/lwp.o: src/lwp.c
