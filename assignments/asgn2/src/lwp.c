@@ -1,4 +1,4 @@
-
+#include <lwp.h>
 
 // Creates a new lightweight process which executes the given function
 // with the given argument.
