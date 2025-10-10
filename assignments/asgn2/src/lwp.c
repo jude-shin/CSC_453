@@ -1,4 +1,6 @@
+#include <stddef.h>
 #include <lwp.h>
+#include <roundrobin.h>
 
 // Creates a new lightweight process which executes the given function
 // with the given argument.
@@ -35,8 +37,7 @@ tid_t lwp_gettid(void) {
   return 0;
 }
 
-// Returns the tid of the calling LWP or NO THREAD if not called by a
-// LWP.
+// Returns the tid of the calling LWP or NO THREAD if not called by a LWP.
 thread tid2thread(tid_t tid) {
   return 0;
 }
@@ -52,10 +53,26 @@ tid_t lwp_wait(int *status) {
 // to the new one in next() order. If scheduler is NULL the library
 // should return to round-robin scheduling.
 void lwp_set_scheduler(scheduler sched) {
+  // Default scheduler is round-robin.
+  if (sched == NULL) {
+      sched->init = NULL;
+      sched->shutdown = NULL;
+      sched->admit = rr_admit;
+      sched->remove = rr_remove;
+      sched->next = rr_next;
+      sched->qlen = rr_qlen;
+  }
 
+  // TODO
+  // Pull out the threads from the old scheduler. (with what I am assuming to
+  // be the lwp_get_scheduler())
+  // Use next() and remove() from the old scheduler
+  // Use admit() with the new one
+
+  // Shut down the old scheduler
 }
 
 // Returns the pointer to the current scheduler.
 scheduler lwp_get_scheduler(void) {
-  return (void*)0;
+  return NULL;
 }
