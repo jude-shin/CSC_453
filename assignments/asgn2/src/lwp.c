@@ -143,11 +143,9 @@ void lwp_set_scheduler(scheduler sched) {
 // Returns the pointer to the current scheduler.
 scheduler lwp_get_scheduler(void) {
   // TODO: (ASK) do I want this functionality?
-  // // If the current user asks for no particular scheduler, just assume that
-  // // they want the default: MyRoundRobin
-  // if (cur_sched == NULL) {
-  //   cur_sched  = MyRoundRobin;
-  // }
+  if (cur_sched == NULL) {
+    cur_sched  = MyRoundRobin;
+  }
 
   return cur_sched;
 }
