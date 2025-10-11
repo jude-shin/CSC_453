@@ -14,55 +14,16 @@ scheduler RoundRobin = {
   rr_qlen
 };
 
-// Can be a circular linked list
+// TODO: is it fine that I have a bunch of global variables?
 thread sched_pool_head = NULL;
-
-// // TODO: add the tail in later
 thread sched_pool_tail = NULL;
+thread sched_pool_cur = NULL;
 
 // Add the passed context to the scheduler’s scheduling pool.
 // For round robin, this thread is added to the end of the list
 void rr_admit(thread new) {
-  // If this is the first process that is added to the scheduler, then the head
-  // value should be NULL. In that case the new thread is going to be the only
-  // thread.
-  if (sched_pool_head == NULL) {
-    sched_pool_head = new;
-  }
-  
-  // Increment the number of threads in the schedulers pool.
-  RoundRobin->qlen++;
-}
-
-// Remove the passed context from the scheduler’s scheduling pool.
-void rr_remove(thread victim) {
-
-  // Decrement the number of threads in the schedulers pool.
-  RoundRobin->qlen++;
-}
-
-// Return the next thread to be run or NULL if there isn’t one.
-// For round robin, iterate to the next one in the list, and loop back to the
-// beginning if we reach the end of the list.
-thread rr_next(void) {
-  return NULL;
-}
-
-// Return the number of runnable threads. This will be useful for lwp wait() in
-// determining if waiting makes sense.
-int rr_qlen(void) {
-  return 0;
-}
-
-
-// ======================================
-
-// Tack on the new thread to the end of the globally linked list (to the tail)
-// This only handles the scheduler's linked list portion
-void append_sched_ll(thread new) {
-  // TODO: change this in the header file
-  // sched_one is the NEXT pointer
-  // sched_two is the PREV pointer
+  // NOTE: sched_one is the NEXT pointer
+  // NOTE: sched_two is the PREV pointer
 
   // If the tail is NULL, then the head must also be NULL
   // Set both the head and the tail to the new thread
@@ -74,6 +35,11 @@ void append_sched_ll(thread new) {
     
     sched_pool_head = new;
     sched_pool_tail = new;
+
+    // The first and only thread should be added as the scheduler's 'rr_next'
+    // value as the starting point
+    
+    sched_pool_cur = new;
     return;
   }
 
@@ -88,12 +54,10 @@ void append_sched_ll(thread new) {
   // new->sched_two = new->sched_two;
 }
 
-// Removes a victim from the lined list
-// This only handles the scheduler's linked list portion
-void remove_sched_ll(thread victim) {
-  // TODO: change this in the header file
-  // sched_one is the NEXT pointer
-  // sched_two is the PREV pointer
+// Remove the passed context from the scheduler’s scheduling pool.
+void rr_remove(thread victim) {
+  // NOTE: sched_one is the NEXT pointer
+  // NOTE: sched_two is the PREV pointer
 
   // (victim's prev)'s next becomes (victim's next)
   if (victim->sched_two != NULL) {
@@ -103,4 +67,40 @@ void remove_sched_ll(thread victim) {
   if (victim->sched_one != NULL) {
     victim->sched_one->sched_two = victim->sched_two;
   }
+}
+
+// Return the next thread to be run or NULL if there isn’t one.
+// For round robin, iterate to the next one in the list, and loop back to the
+// beginning if we reach the end of the list.
+thread rr_next(void) {
+  if (sched_pool_cur == NULL) {
+    return NULL;
+  }
+  thread next = sched_pool_cur;
+
+  // Increment the next pointer
+  sched_pool_cur = sched_pool_cur->sched_one;
+
+  return next;
+}
+
+// Return the number of runnable threads. This will be useful for lwp wait() in
+// determining if waiting makes sense.
+int rr_qlen(void) {
+  if (sched_pool_head == NULL)  {
+    return 0;
+  }
+ 
+  int count = 1;
+  // thread cur = sched_pool_head;
+  thread cur = NULL;
+  thread next = sched_pool_head->sched_one;
+
+  while(next != cur) {
+    // cur = next;
+    next = next->sched_one;
+    count++;
+  }
+
+  return count;
 }
