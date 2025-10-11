@@ -1,45 +1,49 @@
 #include <stddef.h>
-#include <lwp.h>
-#include <schedulers.h>
+#include <unistd.h>
+#include <stdio.h>
 #include "roundrobin.h"
 
 // The scheduler that is the default for this package
-// TODO: add this to the roundrobin library
-scheduler RoundRobin = {
-  NULL, 
-  NULL, 
-  rr_admit, 
-  rr_remove, 
-  rr_next, 
-  rr_qlen
+static struct scheduler my_rr_publish = {
+  .init=NULL, 
+  .shutdown=NULL, 
+  .admit=my_rr_admit, 
+  .remove=my_rr_remove, 
+  .next=my_rr_next, 
+  .qlen=my_rr_qlen
 };
+scheduler MyRoundRobin = &my_rr_publish;
 
-// TODO: is it fine that I have a bunch of global variables?
+// we can honestly make the head pointer the 'current' pointer
 static thread sched_pool_head = NULL;
 static thread sched_pool_cur = NULL;
 
 // Add the passed context to the scheduler’s scheduling pool.
 // For round robin, this thread is added to the end of the list
-void rr_admit(thread new) {
+void my_rr_admit(thread new) {
+  printf("fn called: rr_admit");
   // NOTE: sched_one is the NEXT pointer
   // NOTE: sched_two is the PREV pointer
-  thread tail = sched_pool_head->sched_two;
 
-  // If the tail is NULL, then the head must also be NULL
-  // Set both the head and the tail to the new thread
-  if (tail == NULL) {
+  printf("Head & : %p\n", sched_pool_head);
+  printf("[%lu] New& : %p\n\n", new->tid, new);
+
+  // If there is currently nothing in the list, set both the head and the tail
+  // to the new thread
+  if (sched_pool_head == NULL) {
     // Make sure these are pointing to itself, as this is a circular
     // linked list
     new->sched_one = new;
     new->sched_two = new;
     sched_pool_head = new;
 
-    // The first and only thread should be added as the scheduler's 'rr_next'
-    // value as the starting point
+    // The first and only thread should be added as the scheduler's thread pool
     sched_pool_cur = new;
 
     return;
   }
+
+  thread tail = sched_pool_head->sched_two;
  
   // Setup the new thread's next and prev to point to the head and tail.
   new->sched_one = sched_pool_head;
@@ -53,7 +57,8 @@ void rr_admit(thread new) {
 }
 
 // Remove the passed context from the scheduler’s scheduling pool.
-void rr_remove(thread victim) {
+void my_rr_remove(thread victim) {
+  printf("fn called: rr_remove");
   // NOTE: sched_one is the NEXT pointer
   // NOTE: sched_two is the PREV pointer
 
@@ -64,41 +69,61 @@ void rr_remove(thread victim) {
     sched_pool_cur = NULL;
     return;
   }
+  
+  // Update the head pointer if we get rid of it.
+  if (victim == sched_pool_head) {
+    sched_pool_head = victim->sched_one;
+  }
+
+  // Update the cur pointer if we get rid of it.
+  if (victim == sched_pool_cur) {
+    sched_pool_cur = victim->sched_one;
+  }
 
   // (victim's prev)'s next becomes (victim's next)
   victim->sched_two->sched_one = victim->sched_one;
   // (victim's next)'s prev becomes (victim's prev)
   victim->sched_one->sched_two = victim->sched_two;
+
+  // For my own sanity
+  victim->sched_one = NULL;
+  victim->sched_two = NULL;
 }
 
-// Return the next thread to be run or NULL if there isn’t one.
-// For round robin, iterate to the next one in the list, and loop back to the
-// beginning if we reach the end of the list.
-thread rr_next(void) {
+thread my_rr_next(void) {
+  printf("fn called: rr_next");
+
   if (sched_pool_cur == NULL) {
     return NULL;
   }
-  thread next = sched_pool_cur;
+
+  if (sched_pool_cur->sched_one == NULL) {
+    return NULL;
+  }
 
   // Increment the next pointer
+  thread next = sched_pool_cur;
+
   sched_pool_cur = sched_pool_cur->sched_one;
+  printf("NEXT thread: [%lu]", next->tid);
 
   return next;
 }
 
 // Return the number of runnable threads. This will be useful for lwp wait() in
 // determining if waiting makes sense.
-int rr_qlen(void) {
+int my_rr_qlen(void) {
+  printf("fn called: rr_qlen");
+
   if (sched_pool_head == NULL)  {
     return 0;
   }
  
   int count = 1;
-  thread cur = sched_pool_head;
   thread next = sched_pool_head->sched_one;
 
-  while(next != cur) {
-    cur = next;
+  while(next != sched_pool_head) {
+    printf("[%lu] count: %d\n", next->tid, count);
     next = next->sched_one;
     count++;
   }

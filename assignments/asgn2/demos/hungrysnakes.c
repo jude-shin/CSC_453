@@ -55,6 +55,7 @@
 #include "snakes.h"
 #include "lwp.h"
 #include "util.h"
+#include "roundrobin.h"
 
 #define MAXSNAKES  100
 
@@ -107,6 +108,11 @@ int main(int argc, char *argv[]){
   for(i=0;i<cnt;i++) {
     s[i]->lw_pid = lwp_create((lwpfun)run_hungry_snake,(void*)(s+i));
   }
+
+  // ================================================
+  // Jude Shin Code
+  lwp_set_scheduler(MyRoundRobin);
+  // ================================================
 
   lwp_start();                    
 

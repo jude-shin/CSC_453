@@ -44,6 +44,7 @@
 #include <unistd.h>
 #include "lwp.h"
 #include "schedulers.h"
+#include "roundrobin.h"
 
 #define MAXSNAKES  100
 
@@ -52,17 +53,28 @@ static void indentnum(void *num);
 int main(int argc, char *argv[]){
   long i;
 
-  printf("Launching LWPS\n");
+  printf("Creating Threads\n");
 
   /* spawn a number of individual LWPs */
   for(i=1;i<=5;i++) {
+    printf("Creating Thread [%lu]\n", i);
+
     lwp_create((lwpfun)indentnum,(void*)i);
   }
 
+  printf("Setting Scheduler\n");
+  lwp_set_scheduler(MyRoundRobin);
+
+  printf("Starting...\n");
+
   lwp_start();
+
+  printf("Waiting...\n");
 
   /* wait for the other LWPs */
   for(i=1;i<=5;i++) {
+    printf("Trying to wait for created thread [%lu]", i);
+
     int status,num;
     tid_t t;
     t = lwp_wait(&status);

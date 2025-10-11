@@ -1,6 +1,7 @@
 #include <stddef.h>
+#include <stdio.h>
 #include <lwp.h>
-#include <roundrobin.h>
+#include "roundrobin.h"
 
 // The scheduler that the package is currently using to manage the threads
 static scheduler cur_sched = NULL;
@@ -22,30 +23,31 @@ static tid_t tid_t_coutner = 0;
 // lwp create() returns the (lightweight) thread id of the new thread
 // or NO THREAD if the thread cannot be created.
 tid_t lwp_create(lwpfun function, void *argument){
-  tid_t_coutner = tid_t_coutner+1;
+  // tid_t_coutner = tid_t_coutner+1;
 
-  // TODO: do some wrapper stuff with the function here?
+  // // TODO: do some wrapper stuff with the function here?
 
-  // create a new thread
-  // TODO: fill in the new thread and the information
-  rfile new_rfile = {};
+  // // create a new thread
+  // // TODO: fill in the new thread and the information
+  // rfile new_rfile = {};
 
-   thread new_thread = {};
-    new_thread->tid = tid_t_coutner;
-    new_thread->stack = 0; // fix this
-    new_thread->stacksize = 0;
-    new_thread->state = new_rfile;
-    new_thread->status = 0;
-    new_thread->lib_one = NULL;
-    new_thread->lib_two = NULL;
-    new_thread->sched_one = NULL;
-    new_thread->sched_two = NULL;
-    new_thread->exited = NULL;
+  //  thread new_thread = {};
+  //   new_thread->tid = tid_t_coutner;
+  //   new_thread->stack = 0; // fix this
+  //   new_thread->stacksize = 0;
+  //   new_thread->state = new_rfile;
+  //   new_thread->status = 0;
+  //   new_thread->lib_one = NULL;
+  //   new_thread->lib_two = NULL;
+  //   new_thread->sched_one = NULL;
+  //   new_thread->sched_two = NULL;
+  //   new_thread->exited = NULL;
 
-  // admit it to the current scheduler
-  cur_sched->admit(new_thread);
+  // // admit it to the current scheduler
+  // cur_sched->admit(new_thread);
 
-  return tid_t_coutner;
+  // return tid_t_coutner;
+  return 0;
 }
 
 
@@ -104,9 +106,9 @@ void lwp_set_scheduler(scheduler sched) {
   }
 
   // If the current user asks for no particular scheduler, just assume that
-  // they want the default: RoundRobin
+  // they want the default: MyRoundRobin
   if (sched == NULL) {
-    sched = RoundRobin;
+    sched = MyRoundRobin;
   }
   
   // If there is no current scheduler, then there is nothing more to do but to
@@ -143,9 +145,9 @@ void lwp_set_scheduler(scheduler sched) {
 scheduler lwp_get_scheduler(void) {
   // TODO: (ASK) do I want this functionality?
   // // If the current user asks for no particular scheduler, just assume that
-  // // they want the default: RoundRobin
+  // // they want the default: MyRoundRobin
   // if (cur_sched == NULL) {
-  //   cur_sched  = RoundRobin;
+  //   cur_sched  = MyRoundRobin;
   // }
 
   return cur_sched;
