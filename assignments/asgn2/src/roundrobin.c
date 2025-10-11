@@ -15,8 +15,8 @@ scheduler RoundRobin = {
 };
 
 // TODO: is it fine that I have a bunch of global variables?
-thread sched_pool_head = NULL;
-thread sched_pool_cur = NULL;
+static thread sched_pool_head = NULL;
+static thread sched_pool_cur = NULL;
 
 // Add the passed context to the scheduler’s scheduling pool.
 // For round robin, this thread is added to the end of the list
@@ -57,17 +57,18 @@ void rr_remove(thread victim) {
   // NOTE: sched_one is the NEXT pointer
   // NOTE: sched_two is the PREV pointer
 
-  // TODO: do a check to see if it is the only item in the list
-  // TODO: check to see if this is the current thread?
+  // If the victim happens to be the only one in the list, then just remove
+  // the head and current threads, setting them to NULL
+  if (victim->sched_one == victim) {
+    sched_pool_head = NULL;
+    sched_pool_cur = NULL;
+    return;
+  }
 
   // (victim's prev)'s next becomes (victim's next)
-  if (victim->sched_two != NULL) {
-    victim->sched_two->sched_one = victim->sched_one;
-  }
+  victim->sched_two->sched_one = victim->sched_one;
   // (victim's next)'s prev becomes (victim's prev)
-  if (victim->sched_one != NULL) {
-    victim->sched_one->sched_two = victim->sched_two;
-  }
+  victim->sched_one->sched_two = victim->sched_two;
 }
 
 // Return the next thread to be run or NULL if there isn’t one.
