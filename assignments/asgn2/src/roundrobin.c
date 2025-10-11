@@ -21,12 +21,9 @@ static thread sched_pool_cur = NULL;
 // Add the passed context to the scheduler’s scheduling pool.
 // For round robin, this thread is added to the end of the list
 void my_rr_admit(thread new) {
-  printf("fn called: rr_admit");
+  // printf("fn called: rr_admit");
   // NOTE: sched_one is the NEXT pointer
   // NOTE: sched_two is the PREV pointer
-
-  printf("Head & : %p\n", sched_pool_head);
-  printf("[%lu] New& : %p\n\n", new->tid, new);
 
   // If there is currently nothing in the list, set both the head and the tail
   // to the new thread
@@ -58,7 +55,7 @@ void my_rr_admit(thread new) {
 
 // Remove the passed context from the scheduler’s scheduling pool.
 void my_rr_remove(thread victim) {
-  printf("fn called: rr_remove");
+  // printf("fn called: rr_remove");
   // NOTE: sched_one is the NEXT pointer
   // NOTE: sched_two is the PREV pointer
 
@@ -91,7 +88,7 @@ void my_rr_remove(thread victim) {
 }
 
 thread my_rr_next(void) {
-  printf("fn called: rr_next");
+  // printf("fn called: rr_next");
 
   if (sched_pool_cur == NULL) {
     return NULL;
@@ -103,9 +100,7 @@ thread my_rr_next(void) {
 
   // Increment the next pointer
   thread next = sched_pool_cur;
-
   sched_pool_cur = sched_pool_cur->sched_one;
-  printf("NEXT thread: [%lu]", next->tid);
 
   return next;
 }
@@ -113,7 +108,7 @@ thread my_rr_next(void) {
 // Return the number of runnable threads. This will be useful for lwp wait() in
 // determining if waiting makes sense.
 int my_rr_qlen(void) {
-  printf("fn called: rr_qlen");
+  // printf("fn called: rr_qlen");
 
   if (sched_pool_head == NULL)  {
     return 0;
@@ -123,7 +118,6 @@ int my_rr_qlen(void) {
   thread next = sched_pool_head->sched_one;
 
   while(next != sched_pool_head) {
-    printf("[%lu] count: %d\n", next->tid, count);
     next = next->sched_one;
     count++;
   }

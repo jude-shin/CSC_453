@@ -73,8 +73,6 @@ int main(int argc, char *argv[]){
 
   /* wait for the other LWPs */
   for(i=1;i<=5;i++) {
-    printf("Trying to wait for created thread [%lu]", i);
-
     int status,num;
     tid_t t;
     t = lwp_wait(&status);
