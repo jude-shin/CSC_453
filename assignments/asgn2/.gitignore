@@ -1,6 +1,9 @@
 hungry
 snakes
 nums
+my_hungry
+my_snakes
+my_nums
 
 compile_flags.txt
 bin/
