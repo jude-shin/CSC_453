@@ -16,7 +16,6 @@ scheduler RoundRobin = {
 
 // TODO: is it fine that I have a bunch of global variables?
 thread sched_pool_head = NULL;
-thread sched_pool_tail = NULL;
 thread sched_pool_cur = NULL;
 
 // Add the passed context to the scheduler’s scheduling pool.
@@ -92,12 +91,11 @@ int rr_qlen(void) {
   }
  
   int count = 1;
-  // thread cur = sched_pool_head;
-  thread cur = NULL;
+  thread cur = sched_pool_head;
   thread next = sched_pool_head->sched_one;
 
   while(next != cur) {
-    // cur = next;
+    cur = next;
     next = next->sched_one;
     count++;
   }
