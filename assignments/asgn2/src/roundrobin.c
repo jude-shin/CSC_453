@@ -1,30 +1,23 @@
 #include <stddef.h>
 #include <lwp.h>
 #include <schedulers.h>
+#include "roundrobin.h"
 
-// // This is to be called before any threads are admitted to the scheduler. 
-// // It’s to allow the scheduler to set up. This one is allowed to be NULL, 
-// // so don’t call it if it is.
-// void rr_init(void) {
-// }
-// 
-// // This is to be called when the lwp library is done with a scheduler to allow
-// // it to clean up. This, too, is allowed to be NULL, so don’t call it if it is.
-// void rr_shutdown(void) {
-// }
+static thread *head = NULL;
 
 // Add the passed context to the scheduler’s scheduling pool.
 // For round robin, this thread is added to the end of the list
 void rr_admit(thread new) {
-  scheduler sched = lwp_get_scheduler();
 
   // Increment the number of threads in the schedulers pool.
-  sched->qlen++;
+  RoundRobin->qlen++;
 }
 
 // Remove the passed context from the scheduler’s scheduling pool.
 void rr_remove(thread victim) {
 
+  // Decrement the number of threads in the schedulers pool.
+  RoundRobin->qlen++;
 }
 
 // Return the next thread to be run or NULL if there isn’t one.
@@ -39,3 +32,4 @@ thread rr_next(void) {
 int rr_qlen(void) {
   return 0;
 }
+

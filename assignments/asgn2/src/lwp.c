@@ -2,6 +2,30 @@
 #include <lwp.h>
 #include <roundrobin.h>
 
+// The scheduler that the package is currently using to manage the threads
+static struct scheduler* cur_sched = NULL;
+
+// The scheduler that is the default for this package
+// TODO: add this to the roundrobin library
+static struct scheduler* roundrobin = {
+  NULL, 
+  NULL, 
+  rr_admit, 
+  rr_remove, 
+  rr_next, 
+  rr_qlen
+};
+
+// A global list of all threads.
+// This is just the head, but every thread is going to point to another 
+// using the two pointer variables. 
+// thread->lib_one is the pointer to the NEXT thread in the linked list
+// thread->lib_two is the pointer to the PREV thread in the lined list
+static struct thread* head = NULL;
+// The tail is just for convenience
+static struct thread* tail = NULL;
+
+
 // Creates a new lightweight process which executes the given function
 // with the given argument.
 // lwp create() returns the (lightweight) thread id of the new thread
@@ -53,26 +77,49 @@ tid_t lwp_wait(int *status) {
 // to the new one in next() order. If scheduler is NULL the library
 // should return to round-robin scheduling.
 void lwp_set_scheduler(scheduler sched) {
-  // Default scheduler is round-robin.
-  if (sched == NULL) {
-      sched->init = NULL;
-      sched->shutdown = NULL;
-      sched->admit = rr_admit;
-      sched->remove = rr_remove;
-      sched->next = rr_next;
-      sched->qlen = rr_qlen;
+  // If the two schedulers are the same, then there is no point in changing
+  // and transferring all the info over. (We might get stuck in a loop).
+  if (sched == cur_sched) {
+    return;
   }
 
-  // TODO
-  // Pull out the threads from the old scheduler. (with what I am assuming to
-  // be the lwp_get_scheduler())
-  // Use next() and remove() from the old scheduler
-  // Use admit() with the new one
+  // If the current user asks for no particular scheduler, just assume that
+  // they want the default: RoundRobin
+  if (sched == NULL) {
+    sched = roundrobin;
+  }
+  
+  // If there is no current scheduler, then there is nothing more to do but to
+  // setting the pointer.
+  if (cur_sched == NULL) {
+    cur_sched = sched;
+    return;
+  }
+
+  // TODO: do we init the scheduler here? or does the client code do this?
+  // if (cur_sched->init != NULL) {
+  //   cur_sched->init();
+  // }
+
+  // TODO: check that the next() returns NULL when there is nothing left
+  thread nxt = NULL;
+  nxt = cur_sched->next();
+  while(nxt != NULL) { 
+    cur_sched->remove(nxt); // Remove the thread from the old scheduler.
+    sched->admit(nxt); // Add that thread to the new scheduler.
+    nxt = cur_sched->next();// Onto the next thread in the old scheduler.
+  }
 
   // Shut down the old scheduler
+  if (cur_sched->shutdown != NULL) {
+    cur_sched->shutdown();
+  }
+  
+  // Set the currently used scheduler to the scheduler that we just created
+  cur_sched = sched;
 }
 
 // Returns the pointer to the current scheduler.
 scheduler lwp_get_scheduler(void) {
-  return NULL;
+  return cur_sched;
 }
