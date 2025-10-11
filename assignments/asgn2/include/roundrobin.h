@@ -2,7 +2,7 @@
 #define ROUNDROBIN 
 
 #include <lwp.h>
-extern scheduler MyRoundRobin;
+extern scheduler MyRoundRobin; 
 
 extern void rr_init(void);
 extern void rr_shutdown(void);
