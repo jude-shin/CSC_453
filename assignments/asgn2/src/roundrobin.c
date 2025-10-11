@@ -3,12 +3,33 @@
 #include <schedulers.h>
 #include "roundrobin.h"
 
-static thread *head = NULL;
+// The scheduler that is the default for this package
+// TODO: add this to the roundrobin library
+scheduler RoundRobin = {
+  NULL, 
+  NULL, 
+  rr_admit, 
+  rr_remove, 
+  rr_next, 
+  rr_qlen
+};
+
+// Can be a circular linked list
+thread sched_pool_head = NULL;
+
+// // TODO: add the tail in later
+// thread sched_pool_tail = NULL;
 
 // Add the passed context to the scheduler’s scheduling pool.
 // For round robin, this thread is added to the end of the list
 void rr_admit(thread new) {
-
+  // If this is the first process that is added to the scheduler, then the head
+  // value should be NULL. In that case the new thread is going to be the only
+  // thread.
+  if (sched_pool_head == NULL) {
+    sched_pool_head = new;
+  }
+  
   // Increment the number of threads in the schedulers pool.
   RoundRobin->qlen++;
 }
