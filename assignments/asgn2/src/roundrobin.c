@@ -23,40 +23,42 @@ thread sched_pool_cur = NULL;
 void rr_admit(thread new) {
   // NOTE: sched_one is the NEXT pointer
   // NOTE: sched_two is the PREV pointer
+  thread tail = sched_pool_head->sched_two;
 
   // If the tail is NULL, then the head must also be NULL
   // Set both the head and the tail to the new thread
-  if (sched_pool_tail == NULL) {
-    // Make sure these are pointing to NULL to indicate they are the head and 
-    // tail respectively
-    new->sched_one = NULL;
-    new->sched_two = NULL;
-    
+  if (tail == NULL) {
+    // Make sure these are pointing to itself, as this is a circular
+    // linked list
+    new->sched_one = new;
+    new->sched_two = new;
     sched_pool_head = new;
-    sched_pool_tail = new;
 
     // The first and only thread should be added as the scheduler's 'rr_next'
     // value as the starting point
-    
     sched_pool_cur = new;
+
     return;
   }
+ 
+  // Setup the new thread's next and prev to point to the head and tail.
+  new->sched_one = sched_pool_head;
+  new->sched_two = tail;
 
-  // new's 'next' becomes cur's 'next'
-  new->sched_one = sched_pool_tail->sched_one;
-  // new's 'prev' becomes cur
-  new->sched_two = sched_pool_tail;
+  // Update the tail->next pointer to the new thread
+  tail->sched_one = new;
 
-  // cur's 'next' becomes new
-  sched_pool_tail->sched_one = new;
-  // cur's 'prev' stays the same
-  // new->sched_two = new->sched_two;
+  // Update the head->prev  pointer to the new thread
+  sched_pool_head->sched_two = new;
 }
 
 // Remove the passed context from the scheduler’s scheduling pool.
 void rr_remove(thread victim) {
   // NOTE: sched_one is the NEXT pointer
   // NOTE: sched_two is the PREV pointer
+
+  // TODO: do a check to see if it is the only item in the list
+  // TODO: check to see if this is the current thread?
 
   // (victim's prev)'s next becomes (victim's next)
   if (victim->sched_two != NULL) {
