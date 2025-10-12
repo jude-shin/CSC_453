@@ -27,7 +27,7 @@ static tid_t tid_t_coutner = 0;
 // Creates a new lightweight process which executes the given function
 // with the given argument.
 // lwp create() returns the (lightweight) thread id of the new thread
-// or NO THREAD if the thread cannot be created.
+// or NO_THREAD if the thread cannot be created.
 tid_t lwp_create(lwpfun function, void *argument){
   if (DEBUG) {
     printf("[debug] lwp_create\n");
@@ -57,6 +57,7 @@ tid_t lwp_create(lwpfun function, void *argument){
   cur_sched->admit(new_thread);
 
   return tid_t_coutner;
+  return NO_THREAD;
 }
 
 
@@ -86,13 +87,21 @@ void lwp_exit(int exitval) {
   }
 }
 
-// Returns the tid of the calling LWP or NO THREAD if not called by a LWP.
+// Returns the tid of the calling LWP or NO_THREAD if not called by a LWP.
 tid_t lwp_gettid(void) {
   if (DEBUG) {
     printf("[debug] lwp_gettid\n");
   }
 
-  return 0;
+  thread t = NULL;
+
+  // TODO: Somehow find a thread and set it to t
+  
+  if (t == NULL) {
+    return NO_THREAD;
+  }
+
+  return  t->tid;
 }
 
 // Returns the thread corresponding to the given thread ID, or NULL
@@ -117,13 +126,13 @@ thread tid2thread(tid_t tid) {
 
 // Waits for a thread to terminate, deallocates its resources, and re-
 // ports its termination status if status is non-NULL.
-// Returns the tid of the terminated thread or NO THREAD.
+// Returns the tid of the terminated thread or NO_THREAD.
 tid_t lwp_wait(int *status) {
   if (DEBUG) {
     printf("[debug] lwp_wait\n");
   }
 
-  return 0;
+  return NO_THREAD;
 }
 
 // Causes the LWP package to use the given scheduler to choose the
