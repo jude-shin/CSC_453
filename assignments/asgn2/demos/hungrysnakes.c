@@ -58,6 +58,7 @@
 #include "roundrobin.h"
 
 #define MAXSNAKES  100
+#define FAST_SNAKES  1
 
 int main(int argc, char *argv[]){
   int i,cnt,err;
@@ -94,6 +95,85 @@ int main(int argc, char *argv[]){
   cnt = 0;
   /* snake new_snake(int y, int x, int len, int dir, int color) ;*/
   s[cnt++] = new_snake( 8,30,10, E,1);/* all start at color one */
+  s[cnt++] = new_snake(10,30,10, E,1);
+  s[cnt++] = new_snake(12,30,10, E,1);
+  s[cnt++] = new_snake( 8,50,10, W,1);
+  s[cnt++] = new_snake(10,50,10, W,1);
+  s[cnt++] = new_snake(12,50,10, W,1);
+  s[cnt++] = new_snake( 4,40,10, N,1);
+
+  s[cnt++] = new_snake( 8,30,10, E,1);
+  s[cnt++] = new_snake(10,30,10, E,1);
+  s[cnt++] = new_snake(10,30,10, E,1);
+  s[cnt++] = new_snake(10,30,10, E,1);
+  s[cnt++] = new_snake(10,30,10, E,1);
+  s[cnt++] = new_snake(12,30,10, E,1);
+  s[cnt++] = new_snake( 8,50,10, W,1);
+  s[cnt++] = new_snake(10,50,10, W,1);
+  s[cnt++] = new_snake(12,50,10, W,1);
+  s[cnt++] = new_snake( 4,40,10, N,1);
+  s[cnt++] = new_snake( 8,30,10, E,1);
+  s[cnt++] = new_snake(10,30,10, E,1);
+  s[cnt++] = new_snake(12,30,10, E,1);
+  s[cnt++] = new_snake( 8,50,10, W,1);
+  s[cnt++] = new_snake(10,50,10, W,1);
+  s[cnt++] = new_snake(12,50,10, W,1);
+  s[cnt++] = new_snake( 4,40,10, N,1);
+  s[cnt++] = new_snake( 8,30,10, E,1);
+  s[cnt++] = new_snake(10,30,10, E,1);
+  s[cnt++] = new_snake(12,30,10, E,1);
+  s[cnt++] = new_snake( 8,50,10, W,1);
+  s[cnt++] = new_snake(10,50,10, W,1);
+  s[cnt++] = new_snake(12,50,10, W,1);
+  s[cnt++] = new_snake(12,30,10, E,1);
+  s[cnt++] = new_snake( 8,50,10, W,1);
+  s[cnt++] = new_snake(10,50,10, W,1);
+  s[cnt++] = new_snake(12,50,10, W,1);
+  s[cnt++] = new_snake( 4,40,10, N,1);
+  s[cnt++] = new_snake( 8,30,10, E,1);
+  s[cnt++] = new_snake(10,30,10, E,1);
+  s[cnt++] = new_snake(12,30,10, E,1);
+  s[cnt++] = new_snake( 8,50,10, W,1);
+  s[cnt++] = new_snake(10,50,10, W,1);
+  s[cnt++] = new_snake(12,50,10, W,1);
+  s[cnt++] = new_snake( 4,40,10, N,1);
+  s[cnt++] = new_snake( 8,30,10, E,1);
+  s[cnt++] = new_snake(10,30,10, E,1);
+  s[cnt++] = new_snake(12,30,10, E,1);
+  s[cnt++] = new_snake( 8,50,10, W,1);
+  s[cnt++] = new_snake(10,50,10, W,1);
+  s[cnt++] = new_snake(12,50,10, W,1);
+  s[cnt++] = new_snake(12,30,10, E,1);
+  s[cnt++] = new_snake( 8,50,10, W,1);
+  s[cnt++] = new_snake(10,50,10, W,1);
+  s[cnt++] = new_snake(12,50,10, W,1);
+  s[cnt++] = new_snake( 4,40,10, N,1);
+  s[cnt++] = new_snake( 8,30,10, E,1);
+  s[cnt++] = new_snake(10,30,10, E,1);
+  s[cnt++] = new_snake(12,30,10, E,1);
+  s[cnt++] = new_snake( 8,50,10, W,1);
+  s[cnt++] = new_snake(10,50,10, W,1);
+  s[cnt++] = new_snake(12,50,10, W,1);
+  s[cnt++] = new_snake( 4,40,10, N,1);
+  s[cnt++] = new_snake( 8,30,10, E,1);
+  s[cnt++] = new_snake(10,30,10, E,1);
+  s[cnt++] = new_snake(12,30,10, E,1);
+  s[cnt++] = new_snake( 8,50,10, W,1);
+  s[cnt++] = new_snake(10,50,10, W,1);
+  s[cnt++] = new_snake(12,50,10, W,1);
+  s[cnt++] = new_snake(12,30,10, E,1);
+  s[cnt++] = new_snake( 8,50,10, W,1);
+  s[cnt++] = new_snake(10,50,10, W,1);
+  s[cnt++] = new_snake(12,50,10, W,1);
+  s[cnt++] = new_snake( 4,40,10, N,1);
+  s[cnt++] = new_snake( 8,30,10, E,1);
+  s[cnt++] = new_snake(10,30,10, E,1);
+  s[cnt++] = new_snake(12,30,10, E,1);
+  s[cnt++] = new_snake( 8,50,10, W,1);
+  s[cnt++] = new_snake(10,50,10, W,1);
+  s[cnt++] = new_snake(12,50,10, W,1);
+  s[cnt++] = new_snake( 4,40,10, N,1);
+  s[cnt++] = new_snake( 8,30,10, E,1);
   s[cnt++] = new_snake(10,30,10, E,1);
   s[cnt++] = new_snake(12,30,10, E,1);
   s[cnt++] = new_snake( 8,50,10, W,1);
