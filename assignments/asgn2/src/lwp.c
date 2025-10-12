@@ -105,9 +105,13 @@ static void lwp_remove(thread victim) {
 }
 
 // Gets the size of the stack that we should use.
-// If any of the system calls error, then the return value is -1, and should
+// If any of the system calls error, then the return value is 0, and should
 // be handled in function who called get_stacksize()
 static size_t get_stacksize() {
+  #ifdef DEBUG
+  printf("[debug] get_stacksize\n");
+  #endif
+
   struct rlimit rlim;
   rlim_t limit = 0;
 
@@ -126,14 +130,14 @@ static size_t get_stacksize() {
   // Catches -1 on error, as well as the page size being zero.
   if (page_size <= 0) {
     perror("[get_stacksize] Error when getting _SC_PAGE_SIZE.");
-    return -1;
+    return 0;
   }
   
   // Round the stack size to the nearest page_size.
   uintptr_t remainder = (uintptr_t)limit%(uintptr_t)page_size;
 
   if (remainder == 0) {
-    return page_size;
+    return (size_t)limit;
   }
 
   // Return the limit rounded to the nearest page_size.
@@ -145,6 +149,8 @@ static size_t get_stacksize() {
 // with the given argument.
 // lwp create() returns the (lightweight) thread id of the new thread
 // or NO_THREAD if the thread cannot be created.
+
+// TODO: what the hell do I do with this lwpfun function?
 tid_t lwp_create(lwpfun function, void *argument){
   #ifdef DEBUG
   printf("[debug] lwp_create\n");
@@ -153,13 +159,19 @@ tid_t lwp_create(lwpfun function, void *argument){
   thread new = {0};
 
   // Get the soft stack size.
+  #ifdef DEBUG
+  printf("[debug:lwp_create] getting stacksize\n");
+  #endif
   size_t new_stacksize = get_stacksize();
-  if (new_stacksize == -1) {
+  if (new_stacksize == 0) {
     perror("[lwp_create] Error when getting RLIMIT_STACK.");
     return NO_THREAD;
   }
   new->stacksize = new_stacksize;
   
+  #ifdef DEBUG
+  printf("[debug:lwp_create] mmap new stack\n");
+  #endif
   // mmap() a new stack for this thread. 
   void *new_stack = mmap(
       NULL, 
@@ -175,12 +187,16 @@ tid_t lwp_create(lwpfun function, void *argument){
   }
   new->stack = new_stack;
 
+  #ifdef DEBUG
+  printf("[debug:lwp_create] setting other thread things\n");
+  #endif
+
   // Create a new id (just using a counter)
   new->tid = tid_counter++;
 
   // Load the current registers into the current state.
   // TODO: do I even need to do this? 
-  // swap_rfiles(NULL, &new->state);
+  swap_rfiles(NULL, &new->state);
 
   // Indicate that it is a live and running process.
   new->status = LWP_LIVE;
@@ -196,8 +212,16 @@ tid_t lwp_create(lwpfun function, void *argument){
   // ANY thread can create a thread...
   new->exited = NULL; // TODO: I still don't know what the hell this is
 
+  #ifdef DEBUG
+  printf("[debug:lwp_create] adding to live threads (lib list)\n");
+  #endif
+
   // Add this to the rolling global list of items
   lwp_add_live(new);
+
+  #ifdef DEBUG
+  printf("[debug:lwp_create] admitting to scheduler\n");
+  #endif
 
   // Admit the newly created "main" thread to the current scheduler
   curr_sched->admit(new);
