@@ -6,8 +6,8 @@
 #define DEBUG 0
 
 // These are the variable names in the given Thread struct.
-// Arbitrarily, one will represent the 'next' pointer in the doubly linked list
-// , and the other will represent the 'prev' pointer.
+// Arbitrarily, one will represent the 'next' pointer in the sched's doubly
+// linked list, and the other will represent the 'prev' pointer.
 #define NEXT sched_one
 #define PREV sched_two
 
@@ -32,8 +32,9 @@ static thread sched_pool_cur = NULL;
 // For round robin, this thread is added to the end of the list.
 void rr_admit(thread new) {
   if (DEBUG) {
-    printf("fn called: rr_admit");
+    printf("[debug] rr_admit\n");
   }
+
 
   // If there is currently nothing in the list, set both the head and the tail
   // to the new thread
@@ -69,7 +70,7 @@ void rr_admit(thread new) {
 // Remove the passed context from the scheduler’s scheduling pool.
 void rr_remove(thread victim) {
   if (DEBUG) {
-    printf("fn called: rr_remove");
+    printf("[debug] rr_remove\n");
   }
 
   // If the victim happens to be the only one in the list, then just remove
@@ -102,7 +103,7 @@ void rr_remove(thread victim) {
 
 thread rr_next(void) {
   if (DEBUG) {
-    printf("fn called: rr_next");
+    printf("[debug] rr_next\n");
   }
 
   // There is no next thread if there are no threads available.
@@ -123,7 +124,7 @@ thread rr_next(void) {
 // determining if waiting makes sense.
 int rr_qlen(void) {
   if (DEBUG) {
-    printf("fn called: rr_qlen");
+    printf("[debug] rr_qlen\n");
   }
   
   if (sched_pool_head == NULL)  {
