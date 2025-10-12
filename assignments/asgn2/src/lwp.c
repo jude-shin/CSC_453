@@ -15,9 +15,9 @@
 scheduler cur_sched = NULL;
 
 // A global list of all threads.
-static thread* head = NULL;
+thread head = NULL;
 // The tail is just for convenience.
-static thread* tail = NULL;
+thread tail = NULL;
 
 // A counter for all the ids. We assume the domain will never be more than
 // 2^64 - 2 threads.
@@ -101,8 +101,18 @@ thread tid2thread(tid_t tid) {
   if (DEBUG) {
     printf("[debug] tid2thread\n");
   }
-
-  return 0;
+  
+  // Classic linear search of the linked list starting at the head.
+  thread t = head;
+  while (t != NULL) {
+    if (t->tid == tid) {
+      return t;
+    }
+    t = t->NEXT;
+  }
+    
+  // If we have reached this point, then there is no id that matches
+  return NULL;
 }
 
 // Waits for a thread to terminate, deallocates its resources, and re-

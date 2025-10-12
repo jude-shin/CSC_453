@@ -6,8 +6,8 @@
 #define DEBUG 0
 
 // These are the variable names in the given Thread struct.
-// Arbitrarily, one will represent the 'next' pointer in the sched's doubly
-// linked list, and the other will represent the 'prev' pointer.
+// Arbitrarily, one will represent the 'next' pointer in the sched's circular 
+// doubly linked list, and the other will represent the 'prev' pointer.
 #define NEXT sched_one
 #define PREV sched_two
 
