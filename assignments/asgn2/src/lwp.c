@@ -149,7 +149,60 @@ tid_t lwp_create(lwpfun function, void *argument){
   #ifdef DEBUG
   printf("[debug] lwp_create\n");
   #endif
-  return 0;
+
+  thread new = {0};
+
+  // Get the soft stack size.
+  size_t new_stacksize = get_stacksize();
+  if (new_stacksize == -1) {
+    perror("[lwp_create] Error when getting RLIMIT_STACK.");
+    return NO_THREAD;
+  }
+  new->stacksize = new_stacksize;
+  
+  // mmap() a new stack for this thread. 
+  void *new_stack = mmap(
+      NULL, 
+      new_stacksize, 
+      PROT_READ|PROT_WRITE, 
+      MAP_PRIVATE|MAP_ANONYMOUS|MAP_STACK, 
+      -1, 
+      0);
+
+  if (new_stack == MAP_FAILED) {
+    perror("[lwp_create] Error when mmapp()ing a new stack.");
+    return NO_THREAD;
+  }
+  new->stack = new_stack;
+
+  // Create a new id (just using a counter)
+  new->tid = tid_counter++;
+
+  // Load the current registers into the current state.
+  // TODO: do I even need to do this? 
+  // swap_rfiles(NULL, &new->state);
+
+  // Indicate that it is a live and running process.
+  new->status = LWP_LIVE;
+
+  // TODO: For my own sanity, but probably okay to remove later
+  new->lib_one = NULL;
+  new->lib_two = NULL;
+  new->sched_one = NULL;
+  new->sched_two = NULL;
+
+  // TODO: is this the thread that created this thread?
+  // in start's case, this would be the current thread, but in lwp_create, 
+  // ANY thread can create a thread...
+  new->exited = NULL; // TODO: I still don't know what the hell this is
+
+  // Add this to the rolling global list of items
+  lwp_add_live(new);
+
+  // Admit the newly created "main" thread to the current scheduler
+  curr_sched->admit(new);
+
+  return new->tid;
 }
 
 
@@ -159,15 +212,10 @@ void lwp_start(void){
   #ifdef DEBUG
   printf("[debug] lwp_start\n");
   #endif
-
-  thread new = {0};
-
   // Setup the context for the very first thead (using the original system
   // thread).
-  new->tid = tid_counter++;
 
-  // Use the current stack for this special thread only.
-  new->stack = NULL; 
+  thread new = {0};
 
   // Get the soft stack size.
   size_t new_stacksize = get_stacksize();
@@ -176,6 +224,12 @@ void lwp_start(void){
     exit(EXIT_FAILURE);
   }
   new->stacksize = new_stacksize;
+
+  // Use the current stack for this special thread only.
+  new->stack = NULL; 
+  
+  // Create a new id (just using a counter)
+  new->tid = tid_counter++;
 
   // Load the current registers into the current state.
   // TODO: do I even need to do this?
@@ -189,6 +243,10 @@ void lwp_start(void){
   new->lib_two = NULL;
   new->sched_one = NULL;
   new->sched_two = NULL;
+
+  // TODO: is this the thread that created this thread?
+  // in start's case, this would be the current thread, but in lwp_create, 
+  // ANY thread can create a thread...
   new->exited = NULL; // TODO: I still don't know what the hell this is
 
   // Add this to the rolling global list of items
