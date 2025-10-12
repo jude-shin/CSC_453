@@ -1,6 +1,8 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <sys/mman.h>
+#include <unistd.h>
+#include <sys/resource.h>
 #include <stdlib.h>
 #include <lwp.h> // TODO: what is the difference? <> vs ""
 #include "roundrobin.h"
@@ -13,7 +15,11 @@
 #define NEXT lib_one
 #define PREV lib_two 
 
-// The scheduler that the package is currently using to manage the threads
+// The size of the RLIMIT_STACK in bytes if none is set.
+// TODO: set to 8MB
+#define RLIMIT_STACK_DEFAULT 8000000
+
+// The scheduler that the package is currently using to manage the thread
 static scheduler curr_sched = NULL;
 
 // A global list of all threads. This list is not in any particular order; we
@@ -28,6 +34,10 @@ static thread term_tail = NULL;
 
 // The thread that is currently in context.
 static thread curr = NULL;
+
+// Queue of waiting threads
+// I DON'T KNOW WHAT IS GOING ON HERE
+static thread waiting = NULL;
 
 // A counter for all the ids. We assume the domain will never be more than
 // 2^64 - 2 threads.
@@ -94,6 +104,42 @@ static void lwp_remove(thread victim) {
   victim->PREV = NULL;
 }
 
+// Gets the size of the stack that we should use.
+// If any of the system calls error, then the return value is -1, and should
+// be handled in function who called get_stacksize()
+static size_t get_stacksize() {
+  struct rlimit rlim;
+  rlim_t limit = 0;
+
+  if(getrlimit(RLIMIT_STACK, &rlim) == -1 || rlim.rlim_cur == RLIM_INFINITY) {
+    // Set the default to RLIMIT_STACK_DEFAULT
+    limit = RLIMIT_STACK_DEFAULT;
+  }
+  else {
+    limit = rlim.rlim_cur;
+  }
+  
+  // Ensure that the limit is going to be set to a multiple of the page size.
+  // This is in bytes.
+  size_t page_size = sysconf(_SC_PAGE_SIZE);
+
+  // Catches -1 on error, as well as the page size being zero.
+  if (page_size <= 0) {
+    perror("[get_stacksize] Error when getting _SC_PAGE_SIZE.");
+    return -1;
+  }
+  
+  // Round the stack size to the nearest page_size.
+  uintptr_t remainder = (uintptr_t)limit%(uintptr_t)page_size;
+
+  if (remainder == 0) {
+    return page_size;
+  }
+
+  // Return the limit rounded to the nearest page_size.
+  return (size_t)((uintptr_t)limit + ((uintptr_t)page_size - remainder));
+}
+
 
 // Creates a new lightweight process which executes the given function
 // with the given argument.
@@ -114,25 +160,35 @@ void lwp_start(void){
   printf("[debug] lwp_start\n");
   #endif
 
-  tid_counter++;
-  unsigned long *new_stack; // THis is the current stack! (Use NULL)?
-  size_t new_stacksize;
-  rfile new_rfile = {};
-  unsigned int new_status;
-  thread lib_one;
-  thread lib_two;
+  thread new = {0};
 
-  // TODO: condense this
-  thread new = {};
-  new->tid = tid_counter;
-  new->stack = new_stack;
+  // Setup the context for the very first thead (using the original system
+  // thread).
+  new->tid = tid_counter++;
+
+  // Use the current stack for this special thread only.
+  new->stack = NULL; 
+
+  // Get the soft stack size.
+  size_t new_stacksize = get_stacksize();
+  if (new_stacksize == -1) {
+    perror("[lwp_start] Error when getting RLIMIT_STACK.");
+    exit(EXIT_FAILURE);
+  }
   new->stacksize = new_stacksize;
-  new->state = new_rfile;
-  new->status = new_status;
-  new->lib_one = lib_one;
-  new->lib_two = lib_two;
-  new->sched_one = NULL; // doesn't matter... sched problem to deal with 
-  new->sched_two = NULL; // doesn't matter... sched problem to deal with 
+
+  // Load the current registers into the current state.
+  // TODO: do I even need to do this?
+  swap_rfiles(NULL, &new->state);
+
+  // Indicate that it is a live and running process.
+  new->status = LWP_LIVE;
+
+  // TODO: For my own sanity, but probably okay to remove later
+  new->lib_one = NULL;
+  new->lib_two = NULL;
+  new->sched_one = NULL;
+  new->sched_two = NULL;
   new->exited = NULL; // TODO: I still don't know what the hell this is
 
   // Add this to the rolling global list of items
@@ -141,12 +197,8 @@ void lwp_start(void){
   // Admit the newly created "main" thread to the current scheduler
   curr_sched->admit(new);
 
+  // Start the yielding process.
   lwp_yield();
-  
-  // TODO (1): (ASK) do I have to lwp_exit() here?
-  // I don't think so... in numbers.c, there is one exit status, and I think
-  // that is in reference to the "main" thread that we are creating here.
-  // SO, every wrapped funciton should call lwp_exit()?
 }
 
 // Yields control to another LWP. Which one depends on the sched-
@@ -157,6 +209,21 @@ void lwp_yield(void) {
   #ifdef DEBUG
   printf("[debug] lwp_yield\n");
   #endif
+
+  // Get the thread that the scheduler gives next.
+  scheduler sched = lwp_get_scheduler();
+  thread next = sched->next();
+  if (next == NULL) {
+    exit(curr->status); // TODO: I have a feeling this does not work
+  }
+
+  // Save the current register values to curr->state
+  // Load next->state to the current register values
+  // TODO: check to see if this is how we really reference these states -> vs .
+  swap_rfiles(&curr->state, &next->state);
+
+  // The current thread is now the new thread the scheduler just chose.
+  curr = next;
 }
 
 // Terminates the current LWP and yields to whichever thread the
@@ -166,7 +233,26 @@ void lwp_exit(int exitval) {
   printf("[debug] lwp_exit\n");
   #endif
 
-  // NOTE: no deallocation happens here. That is for lwp_wait() to handle.
+  // Remove from the scheduler?
+  scheduler sched = lwp_get_scheduler();
+  sched->remove(curr);
+
+  // Remove the lwp from the live stack.
+  lwp_remove(curr);
+
+  // Combine the status and the exitval, and set it as the thread's new status.
+  curr->status = MKTERMSTAT(curr->status, exitval);
+
+  // Add the current thread to the queue of terminated threads.
+  lwp_add_term(curr);
+
+  // The curr thread should be handled in lwp_yield(), however, this is more
+  // for my sanity.
+  // TODO: Maybe this is not good to have...
+  // curr = NULL;
+
+  // Yield to the next thread that the scheduler chooses.
+  lwp_yield();
 }
 
 // Returns the tid of the calling LWP or NO_THREAD if not called by a LWP.
