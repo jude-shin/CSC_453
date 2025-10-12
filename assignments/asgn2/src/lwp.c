@@ -195,8 +195,8 @@ tid_t lwp_create(lwpfun function, void *argument){
   new->tid = tid_counter++;
 
   // Load the current registers into the current state.
-  // TODO: do I even need to do this? 
   swap_rfiles(NULL, &new->state);
+  new->state.fxsave = FPU_INIT;
 
   // Indicate that it is a live and running process.
   new->status = LWP_LIVE;
@@ -258,6 +258,7 @@ void lwp_start(void){
   // Load the current registers into the current state.
   // TODO: do I even need to do this?
   swap_rfiles(NULL, &new->state);
+  new->state.fxsave = FPU_INIT;
 
   // Indicate that it is a live and running process.
   new->status = LWP_LIVE;
