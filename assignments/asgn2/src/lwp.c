@@ -78,7 +78,6 @@ void lwp_yield(void) {
   }
 }
 
-
 // Terminates the current LWP and yields to whichever thread the
 // scheduler chooses. lwp exit() does not return.
 void lwp_exit(int exitval) {
@@ -87,9 +86,7 @@ void lwp_exit(int exitval) {
   }
 }
 
-// Waits for a thread to terminate, deallocates its resources, and re-
-// ports its termination status if status is non-NULL.
-// Returns the tid of the terminated thread or NO THREAD.
+// Returns the tid of the calling LWP or NO THREAD if not called by a LWP.
 tid_t lwp_gettid(void) {
   if (DEBUG) {
     printf("[debug] lwp_gettid\n");
@@ -98,7 +95,8 @@ tid_t lwp_gettid(void) {
   return 0;
 }
 
-// Returns the tid of the calling LWP or NO THREAD if not called by a LWP.
+// Returns the thread corresponding to the given thread ID, or NULL
+// if the ID is invalid
 thread tid2thread(tid_t tid) {
   if (DEBUG) {
     printf("[debug] tid2thread\n");
@@ -107,17 +105,14 @@ thread tid2thread(tid_t tid) {
   return 0;
 }
 
-// Returns the thread corresponding to the given thread ID, or NULL
-// if the ID is invalid
+// Waits for a thread to terminate, deallocates its resources, and re-
+// ports its termination status if status is non-NULL.
+// Returns the tid of the terminated thread or NO THREAD.
 tid_t lwp_wait(int *status) {
   if (DEBUG) {
     printf("[debug] lwp_wait\n");
   }
 
-  // this is where you use the last variable in the thread struct 
-  // (pointer "exited")
-  // i am not sure yet, but this is either an int or just a true/false variable
-  // I think it is just a true false variable
   return 0;
 }
 
