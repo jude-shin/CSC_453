@@ -25,8 +25,8 @@ scheduler MyRoundRobin = &rr_publish;
 // Circular-doubly-linked-list to keep track of all of the schedulable threads.
 // TODO: ask if the head pointer could also be used as the cur pointer. 
 // (I DON'T THINK SO BECAUSE THEN THE INSERTS MAY BE OUT OF ORDER...)
-static thread sched_pool_head = NULL;
-static thread sched_pool_cur = NULL;
+static thread head = NULL;
+static thread curr = NULL;
 
 // Add the passed context to the scheduler’s scheduling pool.
 // For round robin, this thread is added to the end of the list.
@@ -38,33 +38,33 @@ void rr_admit(thread new) {
 
   // If there is currently nothing in the list, set both the head and the tail
   // to the new thread
-  if (sched_pool_head == NULL) {
+  if (head == NULL) {
     // Make sure these are pointing to itself, as this is a circular
     // linked list
     new->NEXT= new;
     new->PREV = new;
-    sched_pool_head = new;
+    head = new;
 
     // The first (and only) thread should be added as the scheduler's currently
     // 'selected' thread in the pool.
-    sched_pool_cur = new;
+    curr = new;
 
     return;
   }
 
   // The tail is going to be the head's prev thread becuase this is a circular
   // -doubly-linked-list.
-  thread tail = sched_pool_head->PREV;
+  thread tail = head->PREV;
  
   // Setup the new thread's next and prev to point to the head and tail.
-  new->NEXT = sched_pool_head;
+  new->NEXT = head;
   new->PREV = tail;
 
   // Update the tail->next pointer to the new thread
   tail->NEXT = new;
 
   // Update the head->prev  pointer to the new thread
-  sched_pool_head->PREV = new;
+  head->PREV = new;
 }
 
 // Remove the passed context from the scheduler’s scheduling pool.
@@ -76,19 +76,19 @@ void rr_remove(thread victim) {
   // If the victim happens to be the only one in the list, then just remove
   // the head and current threads, setting them to NULL
   if (victim->NEXT == victim) {
-    sched_pool_head = NULL;
-    sched_pool_cur = NULL;
+    head = NULL;
+    curr = NULL;
     return;
   }
   
   // Update the head pointer if we get rid of it.
-  if (victim == sched_pool_head) {
-    sched_pool_head = victim->NEXT;
+  if (victim == head) {
+    head = victim->NEXT;
   }
 
   // Update the cur pointer if we get rid of it.
-  if (victim == sched_pool_cur) {
-    sched_pool_cur = victim->NEXT;
+  if (victim == curr) {
+    curr = victim->NEXT;
   }
 
   // (victim's prev)'s next becomes (victim's next)
@@ -107,15 +107,15 @@ thread rr_next(void) {
   }
 
   // There is no next thread if there are no threads available.
-  if (sched_pool_cur == NULL) {
+  if (curr == NULL) {
     return NULL;
   }
 
   // The thread we will return is the 'current' thread that we have set up.
-  thread next = sched_pool_cur;
+  thread next = curr;
 
   // Increment the currently tracked thread the 'next' one
-  sched_pool_cur = sched_pool_cur->NEXT;
+  curr = curr->NEXT;
 
   return next;
 }
@@ -127,17 +127,17 @@ int rr_qlen(void) {
     printf("[debug] rr_qlen\n");
   }
   
-  if (sched_pool_head == NULL)  {
+  if (head == NULL)  {
     return 0;
   }
 
   // Start the counting at the head of the list.
   int count = 1;
-  thread next = sched_pool_head->NEXT;
+  thread next = head->NEXT;
 
   // Keep on walking though the list while counting until you make it back 
   // to the head again (this is a circular-doubly-linked-list)
-  while(next != sched_pool_head) {
+  while(next != head) {
     next = next->NEXT;
     count++;
   }
