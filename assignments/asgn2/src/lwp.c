@@ -98,37 +98,52 @@ tid_t lwp_wait(int *status) {
 // to the new one in next() order. If scheduler is NULL the library
 // should return to round-robin scheduling.
 void lwp_set_scheduler(scheduler sched) {
-  // If the two schedulers are the same, then there is no point in changing
-  // and transferring all the info over. (We might get stuck in a loop).
+  // Default to MyRoundRobin
+  // After this condition, sched is not going to be NULL
+  if (sched == NULL) {
+    sched = MyRoundRobin;
+  }
+
+  // If both are the same (and both not NULL), then don't do anything.
   if (sched == cur_sched) {
     return;
   }
 
-  // If the current user asks for no particular scheduler, just assume that
-  // they want the default: MyRoundRobin
-  if (sched == NULL) {
-    sched = MyRoundRobin;
-  }
-  
   // If there is no current scheduler, then there is nothing more to do but to
-  // setting the pointer.
+  // set the pointer and get out of here. No need to move around threads from
+  // one scheduler to another.
   if (cur_sched == NULL) {
     cur_sched = sched;
     return;
   }
 
-  // // TODO: (ASK) do we init the scheduler here? or does the client code do this?
-  // if (cur_sched->init != NULL) {
-  //   cur_sched->init();
-  // }
+  // --------------------------------------------------
+  // If we made it this far, then that means sched and cur_sched are different,
+  // and not null. 
+  // We must transfer the threads from cur_sched(old) to sched(new)
 
-  // TODO: check that the next() returns NULL when there is nothing left
-  thread nxt = NULL;
-  nxt = cur_sched->next();
+  // TODO: (ASK) do we init the scheduler here? or does the client code do this?
+  // I am pretty sure we need to because it says we must call it before any 
+  // threads are added. (which is what we are going to do in a sec).
+  if (sched->init != NULL) {
+    sched->init();
+  }
+
+  // Keep reading and removing each thread until there is nothing left in 
+  // the old scheduler. Every time you remove a thread from the old scheduler,
+  // add it to the new one.
+  thread nxt = cur_sched->next();
   while(nxt != NULL) { 
-    cur_sched->remove(nxt); // Remove the thread from the old scheduler.
-    sched->admit(nxt); // Add that thread to the new scheduler.
-    nxt = cur_sched->next();// Onto the next thread in the old scheduler.
+    // Remove the thread from the old scheduler.
+    cur_sched->remove(nxt); 
+
+    // Add that thread to the new scheduler.
+    // This automatically overwrites the next and prev pointers, so we don't
+    // need to worry about that.
+    sched->admit(nxt); 
+  
+    // Onto the next thread in the old scheduler.
+    nxt = cur_sched->next();
   }
 
   // Shutdown the old scheduler
