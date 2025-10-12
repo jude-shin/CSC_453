@@ -109,46 +109,37 @@ void lwp_set_scheduler(scheduler sched) {
     return;
   }
 
-  // If there is no current scheduler, then there is nothing more to do but to
-  // set the pointer and get out of here. No need to move around threads from
-  // one scheduler to another.
-  if (cur_sched == NULL) {
-    cur_sched = sched;
-    return;
-  }
-
-  // --------------------------------------------------
-  // If we made it this far, then that means sched and cur_sched are different,
-  // and not null. 
-  // We must transfer the threads from cur_sched(old) to sched(new)
-
   // TODO: (ASK) do we init the scheduler here? or does the client code do this?
   // I am pretty sure we need to because it says we must call it before any 
   // threads are added. (which is what we are going to do in a sec).
+  // Initalize the scheduler before doing anything with it
   if (sched->init != NULL) {
     sched->init();
   }
 
-  // Keep reading and removing each thread until there is nothing left in 
-  // the old scheduler. Every time you remove a thread from the old scheduler,
-  // add it to the new one.
-  thread nxt = cur_sched->next();
-  while(nxt != NULL) { 
-    // Remove the thread from the old scheduler.
-    cur_sched->remove(nxt); 
+  // If there is a current scheduler must transfer the threads from 
+  // the cur_sched(old) to sched(new).
+  // If not, skip on ahead... No need to move around threads from one scheduler
+  // to another for no reason.
+  if (cur_sched != NULL) {
+    thread nxt = cur_sched->next();
+    while(nxt != NULL) { 
+      // Remove the thread from the old scheduler.
+      cur_sched->remove(nxt); 
 
-    // Add that thread to the new scheduler.
-    // This automatically overwrites the next and prev pointers, so we don't
-    // need to worry about that.
-    sched->admit(nxt); 
-  
-    // Onto the next thread in the old scheduler.
-    nxt = cur_sched->next();
-  }
+      // Add that thread to the new scheduler.
+      // This automatically overwrites the next and prev pointers, so we don't
+      // need to worry about that.
+      sched->admit(nxt); 
+    
+      // Onto the next thread in the old scheduler.
+      nxt = cur_sched->next();
+    }
 
-  // Shutdown the old scheduler
-  if (cur_sched->shutdown != NULL) {
-    cur_sched->shutdown();
+    // Shutdown the old scheduler
+    if (cur_sched->shutdown != NULL) {
+      cur_sched->shutdown();
+    }
   }
   
   // Set the currently used scheduler to the scheduler that we just created
