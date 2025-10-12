@@ -47,6 +47,9 @@ static void lwp_wrap(lwpfun fun, void *arg) {
 
 // Append the new thread to the end of the running list of threads
 // I believe this is the key to the FIFO structure
+// TODO: make this universal? I don't know the most efficient way to do this...
+// I don't like having so many global variables, but I also think that I might
+// need a zombie tail.
 static void lwp_append(thread new) {
   // In either case, the new thread will act as the tail, symbolized by its
   // NEXT pointer being NULL.
@@ -225,42 +228,35 @@ tid_t lwp_wait(int *status) {
   #ifdef DEBUG
   printf("[debug] lwp_wait\n");
   #endif
-
-  // search through the global list to find the 'oldest' thread. This should
-  // follow FIFO, so it is whichever thread you come across 
-
+  
+  // Grab the first element of the queue, following the FIFO spec.
   thread t = zombies;
-  while (t != NULL) {
-    // TODO: check this... I don't think this is right, but he gave it, so 
-    // it must be...
-    // TODO: if we are using the zombies fifo queue, then we don't have 
-    // to check this as everything in the queue is already terminated
-    if (LWPTERMINATED(t->status)) { 
-      // Set the value of this pointer to the chosen thread's status
-      // TODO: Deallocate stuff or whatever, I just think you do mmap stuff
-      if (munmap(t->stack, t->stacksize) == -1) {
-        // Something terribly wrong has happened. This syscall failed, so we
-        // note the error and give up. In prod, we might try to limp along, but
-        // for now, we are just bailing. 
-        perror("[lwp_wait] Error munmapping lwp! Bailing now...");
-        exit(EXIT_FAILURE);
-      }
 
-      *status = t->status;
-      tid_t tid = t->tid;
-
-      // remove from the global list?
-
-      return tid;
-    }
-    t = t->NEXT;
+  // If there are no zombies to be cleaned, note that appropriately.
+  if (t == NULL) {
+    *status = -1;
+    return NO_THREAD;
   }
 
-  // If we have reached this state, then there are no threads that have been 
-  // terminated, but not cleaned yet.
-  // give the general
-  *status = -1;
-  return NO_THREAD;
+  // Otherwise, t is the oldest zombie.
+
+  // TODO: remove it from the queue.
+
+  if (t->exited == NULL || t->exited->tid != t->tid) {
+    // The thread t is not the main process created by lwp_start(), so we can 
+    // try to munmap it's contents.
+    if (munmap(t->stack, t->stacksize) == -1) {
+      // Something terribly wrong has happened. This syscall failed, so we
+      // note the error and give up. In prod, we might try to limp along, but
+      // for now, we are just bailing. 
+      perror("[lwp_wait] Error munmapping lwp! Bailing now...");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  *status = t->status;
+  // tid_t tid = t->tid; // TODO: we might want to save the variable before unmap
+  return t->tid;
 }
 
 // Causes the LWP package to use the given scheduler to choose the
