@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <sys/mman.h>
-#include <errno.h>
+#include <stdlib.h>
 #include <lwp.h> // TODO: what is the difference? <> vs ""
 #include "roundrobin.h"
 
@@ -190,14 +190,12 @@ tid_t lwp_gettid(void) {
 
 // Returns the thread corresponding to the given thread ID, or NULL
 // if the ID is invalid
-// TODO (2): (ASK) I am assuming that we only want threads that are not zombies. 
-// aka, threads that have not terminated yet.
 thread tid2thread(tid_t tid) {
   #ifdef DEBUG
   printf("[debug] tid2thread\n");
   #endif
   
-  // Classic linear search of the linked list starting at the head.
+  // Linear search through all live threads
   thread t = head;
   while (t != NULL) {
     if (t->tid == tid) {
@@ -205,9 +203,18 @@ thread tid2thread(tid_t tid) {
     }
     t = t->NEXT;
   }
+  
+  // Linear search through all the terminated threads
+  t = zombies;
+  while (t != NULL) {
+    if (t->tid == tid) {
+      return t;
+    }
+    t = t->NEXT;
+  }
+
     
   // If we have reached this point, then there is no id that matches
-
   return NULL;
 }
 
@@ -231,13 +238,12 @@ tid_t lwp_wait(int *status) {
     if (LWPTERMINATED(t->status)) { 
       // Set the value of this pointer to the chosen thread's status
       // TODO: Deallocate stuff or whatever, I just think you do mmap stuff
-      // TODO (3): ERROR CHECK!!! its a systemcall 
-      // I guess if the free() errors, then return NULL, and set the status
-      // to something meaningful? (or -1 if you are lazy)
       if (munmap(t->stack, t->stacksize) == -1) {
-        // *status = errno; // OR break out of the while loop
-        *status = -1;
-        return NO_THREAD;
+        // Something terribly wrong has happened. This syscall failed, so we
+        // note the error and give up. In prod, we might try to limp along, but
+        // for now, we are just bailing. 
+        perror("[lwp_wait] Error munmapping lwp! Bailing now...");
+        exit(EXIT_FAILURE);
       }
 
       *status = t->status;
@@ -304,7 +310,7 @@ void lwp_set_scheduler(scheduler sched) {
       nxt = curr_sched->next();
     }
 
-    // Shutdown the old scheduler
+    // TODO: Shutdown the old scheduler ONLY after removing the last thread
     if (curr_sched->shutdown != NULL) {
       curr_sched->shutdown();
     }
@@ -320,17 +326,13 @@ scheduler lwp_get_scheduler(void) {
   printf("[debug] lwp_get_scheduler\n");
   #endif
 
-  // // TODO (5a): when would the client ever want this?
-  // // Should I have this return NULL if there really is no scheduler?
-  // // TODO (5b): (ASK) do I want this functionality?
-  // if (curr_sched == NULL) {
-  //   curr_sched  = MyRoundRobin;
-
-  //   // TODO (5c): (ASK) do I want this functionality?
-  //   if (curr_sched->init != NULL) {
-  //     curr_sched->init();
-  //   }
-  // }
+  if (curr_sched == NULL) {
+    curr_sched  = MyRoundRobin;
+    // // TODO: note, you should only call init before admitting the first thread 
+    // if (curr_sched->init != NULL) {
+    //   curr_sched->init();
+    // }
+  }
 
   return curr_sched;
 }
