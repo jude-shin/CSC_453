@@ -46,14 +46,14 @@ nums: bin/numbersmain.o bin/util.o bin/roundrobin.o
 
 # =====================================================================
 
-my_snakes: bin/randomsnakes.o bin/util.o lib64/libsnakes.so lib64/liblwp.so bin/roundrobin.o
-	$(LD) $(LDFLAGS) -o my_snakes bin/randomsnakes.o bin/util.o bin/roundrobin.o -llwp $(SNAKE_LIBS)
+my_snakes: bin/randomsnakes.o bin/util.o lib64/libsnakes.so lib64/liblwp.so bin/roundrobin.o bin/magic64.o
+	$(LD) $(LDFLAGS) -o my_snakes bin/randomsnakes.o bin/util.o bin/roundrobin.o bin/magic64.o -llwp $(SNAKE_LIBS)
 
-my_hungry: bin/hungrysnakes.o bin/util.o lib64/libsnakes.so lib64/liblwp.so bin/roundrobin.o
-	$(LD) $(LDFLAGS) -o my_hungry bin/hungrysnakes.o bin/util.o bin/roundrobin.o -llwp $(SNAKE_LIBS)
+my_hungry: bin/hungrysnakes.o bin/util.o lib64/libsnakes.so lib64/liblwp.so bin/roundrobin.o bin/magic64.o
+	$(LD) $(LDFLAGS) -o my_hungry bin/hungrysnakes.o bin/util.o bin/roundrobin.o bin/magic64.o -llwp $(SNAKE_LIBS)
 
-my_nums: bin/numbersmain.o bin/util.o lib64/liblwp.so bin/roundrobin.o
-	$(LD) $(LDFLAGS) -o my_nums bin/numbersmain.o bin/roundrobin.o -llwp
+my_nums: bin/numbersmain.o bin/util.o lib64/liblwp.so bin/roundrobin.o bin/magic64.o
+	$(LD) $(LDFLAGS) -o my_nums bin/numbersmain.o bin/roundrobin.o bin/magic64.o -llwp
 
 # =====================================================================
 
@@ -81,4 +81,5 @@ bin/roundrobin.o: src/roundrobin.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # =====================================================================
-bin/magic64.o: 
+bin/magic64.o: src/magic64.S
+	$(CC) -o bin/magic64.o -c src/magic64.S
