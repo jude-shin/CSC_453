@@ -16,21 +16,17 @@
 // The scheduler that the package is currently using to manage the threads
 static scheduler curr_sched = NULL;
 
-// A global list of all threads.
-static thread head = NULL;
-// The tail is just for convenience.
-static thread tail = NULL;
+// A global list of all threads. This list is not in any particular order; we
+// are adding the threads to the list by prepending it to the live_head. 
+static thread live_head = NULL;
 
-// Zombie threads that have been exited, but not cleaned up (waited on).
-// This is a singly linked list that shares the lib pointers
-static thread zombies = NULL;
+// A queue of threads that have been exited, but not cleaned up/waited on.
+// This is a singly linked list. Only append to the tail and pop from the head
+// is going to occur with this list.
+static thread term_head = NULL;
+static thread term_tail = NULL;
 
-// TODO: (ASK) I think this is how we are going to keep track of it. Is this
-// a good way of doing this? I don't like using global variables, but I think
-// it is fine since the whole point of this assignment is to have only one
-// process going on at a time.
-// The current thread that is in use. 
-// TODO: (ASK) In most cases, is this the 'caller' thread?
+// The thread that is currently in context.
 static thread curr = NULL;
 
 // A counter for all the ids. We assume the domain will never be more than
@@ -45,36 +41,57 @@ static void lwp_wrap(lwpfun fun, void *arg) {
   lwp_exit(rval);
 }
 
-// Append the new thread to the end of the running list of threads
-// I believe this is the key to the FIFO structure
-// TODO: make this universal? I don't know the most efficient way to do this...
-// I don't like having so many global variables, but I also think that I might
-// need a zombie tail.
-static void lwp_append(thread new) {
+// Append the new thread to the queue of terminated threads
+// the FIFO structure.
+static void lwp_add_term(thread new) {
+  // The terminated list represents a singly linked list, so this is just a 
+  // sanity safeguard. No elements in the singly linked list will have a prev
+  // pointer.
+  new->PREV = NULL;
+
   // In either case, the new thread will act as the tail, symbolized by its
   // NEXT pointer being NULL.
   new->NEXT = NULL;
 
   // If there is nothing allocated yet, then don't do any pointer juggling
-  if (head == NULL) {
-    new->PREV = NULL;
-    head = new;
+  if (term_head == NULL) {
+    term_head = new;
   }
-  // Otherwise, append as normal.
+  // Otherwise, append to the tail of the list.
   else {
-    new->PREV = tail;
-    tail->NEXT = new;
+    term_tail->NEXT = new;
   }
 
   // In either case, when all is said and done, set the tail to be the new
   // thread.
-  tail = new;
+  term_tail = new;
 }
 
-// Remove a thread from the global list
-// This is in support of WAITED threads. Not exited threads; those become
-// zombies for the watied threads to pick up.
-static void lwp_remove(thread new) {
+// Prepend the new thread to the list of live threads.
+// The order in which we append does not matter.
+// However, unlike the terminated queue, this is a doubly linked list.
+static void lwp_add_live(thread new) {
+  new->PREV = NULL;
+  new->NEXT = live_head;
+  live_head->PREV = new;
+  live_head = new;
+}
+
+// Remove a thread from either the queue of termiated threads, or the doubly
+// linked list of live threads. We should only be removing the head of the 
+// terminated queue.
+static void lwp_remove(thread victim) {
+  if (victim->PREV != NULL) {
+    victim->PREV->NEXT = victim->NEXT;
+  }
+
+  if (victim->NEXT == NULL) {
+    victim->NEXT->PREV = victim->PREV;
+  }
+
+  // For sanity, set the pointers to NULL
+  victim->NEXT = NULL;
+  victim->PREV = NULL;
 }
 
 
@@ -86,32 +103,7 @@ tid_t lwp_create(lwpfun function, void *argument){
   #ifdef DEBUG
   printf("[debug] lwp_create\n");
   #endif
-
-  tid_counter++;
-
-  // TODO: do some wrapper stuff with the function here?
-
-  // create a new thread
-  // TODO: fill in the new thread and the information
-  rfile new_rfile = {};
-
-  thread new = {};
-  new->tid = tid_counter;
-  new->stack = 0; // fix this
-  new->stacksize = 0;
-  new->state = new_rfile;
-  new->status = 0;
-  new->lib_one = NULL;
-  new->lib_two = NULL;
-  new->sched_one = NULL;
-  new->sched_two = NULL;
-  new->exited = NULL;
-
-  // admit it to the current scheduler
-  curr_sched->admit(new);
-
-  return tid_counter;
-  return NO_THREAD;
+  return 0;
 }
 
 
@@ -144,7 +136,7 @@ void lwp_start(void){
   new->exited = NULL; // TODO: I still don't know what the hell this is
 
   // Add this to the rolling global list of items
-  lwp_append(new);
+  lwp_add_live(new);
 
   // Admit the newly created "main" thread to the current scheduler
   curr_sched->admit(new);
@@ -178,7 +170,6 @@ void lwp_exit(int exitval) {
 }
 
 // Returns the tid of the calling LWP or NO_THREAD if not called by a LWP.
-// TODO: I don't know how to find the previously calling thread?
 tid_t lwp_gettid(void) {
   #ifdef DEBUG
   printf("[debug] lwp_gettid\n");
@@ -188,18 +179,18 @@ tid_t lwp_gettid(void) {
     return NO_THREAD;
   }
 
-  return  curr->tid;
+  return curr->tid;
 }
 
-// Returns the thread corresponding to the given thread ID, or NULL
-// if the ID is invalid
+// Returns the thread corresponding to the given thread ID, or NULL if the ID
+// is invalid
 thread tid2thread(tid_t tid) {
   #ifdef DEBUG
   printf("[debug] tid2thread\n");
   #endif
   
   // Linear search through all live threads
-  thread t = head;
+  thread t = live_head;
   while (t != NULL) {
     if (t->tid == tid) {
       return t;
@@ -208,7 +199,7 @@ thread tid2thread(tid_t tid) {
   }
   
   // Linear search through all the terminated threads
-  t = zombies;
+  t = term_head;
   while (t != NULL) {
     if (t->tid == tid) {
       return t;
@@ -216,31 +207,31 @@ thread tid2thread(tid_t tid) {
     t = t->NEXT;
   }
 
-    
   // If we have reached this point, then there is no id that matches
   return NULL;
 }
 
-// Waits for a thread to terminate, deallocates its resources, and re-
-// ports its termination status if status is non-NULL.
-// Returns the tid of the terminated thread or NO_THREAD.
+// Waits for a thread to terminate, deallocates its resources, and reports its
+// termination status if status is non-NULL. Returns the tid of the terminated
+// thread or NO_THREAD.
 tid_t lwp_wait(int *status) {
   #ifdef DEBUG
   printf("[debug] lwp_wait\n");
   #endif
   
   // Grab the first element of the queue, following the FIFO spec.
-  thread t = zombies;
+  thread t = term_head;
 
   // If there are no zombies to be cleaned, note that appropriately.
+  // TODO: we are supposed to use the qlen() function?
   if (t == NULL) {
-    *status = -1;
+    // TODO: if there are no terminated threads, the caller of lwp_wait()
+    // (the curr_thread) will have to block.
     return NO_THREAD;
   }
 
-  // Otherwise, t is the oldest zombie.
-
-  // TODO: remove it from the queue.
+  // Remove the thread from the beginning of the queue (t is the beginning)
+  lwp_remove(t);
 
   if (t->exited == NULL || t->exited->tid != t->tid) {
     // The thread t is not the main process created by lwp_start(), so we can 
@@ -254,7 +245,11 @@ tid_t lwp_wait(int *status) {
     }
   }
 
-  *status = t->status;
+  // TODO: t->status is an integer... shouldn't it always be non-NULL?
+  if (t->status != NULL) {
+    *status = t->status;
+  }
+  
   // tid_t tid = t->tid; // TODO: we might want to save the variable before unmap
   return t->tid;
 }
@@ -279,10 +274,7 @@ void lwp_set_scheduler(scheduler sched) {
     return;
   }
 
-  // TODO (4): (ASK) do we init the scheduler here? or does the client code do this?
-  // I am pretty sure we need to because it says we must call it before any 
-  // threads are added. (which is what we are going to do in a sec).
-  // Initalize the scheduler before doing anything with it
+  // Init the scheduler before any theads are admit()ed
   if (sched->init != NULL) {
     sched->init();
   }
@@ -306,7 +298,7 @@ void lwp_set_scheduler(scheduler sched) {
       nxt = curr_sched->next();
     }
 
-    // TODO: Shutdown the old scheduler ONLY after removing the last thread
+    // Shutdown the old scheduler only after all threads are remove()ed
     if (curr_sched->shutdown != NULL) {
       curr_sched->shutdown();
     }
@@ -324,14 +316,7 @@ scheduler lwp_get_scheduler(void) {
 
   if (curr_sched == NULL) {
     curr_sched  = MyRoundRobin;
-    // // TODO: note, you should only call init before admitting the first thread 
-    // if (curr_sched->init != NULL) {
-    //   curr_sched->init();
-    // }
   }
 
   return curr_sched;
 }
-
-
-
