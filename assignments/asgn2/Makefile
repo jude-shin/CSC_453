@@ -79,3 +79,6 @@ bin/lwp.o: src/lwp.c
 
 bin/roundrobin.o: src/roundrobin.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
+# =====================================================================
+bin/magic64.o: 
