@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <sys/resource.h>
 #include <stdlib.h>
-#include <lwp.h> // TODO: what is the difference? <> vs ""
+#include "lwp.h"
 #include "roundrobin.h"
 
 #define DEBUG 1
@@ -16,8 +16,7 @@
 #define PREV lib_two 
 
 // The size of the RLIMIT_STACK in bytes if none is set.
-// TODO: set to 8MB
-#define RLIMIT_STACK_DEFAULT 8000000
+#define RLIMIT_STACK_DEFAULT 8000000 // 8MB
 
 // The scheduler that the package is currently using to manage the thread
 static scheduler curr_sched = NULL;
@@ -70,12 +69,15 @@ static void lwp_list_enqueue(thread head, thread tail, thread new) {
 
     head = new;
     tail = new;
+    return;
   }
 
   new->NEXT = NULL;
   new->PREV = tail;
 
   tail->NEXT = new;
+
+  tail = new;
 }
 
 // Remove a thread from either the queue of termiated threads, the queue of 
@@ -206,16 +208,14 @@ tid_t lwp_create(lwpfun function, void *argument){
   // Indicate that it is a live and running process.
   new_context.status = LWP_LIVE;
 
-  // TODO: For my own sanity, but probably okay to remove later
+  // For sanity...
   new_context.lib_one = NULL;
   new_context.lib_two = NULL;
   new_context.sched_one = NULL;
   new_context.sched_two = NULL;
 
-  // TODO: is this the thread that created this thread?
-  // in start's case, this would be the current thread, but in lwp_create, 
-  // ANY thread can create a thread...
-  new_context.exited = NULL; // TODO: I still don't know what the hell this is
+  // TODO: I am still slightly unsure what this does
+  new_context.exited = NULL;
   
   // ----------------------------------------------------------------------
 
@@ -247,7 +247,7 @@ void lwp_start(void){
   // Setup the context for the very first thead (using the original system
   // thread).
 
-  // TODO: I don't know what to do here
+  // TODO: I don't know what to do here. HOW DO I BUILD THE STACK
   thread new = {0};
 
   // Get the soft stack size.
@@ -326,28 +326,29 @@ void lwp_exit(int exitval) {
   printf("[debug] lwp_exit\n");
   #endif
 
-  // Remove from the scheduler?
+  // Remove from the scheduler.
   scheduler sched = lwp_get_scheduler();
   sched->remove(curr);
-
-  // Remove the lwp from the live stack.
-  lwp_list_remove(live_head, live_tail, curr);
 
   // Combine the status and the exitval, and set it as the thread's new status.
   curr->status = MKTERMSTAT(curr->status, exitval);
 
   // Add the current thread to the queue of terminated threads.
+  // This also effectively removes the current thread from the live stack also.
   lwp_list_enqueue(term_head, term_tail, curr);
+ 
+  // Do some blocking checks if there are blocked threads.
+  // TODO: how do I know that curr is the thread that blck is waiting for?
+  if (blck_head != NULL) {
+    // Set the blocked .exited status to this current thread.
+    blck_head->exited = curr;
 
-  // TODO: add the blocking check
-  
-  // TODO: on top of the blocking check, add another check to see if this is
-  // the last thread (with qlen)
-
-  // The curr thread should be handled in lwp_yield(), however, this is more
-  // for my sanity.
-  // TODO: Maybe this is not good to have...
-  // curr = NULL;
+    // Add the unblocked thread to the scheduler again.;
+    sched->admit(blck_head);
+    
+    // Reset this to "live" by adding it back to the live list
+    lwp_list_enqueue(live_head, live_tail, blck_head);
+  }
 
   // Yield to the next thread that the scheduler chooses.
   lwp_yield();
@@ -417,15 +418,22 @@ tid_t lwp_wait(int *status) {
   
     // We must be blocked... How sad.
     // 1) Deschedule curr
+    sched->remove(curr);
+
     // 2) Put curr on the blocked queue (which "removes" it from the live list)
+    lwp_list_enqueue(blck_head, blck_tail, curr);
+
     // 3) yeild to another process
+    lwp_yield();
     
     // At this point, we have returned!
     // NOTE: curr->exited has been populated with the exited thread
     // 4) Remove curr from the blocked queue
     // 5) Put the curr onto the live list.
-    // 6) exited is now the next thread to deallocate (t)
+    lwp_list_enqueue(live_head, live_tail, curr);
 
+    // 6) exited is now the next thread to deallocate (t)
+    t = curr->exited;
   }
   // Remove the thread from wherever it is
   // 1) it is either the head of the terminated queue
