@@ -7,6 +7,7 @@
 #include "lwp.h"
 #include "roundrobin.h"
 
+// === MACROS ================================================================
 #define DEBUG 1
 
 // These are the variable names in the given Thread struct.
@@ -18,6 +19,8 @@
 // The size of the RLIMIT_STACK in bytes if none is set.
 #define RLIMIT_STACK_DEFAULT 8000000 // 8MB
 
+
+// === GLOBAL VARIABLES (don't freak out, its unavoidable) ===================
 // The scheduler that the package is currently using to manage the thread
 static scheduler curr_sched = NULL;
 
@@ -39,128 +42,19 @@ static thread curr = NULL;
 // 2^64 - 2 threads.
 static tid_t tid_counter = 0;
 
-// Calls the given lwpfun with the given argument. After it is finished with 
-// the lwpfun, it valles lwp_exit() with the appropriate return value.
-static void lwp_wrap(lwpfun fun, void *arg) {
-  int rval;
-  rval = fun(arg);
-  lwp_exit(rval);
-}
 
-// =============================================================
-// TODO: add this to a different file?
-
-// Append the new thread to the end of a given list.
-// For the termiated queue and blocked queue this function abides by the FIFO 
-// requirements. As for the list of all running threads, the order in which 
-// threads are added does not matter.
-// WARNING: Make sure head and tail represent the same list. If not, bad things
-// are going to happen...
-static void lwp_list_enqueue(thread head, thread tail, thread new) {
-  if ((head == NULL) ^ (tail == NULL)) {
-    // This should never happen. Either they are both NULL, or both something.
-    perror("[lwp_list_enqueue] mismatching tail and head pointers");
-    return;
-  }
-
-  if (head == NULL && tail == NULL) {
-    new->NEXT = NULL;
-    new->PREV = NULL;
-
-    head = new;
-    tail = new;
-    return;
-  }
-
-  new->NEXT = NULL;
-  new->PREV = tail;
-
-  tail->NEXT = new;
-
-  tail = new;
-}
-
-// Remove a thread from either the queue of termiated threads, the queue of 
-// blocked threads, or the doubly linked list of live threads. 
-// To dequeue, call lwp_list_remove(head, tail, head)
-static void lwp_list_remove(thread head, thread tail, thread victim) {
-  if ((head == NULL) ^ (tail == NULL)) {
-    // This should never happen. Either they are both NULL, or both something.
-    perror("[lwp_list_dequeue] mismatching tail and head pointers");
-    return;
-  }
-
-  if (head != NULL && victim != NULL) {
-    if (victim->PREV != NULL) {
-      victim->PREV->NEXT = victim->NEXT;
-    }
-    else {
-      // we are at the head...
-      head = victim->NEXT;
-    }
-
-    if (victim->NEXT != NULL) {
-      victim->NEXT->PREV = victim->PREV;
-    }
-    else {
-      // we are at the tail...
-      tail = victim->PREV;
-    }
-
-    // For sanity, set the pointers to NULL
-    victim->NEXT = NULL;
-    victim->PREV = NULL;
-  }
-}
-// =============================================================
+// === HELPER FUCNTIONS ======================================================
+static void lwp_list_enqueue(thread head, thread tail, thread victim);
+static void lwp_list_remove(thread head, thread tail, thread victim);
+static void lwp_wrap(lwpfun fun, void *arg);
+static size_t get_stacksize();
 
 
-// Gets the size of the stack that we should use.
-// If any of the system calls error, then the return value is 0, and should
-// be handled in function who called get_stacksize()
-static size_t get_stacksize() {
-  #ifdef DEBUG
-  printf("[debug] get_stacksize\n");
-  #endif
-
-  struct rlimit rlim;
-  rlim_t limit = 0;
-
-  if(getrlimit(RLIMIT_STACK, &rlim) == -1 || rlim.rlim_cur == RLIM_INFINITY) {
-    // Set the default to RLIMIT_STACK_DEFAULT
-    limit = RLIMIT_STACK_DEFAULT;
-  }
-  else {
-    limit = rlim.rlim_cur;
-  }
-  
-  // Ensure that the limit is going to be set to a multiple of the page size.
-  // This is in bytes.
-  size_t page_size = sysconf(_SC_PAGE_SIZE);
-
-  // Catches -1 on error, as well as the page size being zero.
-  if (page_size <= 0) {
-    perror("[get_stacksize] Error when getting _SC_PAGE_SIZE.");
-    return 0;
-  }
-  
-  // Round the stack size to the nearest page_size.
-  uintptr_t remainder = (uintptr_t)limit%(uintptr_t)page_size;
-
-  if (remainder == 0) {
-    return (size_t)limit;
-  }
-
-  // Return the limit rounded to the nearest page_size.
-  return (size_t)((uintptr_t)limit + ((uintptr_t)page_size - remainder));
-}
-
-
+// === LWP FUCNTIONS =========================================================
 // Creates a new lightweight process which executes the given function
 // with the given argument.
 // lwp create() returns the (lightweight) thread id of the new thread
 // or NO_THREAD if the thread cannot be created.
-
 // TODO: what the hell do I do with this lwpfun function?
 tid_t lwp_create(lwpfun function, void *argument){
   #ifdef DEBUG
@@ -210,8 +104,6 @@ tid_t lwp_create(lwpfun function, void *argument){
   // TODO: I am still slightly unsure what this does
   new_context.exited = NULL;
   
-  // ----------------------------------------------------------------------
-
   printf("[lwp_create] setting threads\n");
   thread new_thread = &new_context;
 
@@ -226,7 +118,6 @@ tid_t lwp_create(lwpfun function, void *argument){
   printf("[lwp_create] exiting function\n");
   return new_thread->tid;
 }
-
 
 // Starts the LWP system. Converts the calling thread into a LWP
 // and lwp yield()s to whichever thread the scheduler chooses.
@@ -511,4 +402,119 @@ scheduler lwp_get_scheduler(void) {
   }
 
   return curr_sched;
+}
+
+
+// === QUEUE HELPER FUNCTIONS ================================================
+// Append the new thread to the end of a given list.
+// For the termiated queue and blocked queue this function abides by the FIFO 
+// requirements. As for the list of all running threads, the order in which 
+// threads are added does not matter.
+// WARNING: Make sure head and tail represent the same list. If not, bad things
+// are going to happen...
+static void lwp_list_enqueue(thread head, thread tail, thread new) {
+  if ((head == NULL) ^ (tail == NULL)) {
+    // This should never happen. Either they are both NULL, or both something.
+    perror("[lwp_list_enqueue] mismatching tail and head pointers");
+    return;
+  }
+
+  if (head == NULL && tail == NULL) {
+    new->NEXT = NULL;
+    new->PREV = NULL;
+
+    head = new;
+    tail = new;
+    return;
+  }
+
+  new->NEXT = NULL;
+  new->PREV = tail;
+
+  tail->NEXT = new;
+
+  tail = new;
+}
+
+// Remove a thread from either the queue of termiated threads, the queue of 
+// blocked threads, or the doubly linked list of live threads. 
+// To dequeue, call lwp_list_remove(head, tail, head)
+static void lwp_list_remove(thread head, thread tail, thread victim) {
+  if ((head == NULL) ^ (tail == NULL)) {
+    // This should never happen. Either they are both NULL, or both something.
+    perror("[lwp_list_dequeue] mismatching tail and head pointers");
+    return;
+  }
+
+  if (head != NULL && victim != NULL) {
+    if (victim->PREV != NULL) {
+      victim->PREV->NEXT = victim->NEXT;
+    }
+    else {
+      // we are at the head...
+      head = victim->NEXT;
+    }
+
+    if (victim->NEXT != NULL) {
+      victim->NEXT->PREV = victim->PREV;
+    }
+    else {
+      // we are at the tail...
+      tail = victim->PREV;
+    }
+
+    // For sanity, set the pointers to NULL
+    victim->NEXT = NULL;
+    victim->PREV = NULL;
+  }
+}
+
+
+// === LWP HELPER FUNCTIONS ==================================================
+// Calls the given lwpfun with the given argument. After it is finished with 
+// the lwpfun, it valles lwp_exit() with the appropriate return value.
+static void lwp_wrap(lwpfun fun, void *arg) {
+  int rval;
+  rval = fun(arg);
+  lwp_exit(rval);
+}
+
+// Gets the size of the stack that we should use.
+// If any of the system calls error, then the return value is 0, and should
+// be handled in function who called get_stacksize()
+static size_t get_stacksize() {
+  #ifdef DEBUG
+  printf("[debug] get_stacksize\n");
+  #endif
+
+  struct rlimit rlim;
+  rlim_t limit = 0;
+
+  if(getrlimit(RLIMIT_STACK, &rlim) == -1 || rlim.rlim_cur == RLIM_INFINITY) {
+    // Set the default to RLIMIT_STACK_DEFAULT
+    limit = RLIMIT_STACK_DEFAULT;
+  }
+  else {
+    limit = rlim.rlim_cur;
+  }
+  
+  // Ensure that the limit is going to be set to a multiple of the page size.
+  // This is in bytes.
+  size_t page_size = sysconf(_SC_PAGE_SIZE);
+
+  // Catches -1 on error, as well as the page size being zero.
+  if (page_size <= 0) {
+    perror("[get_stacksize] Error when getting _SC_PAGE_SIZE.");
+    return 0;
+  }
+  
+  // Round the stack size to the nearest page_size.
+  uintptr_t remainder = (uintptr_t)limit%(uintptr_t)page_size;
+
+  if (remainder == 0) {
+    return (size_t)limit;
+  }
+
+  // Return the limit rounded to the nearest page_size.
+  return (size_t)((uintptr_t)limit + ((uintptr_t)page_size - remainder));
 }
