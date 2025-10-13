@@ -49,8 +49,8 @@ static tid_t tid_counter = 0;
 
 
 // === HELPER FUCNTIONS ======================================================
-static void lwp_list_enqueue(thread head, thread tail, thread victim);
-static void lwp_list_remove(thread head, thread tail, thread victim);
+static void lwp_list_enqueue(thread *head, thread *tail, thread victim);
+static void lwp_list_remove(thread *head, thread *tail, thread victim);
 static void lwp_wrap(lwpfun fun, void *arg);
 static size_t get_stacksize();
 
@@ -522,47 +522,47 @@ scheduler lwp_get_scheduler(void) {
 // threads are added does not matter.
 // WARNING: Make sure head and tail represent the same list. If not, bad things
 // are going to happen...
-static void lwp_list_enqueue(thread head, thread tail, thread new) {
-  if ((head == NULL) ^ (tail == NULL)) {
+static void lwp_list_enqueue(thread *head, thread *tail, thread new) {
+  if ((*head == NULL) ^ (*tail == NULL)) {
     // This should never happen. Either they are both NULL, or both something.
     perror("[lwp_list_enqueue] mismatching tail and head pointers");
     return;
   }
 
-  if (head == NULL && tail == NULL) {
+  if (*head == NULL && *tail == NULL) {
     new->NEXT = NULL;
     new->PREV = NULL;
 
-    head = new;
-    tail = new;
+    *head = new;
+    *tail = new;
     return;
   }
 
   new->NEXT = NULL;
-  new->PREV = tail;
+  new->PREV = *tail;
 
-  tail->NEXT = new;
+  (*tail)->NEXT = new;
 
-  tail = new;
+  *tail = new;
 }
 
 // Remove a thread from either the queue of termiated threads, the queue of 
 // blocked threads, or the doubly linked list of live threads. 
 // To dequeue, call lwp_list_remove(head, tail, head)
-static void lwp_list_remove(thread head, thread tail, thread victim) {
-  if ((head == NULL) ^ (tail == NULL)) {
+static void lwp_list_remove(thread *head, thread *tail, thread victim) {
+  if ((*head == NULL) ^ (*tail == NULL)) {
     // This should never happen. Either they are both NULL, or both something.
     perror("[lwp_list_dequeue] mismatching tail and head pointers");
     return;
   }
 
-  if (head != NULL && victim != NULL) {
+  if (*head != NULL && victim != NULL) {
     if (victim->PREV != NULL) {
       victim->PREV->NEXT = victim->NEXT;
     }
     else {
       // we are at the head...
-      head = victim->NEXT;
+      *head = victim->NEXT;
     }
 
     if (victim->NEXT != NULL) {
@@ -570,7 +570,7 @@ static void lwp_list_remove(thread head, thread tail, thread victim) {
     }
     else {
       // we are at the tail...
-      tail = victim->PREV;
+      *tail = victim->PREV;
     }
 
     // For sanity, set the pointers to NULL
