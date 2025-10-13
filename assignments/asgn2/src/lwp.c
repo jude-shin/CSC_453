@@ -131,7 +131,7 @@ tid_t lwp_create(lwpfun function, void *argument){
   printf("[lwp_create] adding thread to lib live list\n");
   #endif
   // Add this to the rolling global list of items
-  lwp_list_enqueue(live_head, live_tail, new);
+  lwp_list_enqueue(&live_head, &live_tail, new);
 
   #ifdef DEBUG
   printf("[lwp_create] admitting new thread to scheduler\n");
@@ -198,7 +198,7 @@ void lwp_start(void){
   printf("[lwp_create] adding thread to lib live list\n");
   #endif
   // Add this to the rolling global list of items
-  lwp_list_enqueue(live_head, live_tail, new);
+  lwp_list_enqueue(&live_head, &live_tail, new);
 
   #ifdef DEBUG
   printf("[lwp_create] admitting new thread to scheduler\n");
@@ -288,7 +288,7 @@ void lwp_exit(int exitval) {
 
   // Add the current thread to the queue of terminated threads.
   // This also effectively removes the current thread from the live stack also.
-  lwp_list_enqueue(term_head, term_tail, curr);
+  lwp_list_enqueue(&term_head, &term_tail, curr);
  
   // Do some blocking checks if there are blocked threads.
   // TODO: how do I know that curr is the thread that blck is waiting for?
@@ -301,7 +301,7 @@ void lwp_exit(int exitval) {
     sched->admit(blck_head);
     
     // Reset this to "live" by adding it back to the live list
-    lwp_list_enqueue(live_head, live_tail, blck_head);
+    lwp_list_enqueue(&live_head, &live_tail, blck_head);
   }
 
   // Yield to the next thread that the scheduler chooses.
@@ -387,7 +387,7 @@ tid_t lwp_wait(int *status) {
     sched->remove(curr);
 
     // 2) Put curr on the blocked queue (which "removes" it from the live list)
-    lwp_list_enqueue(blck_head, blck_tail, curr);
+    lwp_list_enqueue(&blck_head, &blck_tail, curr);
 
     // 3) yeild to another process
     lwp_yield();
@@ -396,7 +396,7 @@ tid_t lwp_wait(int *status) {
     // NOTE: curr->exited has been populated with the exited thread
     // 4) Remove curr from the blocked queue
     // 5) Put the curr onto the live list.
-    lwp_list_enqueue(live_head, live_tail, curr);
+    lwp_list_enqueue(&live_head, &live_tail, curr);
 
     // 6) exited is now the next thread to deallocate (t)
     t = curr->exited;
@@ -406,7 +406,7 @@ tid_t lwp_wait(int *status) {
   // 2) it is somewhere in the (beginning, middle or end) of the terminated 
   // queue (but it is chosen as the next thread to remove as it is from a 
   // blocked process.
-  lwp_list_remove(term_head, term_tail, t);
+  lwp_list_remove(&term_head, &term_tail, t);
 
   if (munmap(t->stack, t->stacksize) == -1) {
     // Something terribly wrong has happened. This syscall failed, so we
