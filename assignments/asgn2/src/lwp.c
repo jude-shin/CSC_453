@@ -58,7 +58,7 @@ static void lwp_wrap(lwpfun fun, void *arg) {
 // WARNING: Make sure head and tail represent the same list. If not, bad things
 // are going to happen...
 static void lwp_list_enqueue(thread head, thread tail, thread new) {
-  if (head == NULL ^ tail == NULL) {
+  if ((head == NULL) ^ (tail == NULL)) {
     // This should never happen. Either they are both NULL, or both something.
     perror("[lwp_list_enqueue] mismatching tail and head pointers");
     return;
@@ -82,7 +82,7 @@ static void lwp_list_enqueue(thread head, thread tail, thread new) {
 // blocked threads, or the doubly linked list of live threads. 
 // To dequeue, call lwp_list_remove(head, tail, head)
 static void lwp_list_remove(thread head, thread tail, thread victim) {
-  if (head == NULL ^ tail == NULL) {
+  if ((head == NULL) ^ (tail == NULL)) {
     // This should never happen. Either they are both NULL, or both something.
     perror("[lwp_list_dequeue] mismatching tail and head pointers");
     return;
