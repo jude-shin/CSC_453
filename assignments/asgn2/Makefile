@@ -35,44 +35,44 @@ progs: $(PROGS)
 
 # =====================================================================
 
-snakes: bin/randomsnakes.o bin/util.o lib64/libsnakes.so bin/roundrobin.o
-	$(LD) $(LDFLAGS) -o snakes bin/randomsnakes.o bin/util.o bin/roundrobin.o -lPLN $(SNAKE_LIBS)
+snakes: bin/randomsnakes.o bin/util.o bin/roundrobin.o lib64/libsnakes.so 
+	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -lPLN $(SNAKE_LIBS)
 
-hungry: bin/hungrysnakes.o bin/util.o lib64/libsnakes.so bin/roundrobin.o
-	$(LD) $(LDFLAGS) -o hungry bin/hungrysnakes.o bin/util.o bin/roundrobin.o -lPLN $(SNAKE_LIBS)
+hungry: bin/hungrysnakes.o bin/util.o bin/roundrobin.o lib64/libsnakes.so
+	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -lPLN $(SNAKE_LIBS)
 
-nums: bin/numbersmain.o bin/util.o bin/roundrobin.o
-	$(LD) $(LDFLAGS) -o nums bin/numbersmain.o bin/roundrobin.o -lPLN
+nums: bin/numbersmain.o bin/roundrobin.o lib64/libsnakes.so
+	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -lPLN
 
 # =====================================================================
 
-my_snakes: bin/randomsnakes.o bin/util.o lib64/libsnakes.so lib64/liblwp.so bin/roundrobin.o bin/magic64.o
-	$(LD) $(LDFLAGS) -o my_snakes bin/randomsnakes.o bin/util.o bin/roundrobin.o bin/magic64.o -llwp $(SNAKE_LIBS)
+my_snakes: bin/randomsnakes.o bin/util.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so 
+	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp $(SNAKE_LIBS)
 
-my_hungry: bin/hungrysnakes.o bin/util.o lib64/libsnakes.so lib64/liblwp.so bin/roundrobin.o bin/magic64.o
-	$(LD) $(LDFLAGS) -o my_hungry bin/hungrysnakes.o bin/util.o bin/roundrobin.o bin/magic64.o -llwp $(SNAKE_LIBS)
+my_hungry: bin/hungrysnakes.o bin/util.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so
+	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp $(SNAKE_LIBS)
 
-my_nums: bin/numbersmain.o bin/util.o lib64/liblwp.so bin/roundrobin.o bin/magic64.o
-	$(LD) $(LDFLAGS) -o my_nums bin/numbersmain.o bin/roundrobin.o bin/magic64.o -llwp
+my_nums: bin/numbersmain.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so 
+	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp
 
 # =====================================================================
 
 bin/hungrysnakes.o: demos/hungrysnakes.c include/lwp.h include/snakes.h
-	$(CC) $(CFLAGS) -c demos/hungrysnakes.c -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 bin/randomsnakes.o: demos/randomsnakes.c include/lwp.h include/snakes.h
-	$(CC) $(CFLAGS) -c demos/randomsnakes.c -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 bin/numbersmain.o: demos/numbersmain.c include/lwp.h
-	$(CC) $(CFLAGS) -c demos/numbersmain.c -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 bin/util.o: demos/util.c include/lwp.h include/util.h include/snakes.h
-	$(CC) $(CFLAGS) -c demos/util.c -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # =====================================================================
 # TODO: make this universal
 lib64/liblwp.so: bin/lwp.o
-	$(CC) $(CFLAGS) -shared -o $@ bin/lwp.o 
+	$(CC) $(CFLAGS) -shared -o $@ $< 
 
 bin/lwp.o: src/lwp.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -82,4 +82,4 @@ bin/roundrobin.o: src/roundrobin.c
 
 # =====================================================================
 bin/magic64.o: src/magic64.S
-	$(CC) -o bin/magic64.o -c src/magic64.S
+	$(CC) $(CFLAGS) -c $< -o $@
