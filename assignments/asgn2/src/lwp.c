@@ -198,13 +198,6 @@ tid_t lwp_create(lwpfun function, void *argument){
   // Create a new id (just using a counter)
   new_context.tid = tid_counter++;
 
-  // TODO: I don't think we need to set up the registers 
-  // printf("[lwp_create] trying to set the floating point registers\n");
-  // new_context.state.fxsave = FPU_INIT;
-  // printf("[lwp_create] swapping rfiles\n");
-  // Load the current registers into the current state.
-  // swap_rfiles(NULL, &new_context.state);
-
   // Indicate that it is a live and running process.
   new_context.status = LWP_LIVE;
 
@@ -264,11 +257,6 @@ void lwp_start(void){
   // Create a new id (just using a counter)
   new->tid = tid_counter++;
 
-  // Load the current registers into the current state.
-  // TODO: do I even need to do this?
-  // new->state.fxsave = FPU_INIT;
-  // swap_rfiles(NULL, &new->state);
-
   // Indicate that it is a live and running process.
   new->status = LWP_LIVE;
 
@@ -278,10 +266,8 @@ void lwp_start(void){
   new->sched_one = NULL;
   new->sched_two = NULL;
 
-  // TODO: is this the thread that created this thread?
-  // in start's case, this would be the current thread, but in lwp_create, 
-  // ANY thread can create a thread...
-  new->exited = NULL; // TODO: I still don't know what the hell this is
+  // TODO: I am still slightly unsure what this does
+  new->exited = NULL;
 
   // Add this to the rolling global list of items
   lwp_list_enqueue(live_head, live_tail, new);
@@ -306,12 +292,13 @@ void lwp_yield(void) {
   scheduler sched = lwp_get_scheduler();
   thread next = sched->next();
   if (next == NULL) {
-    exit(curr->status); // TODO: I have a feeling this does not work
+    // TODO: I have a feeling this does not work?
+    // aren't we supposed to do something with qlen?
+    exit(curr->status);
   }
 
   // Save the current register values to curr->state
   // Load next->state to the current register values
-  // TODO: check to see if this is how we really reference these states -> vs .
   next->state.fxsave = FPU_INIT;
   swap_rfiles(&curr->state, &next->state);
 
@@ -339,6 +326,7 @@ void lwp_exit(int exitval) {
  
   // Do some blocking checks if there are blocked threads.
   // TODO: how do I know that curr is the thread that blck is waiting for?
+  // Is this just implied that it will "just work"
   if (blck_head != NULL) {
     // Set the blocked .exited status to this current thread.
     blck_head->exited = curr;
