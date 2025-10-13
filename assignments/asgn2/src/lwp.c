@@ -35,9 +35,11 @@ static thread term_tail = NULL;
 // The thread that is currently in context.
 static thread curr = NULL;
 
-// Queue of waiting threads
-// I DON'T KNOW WHAT IS GOING ON HERE
-static thread waiting = NULL;
+// Queue of 'blocked' threads... i.e. those threads who have called lwp_wait(),
+// but have no threads that have finished.
+// TODO: every time 
+static thread blocked_head = NULL;
+static thread blocked_tail = NULL;
 
 // A counter for all the ids. We assume the domain will never be more than
 // 2^64 - 2 threads.
@@ -53,6 +55,8 @@ static void lwp_wrap(lwpfun fun, void *arg) {
 
 // Append the new thread to the queue of terminated threads
 // the FIFO structure.
+// TODO: rename this to Enqueue or something for both the queue of termiated
+// threads, and the blocked threads
 static void lwp_add_term(thread new) {
   // The terminated list represents a singly linked list, so this is just a 
   // sanity safeguard. No elements in the singly linked list will have a prev
@@ -333,6 +337,11 @@ void lwp_exit(int exitval) {
 
   // Add the current thread to the queue of terminated threads.
   lwp_add_term(curr);
+
+  // TODO: add the blocking check
+  
+  // TODO: on top of the blocking check, add another check to see if this is
+  // the last thread (with qlen)
 
   // The curr thread should be handled in lwp_yield(), however, this is more
   // for my sanity.
