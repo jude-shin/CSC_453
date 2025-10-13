@@ -7,6 +7,9 @@
 #include "lwp.h"
 #include "roundrobin.h"
 
+// TODO: make sure the stack frame is properly alligned to begin with
+
+
 // === MACROS ================================================================
 #define DEBUG 1
 
@@ -132,6 +135,7 @@ void lwp_start(void){
   // thread).
 
   // TODO: I don't know what to do here. HOW DO I BUILD THE STACK
+  // THIS is wrong... first build the context?
   thread new = {0};
 
   // Get the soft stack size.
