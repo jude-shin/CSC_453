@@ -26,7 +26,7 @@ all: $(ALL_PROGS)
 
 cleanall: clean
 	@rm -f $(EXTRACLEAN)
-	rm -f $(ALL_PROGS) bin/lwp.o bin/roundrobin.o
+	rm -f $(ALL_PROGS) bin/lwp.o bin/roundrobin.o bin/magic64.o
 
 clean:	
 	rm -f $(TEST_OBJS) *~ TAGS
@@ -46,14 +46,23 @@ nums: bin/numbersmain.o bin/roundrobin.o lib64/libsnakes.so
 
 # =====================================================================
 
-my_snakes: bin/randomsnakes.o bin/util.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so 
-	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp $(SNAKE_LIBS)
+# my_snakes: bin/randomsnakes.o bin/util.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so 
+# 	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp $(SNAKE_LIBS)
+# 
+# my_hungry: bin/hungrysnakes.o bin/util.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so
+# 	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp $(SNAKE_LIBS)
+# 
+# my_nums: bin/numbersmain.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so 
+# 	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp
 
-my_hungry: bin/hungrysnakes.o bin/util.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so
-	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp $(SNAKE_LIBS)
+my_snakes: bin/randomsnakes.o bin/util.o bin/roundrobin.o bin/magic64.o bin/lwp.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(SNAKE_LIBS)
 
-my_nums: bin/numbersmain.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so 
-	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp
+my_hungry: bin/hungrysnakes.o bin/util.o bin/roundrobin.o bin/magic64.o bin/lwp.o
+	$(LD) $(LDFLAGS) -o $@ $^ $(SNAKE_LIBS)
+
+my_nums: bin/numbersmain.o bin/roundrobin.o bin/magic64.o bin/lwp.o
+	$(LD) $(LDFLAGS) -o $@ $^
 
 # =====================================================================
 
@@ -70,7 +79,6 @@ bin/util.o: demos/util.c include/lwp.h include/util.h include/snakes.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # =====================================================================
-# TODO: make this universal
 lib64/liblwp.so: bin/lwp.o
 	$(CC) $(CFLAGS) -shared -o $@ $< 
 

@@ -140,7 +140,7 @@ tid_t lwp_create(lwpfun function, void *argument){
   sched->admit(new);
 
   #ifdef DEBUG
-  printf("[lwp_create] ENTER\n");
+  printf("[lwp_create] EXIT\n\n");
   #endif
   return new->tid;
 }
@@ -213,7 +213,7 @@ void lwp_start(void){
   lwp_yield();
 
   #ifdef DEBUG
-  printf("\n[lwp_start] EXIT\n");
+  printf("\n[lwp_start] EXIT\n\n");
   #endif
 }
 
@@ -226,25 +226,49 @@ void lwp_yield(void) {
   printf("\n[lwp_yield] ENTER\n");
   #endif
 
+  #ifdef DEBUG
+  printf("[lwp_yield] get sched->next() thread\n");
+  #endif
   // Get the thread that the scheduler gives next.
   scheduler sched = lwp_get_scheduler();
   thread next = sched->next();
   if (next == NULL) {
     // TODO: I have a feeling this does not work?
     // aren't we supposed to do something with qlen?
+
+    #ifdef DEBUG
+    printf("[lwp_yield] the scheduler has no more \"next\" threads!\n");
+    #endif
+
+    #ifdef DEBUG
+    printf("[lwp_yield] MYYYYY EXIT\n\n");
+    #endif
+
     exit(curr->status);
   }
 
+  printf("\n\n-- next tid: %lu --\n\n", next->tid);
+
+  #ifdef DEBUG
+  printf("[lwp_yield] save floating pt registers\n");
+  #endif
   // Save the current register values to curr->state
   // Load next->state to the current register values
   next->state.fxsave = FPU_INIT;
+  
+  #ifdef DEBUG
+  printf("[lwp_yield] swap_rfiles (save old registers and load next's)\n");
+  #endif
   swap_rfiles(&curr->state, &next->state);
 
   // The current thread is now the new thread the scheduler just chose.
+  #ifdef DEBUG
+  printf("[lwp_yield] have the lib's curr thread point to next\n");
+  #endif
   curr = next;
 
   #ifdef DEBUG
-  printf("[lwp_yield] EXIT\n");
+  printf("[lwp_yield] EXIT\n\n");
   #endif
 }
 
@@ -285,7 +309,7 @@ void lwp_exit(int exitval) {
 
   // TODO: I guess in theory this should never happen?
   #ifdef DEBUG
-  printf("[lwp_exit] EXIT\n");
+  printf("[lwp_exit] EXIT\n\n");
   #endif
 }
 
@@ -300,7 +324,7 @@ tid_t lwp_gettid(void) {
   }
 
   #ifdef DEBUG
-  printf("[lwp_getid] EXIT\n");
+  printf("[lwp_getid] EXIT\n\n");
   #endif
   return curr->tid;
 }
@@ -331,7 +355,7 @@ thread tid2thread(tid_t tid) {
   }
 
   #ifdef DEBUG
-  printf("[tid2thread] EXIT\n");
+  printf("[tid2thread] EXIT\n\n");
   #endif
 
   // If we have reached this point, then there is no id that matches
@@ -406,7 +430,7 @@ tid_t lwp_wait(int *status) {
   free(t);
 
   #ifdef DEBUG
-  printf("[lwp_wait] EXIT\n");
+  printf("[lwp_wait] EXIT\n\n");
   #endif
 
   return id;
@@ -417,9 +441,9 @@ tid_t lwp_wait(int *status) {
 // to the new one in next() order. If scheduler is NULL the library
 // should return to round-robin scheduling.
 void lwp_set_scheduler(scheduler sched) {
-  #ifdef DEBUG
-  printf("\n[lwp_set_scheduler] ENTER\n");
-  #endif
+  // #ifdef DEBUG
+  // printf("\n[lwp_set_scheduler] ENTER\n");
+  // #endif
 
   // Default to MyRoundRobin
   // After this condition, sched is not going to be NULL
@@ -429,6 +453,9 @@ void lwp_set_scheduler(scheduler sched) {
 
   // If both are the same (and both not NULL), then don't do anything.
   if (sched == curr_sched) {
+    // #ifdef DEBUG
+    // printf("[lwp_set_scheduler] EXIT\n\n");
+    // #endif
     return;
   }
 
@@ -465,24 +492,24 @@ void lwp_set_scheduler(scheduler sched) {
   // Set the currently used scheduler to the scheduler that we just created
   curr_sched = sched;
 
-  #ifdef DEBUG
-  printf("[lwp_set_scheduler] EXIT\n");
-  #endif
+  // #ifdef DEBUG
+  // printf("[lwp_set_scheduler] EXIT\n\n");
+  // #endif
 }
 
 // Returns the pointer to the current scheduler.
 scheduler lwp_get_scheduler(void) {
-  #ifdef DEBUG
-  printf("[lwp_get_scheduler] ENTER\n");
-  #endif
+  // #ifdef DEBUG
+  // printf("[lwp_get_scheduler] ENTER\n");
+  // #endif
 
   if (curr_sched == NULL) {
     curr_sched  = MyRoundRobin;
   }
 
-  #ifdef DEBUG
-  printf("[lwp_get_scheduler] EXIT\n");
-  #endif
+  // #ifdef DEBUG
+  // printf("[lwp_get_scheduler] EXIT\n\n");
+  // #endif
 
   return curr_sched;
 }
@@ -566,9 +593,9 @@ static void lwp_wrap(lwpfun fun, void *arg) {
 // If any of the system calls error, then the return value is 0, and should
 // be handled in function who called get_stacksize()
 static size_t get_stacksize() {
-  #ifdef DEBUG
-  printf("\n[get_stacksize] ENTER\n");
-  #endif
+  // #ifdef DEBUG
+  // printf("\n[get_stacksize] ENTER\n");
+  // #endif
 
   struct rlimit rlim;
   rlim_t limit = 0;
@@ -595,15 +622,15 @@ static size_t get_stacksize() {
   uintptr_t remainder = (uintptr_t)limit%(uintptr_t)page_size;
 
   if (remainder == 0) {
-    #ifdef DEBUG
-    printf("[get_stacksize] EXIT\n");
-    #endif
+    // #ifdef DEBUG
+    // printf("[get_stacksize] EXIT\n\n");
+    // #endif
     return (size_t)limit;
   }
 
-  #ifdef DEBUG
-  printf("[get_stacksize] EXIT\n");
-  #endif
+  // #ifdef DEBUG
+  // printf("[get_stacksize] EXIT\n\n");
+  // #endif
 
   // Return the limit rounded to the nearest page_size.
   return (size_t)((uintptr_t)limit + ((uintptr_t)page_size - remainder));
