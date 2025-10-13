@@ -22,24 +22,19 @@
 // The scheduler that the package is currently using to manage the thread
 static scheduler curr_sched = NULL;
 
-// A global list of all threads. This list is not in any particular order; we
-// are adding the threads to the list by prepending it to the live_head. 
-static thread live_head = NULL;
-
-// A queue of threads that have been exited, but not cleaned up/waited on.
-// This is a singly linked list. Only append to the tail and pop from the head
-// is going to occur with this list.
-static thread term_head = NULL;
+// Global doubly linked lists.
+// The term and blocked lists should be treated as queues.
+// No list should contain a duplicate thread, as only two pointers are
+// shared between all three of these lists.
+static thread live_head = NULL;  // Holds live threads
+static thread live_tail = NULL;
+static thread term_head = NULL;  // Holds termiated threads
 static thread term_tail = NULL;
+static thread blck_head = NULL;  // Holds blocked threads
+static thread blck_tail = NULL;
 
 // The thread that is currently in context.
 static thread curr = NULL;
-
-// Queue of 'blocked' threads... i.e. those threads who have called lwp_wait(),
-// but have no threads that have finished.
-// TODO: every time 
-static thread blocked_head = NULL;
-static thread blocked_tail = NULL;
 
 // A counter for all the ids. We assume the domain will never be more than
 // 2^64 - 2 threads.
@@ -53,64 +48,70 @@ static void lwp_wrap(lwpfun fun, void *arg) {
   lwp_exit(rval);
 }
 
-// Append the new thread to the queue of terminated threads
-// the FIFO structure.
-// TODO: rename this to Enqueue or something for both the queue of termiated
-// threads, and the blocked threads
-static void lwp_add_term(thread new) {
-  // The terminated list represents a singly linked list, so this is just a 
-  // sanity safeguard. No elements in the singly linked list will have a prev
-  // pointer.
-  new->PREV = NULL;
+// =============================================================
+// TODO: add this to a different file?
 
-  // In either case, the new thread will act as the tail, symbolized by its
-  // NEXT pointer being NULL.
+// Append the new thread to the end of a given list.
+// For the termiated queue and blocked queue this function abides by the FIFO 
+// requirements. As for the list of all running threads, the order in which 
+// threads are added does not matter.
+// WARNING: Make sure head and tail represent the same list. If not, bad things
+// are going to happen...
+static void lwp_list_enqueue(thread head, thread tail, thread new) {
+  if (head == NULL ^ tail == NULL) {
+    // This should never happen. Either they are both NULL, or both something.
+    perror("[lwp_list_enqueue] mismatching tail and head pointers");
+    return;
+  }
+
+  if (head == NULL && tail == NULL) {
+    new->NEXT = NULL;
+    new->PREV = NULL;
+
+    head = new;
+    tail = new;
+  }
+
   new->NEXT = NULL;
+  new->PREV = tail;
 
-  // If there is nothing allocated yet, then don't do any pointer juggling
-  if (term_head == NULL) {
-    term_head = new;
-  }
-  // Otherwise, append to the tail of the list.
-  else {
-    term_tail->NEXT = new;
-  }
-
-  // In either case, when all is said and done, set the tail to be the new
-  // thread.
-  term_tail = new;
+  tail->NEXT = new;
 }
 
-// Prepend the new thread to the list of live threads.
-// The order in which we append does not matter.
-// However, unlike the terminated queue, this is a doubly linked list.
-static void lwp_add_live(thread new) {
-  new->PREV = NULL;
-  new->NEXT = live_head;
-
-  if (live_head != NULL) {
-    live_head->PREV = new;
+// Remove a thread from either the queue of termiated threads, the queue of 
+// blocked threads, or the doubly linked list of live threads. 
+// To dequeue, call lwp_list_remove(head, tail, head)
+static void lwp_list_remove(thread head, thread tail, thread victim) {
+  if (head == NULL ^ tail == NULL) {
+    // This should never happen. Either they are both NULL, or both something.
+    perror("[lwp_list_dequeue] mismatching tail and head pointers");
+    return;
   }
 
-  live_head = new;
+  if (head != NULL && victim != NULL) {
+    if (victim->PREV != NULL) {
+      victim->PREV->NEXT = victim->NEXT;
+    }
+    else {
+      // we are at the head...
+      head = victim->NEXT;
+    }
+
+    if (victim->NEXT != NULL) {
+      victim->NEXT->PREV = victim->PREV;
+    }
+    else {
+      // we are at the tail...
+      tail = victim->PREV;
+    }
+
+    // For sanity, set the pointers to NULL
+    victim->NEXT = NULL;
+    victim->PREV = NULL;
+  }
 }
+// =============================================================
 
-// Remove a thread from either the queue of termiated threads, or the doubly
-// linked list of live threads. We should only be removing the head of the 
-// terminated queue.
-static void lwp_remove(thread victim) {
-  if (victim->PREV != NULL) {
-    victim->PREV->NEXT = victim->NEXT;
-  }
-
-  if (victim->NEXT == NULL) {
-    victim->NEXT->PREV = victim->PREV;
-  }
-
-  // For sanity, set the pointers to NULL
-  victim->NEXT = NULL;
-  victim->PREV = NULL;
-}
 
 // Gets the size of the stack that we should use.
 // If any of the system calls error, then the return value is 0, and should
@@ -223,7 +224,7 @@ tid_t lwp_create(lwpfun function, void *argument){
 
   // Add this to the rolling global list of items
   printf("[lwp_create] adding thread to lib live list\n");
-  lwp_add_live(new_thread);
+  lwp_list_enqueue(live_head, live_tail, new_thread);
 
   // Admit the newly created "main" thread to the current scheduler
   printf("[lwp_create] admitting new thread to scheduler\n");
@@ -283,7 +284,7 @@ void lwp_start(void){
   new->exited = NULL; // TODO: I still don't know what the hell this is
 
   // Add this to the rolling global list of items
-  lwp_add_live(new);
+  lwp_list_enqueue(live_head, live_tail, new);
 
   // Admit the newly created "main" thread to the current scheduler
   sched ->admit(new);
@@ -330,13 +331,13 @@ void lwp_exit(int exitval) {
   sched->remove(curr);
 
   // Remove the lwp from the live stack.
-  lwp_remove(curr);
+  lwp_list_remove(live_head, live_tail, curr);
 
   // Combine the status and the exitval, and set it as the thread's new status.
   curr->status = MKTERMSTAT(curr->status, exitval);
 
   // Add the current thread to the queue of terminated threads.
-  lwp_add_term(curr);
+  lwp_list_enqueue(term_head, term_tail, curr);
 
   // TODO: add the blocking check
   
@@ -431,7 +432,7 @@ tid_t lwp_wait(int *status) {
   // 2) it is somewhere in the (beginning, middle or end) of the terminated 
   // queue (but it is chosen as the next thread to remove as it is from a 
   // blocked process.
-  lwp_remove(t);
+  lwp_list_remove(term_head, term_tail, t);
 
   if (munmap(t->stack, t->stacksize) == -1) {
     // Something terribly wrong has happened. This syscall failed, so we
