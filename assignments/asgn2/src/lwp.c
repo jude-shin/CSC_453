@@ -9,6 +9,8 @@
 
 // TODO: make sure the stack frame is properly alligned to begin with
 
+// three words are going to be spaced from something in the stack
+
 
 // === MACROS ================================================================
 #define DEBUG 1
@@ -66,7 +68,12 @@ tid_t lwp_create(lwpfun function, void *argument){
   // Get the current scheduler
   scheduler sched = lwp_get_scheduler();
 
-  context new_context = {};
+  // Save the context somewhere that persists against toggling
+  thread new = malloc(sizeof(thread));
+  if (new == NULL) {
+    perror("[lwp_create] Error when getting malloc()ing a new thread.");
+    return NO_THREAD;
+  }
 
   // Get the soft stack size.
   size_t new_stacksize = get_stacksize();
@@ -74,7 +81,7 @@ tid_t lwp_create(lwpfun function, void *argument){
     perror("[lwp_create] Error when getting RLIMIT_STACK.");
     return NO_THREAD;
   }
-  new_context.stacksize = new_stacksize;
+  new->stacksize = new_stacksize;
   
   // mmap() a new stack for this thread. 
   void *new_stack = mmap(
@@ -90,36 +97,33 @@ tid_t lwp_create(lwpfun function, void *argument){
     return NO_THREAD;
   }
 
-  new_context.stack = new_stack;
+  new->stack = new_stack;
 
   // Create a new id (just using a counter)
-  new_context.tid = tid_counter++;
+  new->tid = tid_counter++;
 
   // Indicate that it is a live and running process.
-  new_context.status = LWP_LIVE;
+  new->status = LWP_LIVE;
 
   // For sanity...
-  new_context.lib_one = NULL;
-  new_context.lib_two = NULL;
-  new_context.sched_one = NULL;
-  new_context.sched_two = NULL;
-
-  // TODO: I am still slightly unsure what this does
-  new_context.exited = NULL;
+  new->lib_one = NULL;
+  new->lib_two = NULL;
+  new->sched_one = NULL;
+  new->sched_two = NULL;
+  new->exited = NULL;
   
   printf("[lwp_create] setting threads\n");
-  thread new_thread = &new_context;
 
   // Add this to the rolling global list of items
   printf("[lwp_create] adding thread to lib live list\n");
-  lwp_list_enqueue(live_head, live_tail, new_thread);
+  lwp_list_enqueue(live_head, live_tail, new);
 
   // Admit the newly created "main" thread to the current scheduler
   printf("[lwp_create] admitting new thread to scheduler\n");
-  sched->admit(new_thread);
+  sched->admit(new);
 
   printf("[lwp_create] exiting function\n");
-  return new_thread->tid;
+  return new->tid;
 }
 
 // Starts the LWP system. Converts the calling thread into a LWP
@@ -128,15 +132,19 @@ void lwp_start(void){
   #ifdef DEBUG
   printf("[debug] lwp_start\n");
   #endif
-  // Get the current scheduler
-  scheduler sched = lwp_get_scheduler();
 
   // Setup the context for the very first thead (using the original system
   // thread).
 
-  // TODO: I don't know what to do here. HOW DO I BUILD THE STACK
-  // THIS is wrong... first build the context?
-  thread new = {0};
+  // Get the current scheduler
+  scheduler sched = lwp_get_scheduler();
+
+  // Save the context somewhere that persists against toggling
+  thread new = malloc(sizeof(thread));
+  if (new == NULL) {
+    perror("[lwp_start] Error when malloc()ing a the original thread.");
+    exit(EXIT_FAILURE);
+  }
 
   // Get the soft stack size.
   size_t new_stacksize = get_stacksize();
@@ -155,13 +163,10 @@ void lwp_start(void){
   // Indicate that it is a live and running process.
   new->status = LWP_LIVE;
 
-  // TODO: For my own sanity, but probably okay to remove later
   new->lib_one = NULL;
   new->lib_two = NULL;
   new->sched_one = NULL;
   new->sched_two = NULL;
-
-  // TODO: I am still slightly unsure what this does
   new->exited = NULL;
 
   // Add this to the rolling global list of items
@@ -337,8 +342,16 @@ tid_t lwp_wait(int *status) {
   // if (t->status != NULL) {
   //   *status = t->status;
   // }
+
   *status = t->status;
-  return t->tid;
+
+  tid_t id = t->tid;
+
+  // free the memory malloced for the thread
+
+  free(t);
+
+  return id;
 }
 
 // Causes the LWP package to use the given scheduler to choose the
