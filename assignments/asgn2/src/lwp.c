@@ -63,11 +63,15 @@ static size_t get_stacksize();
 // TODO: what the hell do I do with this lwpfun function?
 tid_t lwp_create(lwpfun function, void *argument){
   #ifdef DEBUG
-  printf("[debug] lwp_create\n");
+  printf("\n[lwp_create] ENTER\n");
   #endif
+
   // Get the current scheduler
   scheduler sched = lwp_get_scheduler();
 
+  #ifdef DEBUG
+  printf("[lwp_create] malloc new thread\n");
+  #endif
   // Save the context somewhere that persists against toggling
   thread new = malloc(sizeof(context));
   if (new == NULL) {
@@ -82,7 +86,10 @@ tid_t lwp_create(lwpfun function, void *argument){
     return NO_THREAD;
   }
   new->stacksize = new_stacksize;
-  
+
+  #ifdef DEBUG
+  printf("[lwp_create] mmap new stack\n");
+  #endif
   // mmap() a new stack for this thread. 
   void *new_stack = mmap(
       NULL, 
@@ -98,8 +105,13 @@ tid_t lwp_create(lwpfun function, void *argument){
   }
   new->stack = new_stack;
 
-  // TODO: "setup" the stack ================================================
+  #ifdef DEBUG
+  printf("[lwp_create] setting up stack\n");
+  #endif
 
+  // TODO: "setup" the stack ================================================
+   
+  printf("[lwp_create] NOT IMPLEMENTED YET\n");
   // ========================================================================
 
   // Create a new id (just using a counter)
@@ -115,17 +127,21 @@ tid_t lwp_create(lwpfun function, void *argument){
   new->sched_two = NULL;
   new->exited = NULL;
   
-  printf("[lwp_create] setting threads\n");
-
-  // Add this to the rolling global list of items
+  #ifdef DEBUG
   printf("[lwp_create] adding thread to lib live list\n");
+  #endif
+  // Add this to the rolling global list of items
   lwp_list_enqueue(live_head, live_tail, new);
 
-  // Admit the newly created "main" thread to the current scheduler
+  #ifdef DEBUG
   printf("[lwp_create] admitting new thread to scheduler\n");
+  #endif
+  // Admit the newly created "main" thread to the current scheduler
   sched->admit(new);
 
-  printf("[lwp_create] exiting function\n");
+  #ifdef DEBUG
+  printf("[lwp_create] ENTER\n");
+  #endif
   return new->tid;
 }
 
@@ -133,7 +149,7 @@ tid_t lwp_create(lwpfun function, void *argument){
 // and lwp yield()s to whichever thread the scheduler chooses.
 void lwp_start(void){
   #ifdef DEBUG
-  printf("[debug] lwp_start\n");
+  printf("\n[lwp_start] ENTER\n");
   #endif
 
   // Setup the context for the very first thead (using the original system
@@ -142,6 +158,9 @@ void lwp_start(void){
   // Get the current scheduler
   scheduler sched = lwp_get_scheduler();
 
+  #ifdef DEBUG
+  printf("[lwp_create] malloc new thread\n");
+  #endif
   // Save the context somewhere that persists against toggling
   thread new = malloc(sizeof(context));
   if (new == NULL) {
@@ -157,6 +176,9 @@ void lwp_start(void){
   }
   new->stacksize = new_stacksize;
 
+  #ifdef DEBUG
+  printf("[lwp_create] original process is NOT mmap()ing a new stack\n");
+  #endif
   // Use the current stack for this special thread only.
   new->stack = NULL; 
   
@@ -172,14 +194,27 @@ void lwp_start(void){
   new->sched_two = NULL;
   new->exited = NULL;
 
+  #ifdef DEBUG
+  printf("[lwp_create] adding thread to lib live list\n");
+  #endif
   // Add this to the rolling global list of items
   lwp_list_enqueue(live_head, live_tail, new);
 
+  #ifdef DEBUG
+  printf("[lwp_create] admitting new thread to scheduler\n");
+  #endif
   // Admit the newly created "main" thread to the current scheduler
   sched ->admit(new);
 
+  #ifdef DEBUG
+  printf("[lwp_create] yield()ing to next thread.\n");
+  #endif
   // Start the yielding process.
   lwp_yield();
+
+  #ifdef DEBUG
+  printf("\n[lwp_start] EXIT\n");
+  #endif
 }
 
 // Yields control to another LWP. Which one depends on the sched-
@@ -188,7 +223,7 @@ void lwp_start(void){
 // minates the program.
 void lwp_yield(void) {
   #ifdef DEBUG
-  printf("[debug] lwp_yield\n");
+  printf("\n[lwp_yield] ENTER\n");
   #endif
 
   // Get the thread that the scheduler gives next.
@@ -207,13 +242,17 @@ void lwp_yield(void) {
 
   // The current thread is now the new thread the scheduler just chose.
   curr = next;
+
+  #ifdef DEBUG
+  printf("[lwp_yield] EXIT\n");
+  #endif
 }
 
 // Terminates the current LWP and yields to whichever thread the
 // scheduler chooses. lwp exit() does not return.
 void lwp_exit(int exitval) {
   #ifdef DEBUG
-  printf("[debug] lwp_exit\n");
+  printf("\n[lwp_exit] ENTER\n");
   #endif
 
   // Remove from the scheduler.
@@ -243,18 +282,26 @@ void lwp_exit(int exitval) {
 
   // Yield to the next thread that the scheduler chooses.
   lwp_yield();
+
+  // TODO: I guess in theory this should never happen?
+  #ifdef DEBUG
+  printf("[lwp_exit] EXIT\n");
+  #endif
 }
 
 // Returns the tid of the calling LWP or NO_THREAD if not called by a LWP.
 tid_t lwp_gettid(void) {
   #ifdef DEBUG
-  printf("[debug] lwp_gettid\n");
+  printf("\n[lwp_getid] ENTER\n");
   #endif
 
   if (curr == NULL) {
     return NO_THREAD;
   }
 
+  #ifdef DEBUG
+  printf("[lwp_getid] EXIT\n");
+  #endif
   return curr->tid;
 }
 
@@ -262,7 +309,7 @@ tid_t lwp_gettid(void) {
 // is invalid
 thread tid2thread(tid_t tid) {
   #ifdef DEBUG
-  printf("[debug] tid2thread\n");
+  printf("[tid2thread] ENTER\n");
   #endif
   
   // Linear search through all live threads
@@ -283,6 +330,10 @@ thread tid2thread(tid_t tid) {
     t = t->NEXT;
   }
 
+  #ifdef DEBUG
+  printf("[tid2thread] EXIT\n");
+  #endif
+
   // If we have reached this point, then there is no id that matches
   return NULL;
 }
@@ -292,7 +343,7 @@ thread tid2thread(tid_t tid) {
 // thread or NO_THREAD.
 tid_t lwp_wait(int *status) {
   #ifdef DEBUG
-  printf("[debug] lwp_wait\n");
+  printf("\n[lwp_wait] ENTER\n");
   #endif
   
   // Grab the first element of the terminated queue, following the FIFO spec.
@@ -354,6 +405,10 @@ tid_t lwp_wait(int *status) {
 
   free(t);
 
+  #ifdef DEBUG
+  printf("[lwp_wait] EXIT\n");
+  #endif
+
   return id;
 }
 
@@ -363,7 +418,7 @@ tid_t lwp_wait(int *status) {
 // should return to round-robin scheduling.
 void lwp_set_scheduler(scheduler sched) {
   #ifdef DEBUG
-  printf("[debug] lwp_set_scheduler\n");
+  printf("\n[lwp_set_scheduler] ENTER\n");
   #endif
 
   // Default to MyRoundRobin
@@ -409,17 +464,25 @@ void lwp_set_scheduler(scheduler sched) {
   
   // Set the currently used scheduler to the scheduler that we just created
   curr_sched = sched;
+
+  #ifdef DEBUG
+  printf("[lwp_set_scheduler] EXIT\n");
+  #endif
 }
 
 // Returns the pointer to the current scheduler.
 scheduler lwp_get_scheduler(void) {
   #ifdef DEBUG
-  printf("[debug] lwp_get_scheduler\n");
+  printf("[lwp_get_scheduler] ENTER\n");
   #endif
 
   if (curr_sched == NULL) {
     curr_sched  = MyRoundRobin;
   }
+
+  #ifdef DEBUG
+  printf("[lwp_get_scheduler] EXIT\n");
+  #endif
 
   return curr_sched;
 }
@@ -504,7 +567,7 @@ static void lwp_wrap(lwpfun fun, void *arg) {
 // be handled in function who called get_stacksize()
 static size_t get_stacksize() {
   #ifdef DEBUG
-  printf("[debug] get_stacksize\n");
+  printf("\n[get_stacksize] ENTER\n");
   #endif
 
   struct rlimit rlim;
@@ -532,8 +595,15 @@ static size_t get_stacksize() {
   uintptr_t remainder = (uintptr_t)limit%(uintptr_t)page_size;
 
   if (remainder == 0) {
+    #ifdef DEBUG
+    printf("[get_stacksize] EXIT\n");
+    #endif
     return (size_t)limit;
   }
+
+  #ifdef DEBUG
+  printf("[get_stacksize] EXIT\n");
+  #endif
 
   // Return the limit rounded to the nearest page_size.
   return (size_t)((uintptr_t)limit + ((uintptr_t)page_size - remainder));
