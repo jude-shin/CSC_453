@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "roundrobin.h"
 
-// #define DEBUG 1
+#define DEBUG 1
 
 // These are the variable names in the given Thread struct.
 // Arbitrarily, one will represent the 'next' pointer in the sched's circular 
@@ -34,7 +34,6 @@ void rr_admit(thread new) {
   #ifdef DEBUG
   printf("[debug] rr_admit\n");
   #endif
-
 
   // If there is currently nothing in the list, set both the head and the tail
   // to the new thread

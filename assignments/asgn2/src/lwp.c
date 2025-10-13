@@ -83,7 +83,11 @@ static void lwp_add_term(thread new) {
 static void lwp_add_live(thread new) {
   new->PREV = NULL;
   new->NEXT = live_head;
-  live_head->PREV = new;
+
+  if (live_head != NULL) {
+    live_head->PREV = new;
+  }
+
   live_head = new;
 }
 
@@ -155,23 +159,19 @@ tid_t lwp_create(lwpfun function, void *argument){
   #ifdef DEBUG
   printf("[debug] lwp_create\n");
   #endif
+  // Get the current scheduler
+  scheduler sched = lwp_get_scheduler();
 
-  thread new = {0};
+  context new_context = {};
 
   // Get the soft stack size.
-  #ifdef DEBUG
-  printf("[debug:lwp_create] getting stacksize\n");
-  #endif
   size_t new_stacksize = get_stacksize();
   if (new_stacksize == 0) {
     perror("[lwp_create] Error when getting RLIMIT_STACK.");
     return NO_THREAD;
   }
-  new->stacksize = new_stacksize;
+  new_context.stacksize = new_stacksize;
   
-  #ifdef DEBUG
-  printf("[debug:lwp_create] mmap new stack\n");
-  #endif
   // mmap() a new stack for this thread. 
   void *new_stack = mmap(
       NULL, 
@@ -185,48 +185,48 @@ tid_t lwp_create(lwpfun function, void *argument){
     perror("[lwp_create] Error when mmapp()ing a new stack.");
     return NO_THREAD;
   }
-  new->stack = new_stack;
 
-  #ifdef DEBUG
-  printf("[debug:lwp_create] setting other thread things\n");
-  #endif
+  new_context.stack = new_stack;
 
   // Create a new id (just using a counter)
-  new->tid = tid_counter++;
+  new_context.tid = tid_counter++;
 
+  // TODO: I don't think we need to set up the registers 
+  // printf("[lwp_create] trying to set the floating point registers\n");
+  // new_context.state.fxsave = FPU_INIT;
+  // printf("[lwp_create] swapping rfiles\n");
   // Load the current registers into the current state.
-  swap_rfiles(NULL, &new->state);
-  new->state.fxsave = FPU_INIT;
+  // swap_rfiles(NULL, &new_context.state);
 
   // Indicate that it is a live and running process.
-  new->status = LWP_LIVE;
+  new_context.status = LWP_LIVE;
 
   // TODO: For my own sanity, but probably okay to remove later
-  new->lib_one = NULL;
-  new->lib_two = NULL;
-  new->sched_one = NULL;
-  new->sched_two = NULL;
+  new_context.lib_one = NULL;
+  new_context.lib_two = NULL;
+  new_context.sched_one = NULL;
+  new_context.sched_two = NULL;
 
   // TODO: is this the thread that created this thread?
   // in start's case, this would be the current thread, but in lwp_create, 
   // ANY thread can create a thread...
-  new->exited = NULL; // TODO: I still don't know what the hell this is
+  new_context.exited = NULL; // TODO: I still don't know what the hell this is
+  
+  // ----------------------------------------------------------------------
 
-  #ifdef DEBUG
-  printf("[debug:lwp_create] adding to live threads (lib list)\n");
-  #endif
+  printf("[lwp_create] setting threads\n");
+  thread new_thread = &new_context;
 
   // Add this to the rolling global list of items
-  lwp_add_live(new);
-
-  #ifdef DEBUG
-  printf("[debug:lwp_create] admitting to scheduler\n");
-  #endif
+  printf("[lwp_create] adding thread to lib live list\n");
+  lwp_add_live(new_thread);
 
   // Admit the newly created "main" thread to the current scheduler
-  curr_sched->admit(new);
+  printf("[lwp_create] admitting new thread to scheduler\n");
+  sched->admit(new_thread);
 
-  return new->tid;
+  printf("[lwp_create] exiting function\n");
+  return new_thread->tid;
 }
 
 
@@ -236,9 +236,13 @@ void lwp_start(void){
   #ifdef DEBUG
   printf("[debug] lwp_start\n");
   #endif
+  // Get the current scheduler
+  scheduler sched = lwp_get_scheduler();
+
   // Setup the context for the very first thead (using the original system
   // thread).
 
+  // TODO: I don't know what to do here
   thread new = {0};
 
   // Get the soft stack size.
@@ -257,8 +261,8 @@ void lwp_start(void){
 
   // Load the current registers into the current state.
   // TODO: do I even need to do this?
-  swap_rfiles(NULL, &new->state);
-  new->state.fxsave = FPU_INIT;
+  // new->state.fxsave = FPU_INIT;
+  // swap_rfiles(NULL, &new->state);
 
   // Indicate that it is a live and running process.
   new->status = LWP_LIVE;
@@ -278,7 +282,7 @@ void lwp_start(void){
   lwp_add_live(new);
 
   // Admit the newly created "main" thread to the current scheduler
-  curr_sched->admit(new);
+  sched ->admit(new);
 
   // Start the yielding process.
   lwp_yield();
@@ -303,6 +307,7 @@ void lwp_yield(void) {
   // Save the current register values to curr->state
   // Load next->state to the current register values
   // TODO: check to see if this is how we really reference these states -> vs .
+  next->state.fxsave = FPU_INIT;
   swap_rfiles(&curr->state, &next->state);
 
   // The current thread is now the new thread the scheduler just chose.
