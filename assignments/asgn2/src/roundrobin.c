@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "roundrobin.h"
 
-// #define DEBUG 1
+#define DEBUG 1
 
 // These are the variable names in the given Thread struct.
 // Arbitrarily, one will represent the 'next' pointer in the sched's circular 

@@ -69,7 +69,7 @@ tid_t lwp_create(lwpfun function, void *argument){
   scheduler sched = lwp_get_scheduler();
 
   // Save the context somewhere that persists against toggling
-  thread new = malloc(sizeof(thread));
+  thread new = malloc(sizeof(context));
   if (new == NULL) {
     perror("[lwp_create] Error when getting malloc()ing a new thread.");
     return NO_THREAD;
@@ -96,8 +96,11 @@ tid_t lwp_create(lwpfun function, void *argument){
     perror("[lwp_create] Error when mmapp()ing a new stack.");
     return NO_THREAD;
   }
-
   new->stack = new_stack;
+
+  // TODO: "setup" the stack ================================================
+
+  // ========================================================================
 
   // Create a new id (just using a counter)
   new->tid = tid_counter++;
@@ -140,7 +143,7 @@ void lwp_start(void){
   scheduler sched = lwp_get_scheduler();
 
   // Save the context somewhere that persists against toggling
-  thread new = malloc(sizeof(thread));
+  thread new = malloc(sizeof(context));
   if (new == NULL) {
     perror("[lwp_start] Error when malloc()ing a the original thread.");
     exit(EXIT_FAILURE);
