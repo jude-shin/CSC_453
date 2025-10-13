@@ -195,6 +195,11 @@ void lwp_start(void){
   new->exited = NULL;
 
   #ifdef DEBUG
+  printf("[lwp_create] set the curr thread to be the newly created thread\n");
+  #endif
+  curr = new;
+
+  #ifdef DEBUG
   printf("[lwp_create] adding thread to lib live list\n");
   #endif
   // Add this to the rolling global list of items
