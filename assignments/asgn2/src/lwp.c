@@ -402,38 +402,50 @@ tid_t lwp_wait(int *status) {
   printf("[debug] lwp_wait\n");
   #endif
   
-  // Grab the first element of the queue, following the FIFO spec.
+  // Grab the first element of the terminated queue, following the FIFO spec.
   thread t = term_head;
 
-  // If there are no zombies to be cleaned, note that appropriately.
-  // TODO: we are supposed to use the qlen() function?
+  // If there are no zombies to be cleaned, either block, or return NO_THREAD
   if (t == NULL) {
-    // TODO: if there are no terminated threads, the caller of lwp_wait()
-    // (the curr_thread) will have to block.
-    return NO_THREAD;
-  }
+    // If there are no more threads that could possibly block (if the scheduler
+    // has 1 element in it).
+    scheduler sched = lwp_get_scheduler();
+    if (sched->qlen() == 1) {
+      return NO_THREAD;
+    }
+  
+    // We must be blocked... How sad.
+    // 1) Deschedule curr
+    // 2) Put curr on the blocked queue (which "removes" it from the live list)
+    // 3) yeild to another process
+    
+    // At this point, we have returned!
+    // NOTE: curr->exited has been populated with the exited thread
+    // 4) Remove curr from the blocked queue
+    // 5) Put the curr onto the live list.
+    // 6) exited is now the next thread to deallocate (t)
 
-  // Remove the thread from the beginning of the queue (t is the beginning)
+  }
+  // Remove the thread from wherever it is
+  // 1) it is either the head of the terminated queue
+  // 2) it is somewhere in the (beginning, middle or end) of the terminated 
+  // queue (but it is chosen as the next thread to remove as it is from a 
+  // blocked process.
   lwp_remove(t);
 
-  if (t->exited == NULL || t->exited->tid != t->tid) {
-    // The thread t is not the main process created by lwp_start(), so we can 
-    // try to munmap it's contents.
-    if (munmap(t->stack, t->stacksize) == -1) {
-      // Something terribly wrong has happened. This syscall failed, so we
-      // note the error and give up. In prod, we might try to limp along, but
-      // for now, we are just bailing. 
-      perror("[lwp_wait] Error munmapping lwp! Bailing now...");
-      exit(EXIT_FAILURE);
-    }
+  if (munmap(t->stack, t->stacksize) == -1) {
+    // Something terribly wrong has happened. This syscall failed, so we
+    // note the error and give up. In prod, we might try to limp along, but
+    // for now, we are just bailing. 
+    perror("[lwp_wait] Error munmapping lwp! Bailing now...");
+    exit(EXIT_FAILURE);
   }
 
-  // TODO: t->status is an integer... shouldn't it always be non-NULL?
-  if (t->status != NULL) {
-    *status = t->status;
-  }
-  
-  // tid_t tid = t->tid; // TODO: we might want to save the variable before unmap
+  // // TODO: t->status is an integer... shouldn't it always be non-NULL?
+  // if (t->status != NULL) {
+  //   *status = t->status;
+  // }
+  *status = t->status;
   return t->tid;
 }
 
