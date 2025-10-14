@@ -302,36 +302,12 @@ void lwp_yield(void) {
     exit(curr->status);
   }
 
-  printf("\n\n-- next tid: %lu --\n\n", next->tid);
-
   // The current thread is now the new thread the scheduler just chose.
   #ifdef DEBUG
   printf("[lwp_yield] have the lib's curr thread point to next\n");
   #endif
   thread old = curr;
   curr = next;
-
-
-
-  // // TAKEOUT
-  // printf("About to swap to thread %lu\n", next->tid);
-  // printf("  next->state.rsp = %p\n", (void*)next->state.rsp);
-  // printf("  next->state.rbp = %p\n", (void*)next->state.rbp);
-  // if (next->state.rsp != 0) {
-  //     unsigned long *sp = (unsigned long *)next->state.rsp;
-  //     printf("  Stack contents at rsp:\n");
-  //     printf("    [%p] = %p\n", (void*)&sp[0], (void*)sp[0]);
-  //     printf("    [%p] = %p\n", (void*)&sp[1], (void*)sp[1]);
-  // }
-
-
-
-
-
-
-
-
-
   
   #ifdef DEBUG
   printf("[lwp_yield] swap_rfiles (save old registers and load next's)\n");
