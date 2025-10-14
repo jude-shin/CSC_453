@@ -13,7 +13,7 @@
 
 
 // === MACROS ================================================================
-#define DEBUG 1
+// #define DEBUG 1
 
 // These are the variable names in the given Thread struct.
 // Arbitrarily, one will represent the 'next' pointer in the lib's doubly
@@ -23,6 +23,8 @@
 
 // The size of the RLIMIT_STACK in bytes if none is set.
 #define RLIMIT_STACK_DEFAULT 8000000 // 8MB
+// Byte allignment for making the stacks
+#define BYTE_ALLIGNMENT 16 // 16 bytes
 
 
 // === GLOBAL VARIABLES (don't freak out, its unavoidable) ===================
@@ -111,37 +113,57 @@ tid_t lwp_create(lwpfun function, void *argument){
   printf("[lwp_create] setting up the rfile\n");
   #endif
 
-  // ========================================================================
 
-  #define BYTE_BOUNDARY 16 // 16 bytes
-
-  // Get the highest address space mmap gave us.
-  uintptr_t stack_beginning = (uintptr_t)new_stack + (uintptr_t)new_stacksize;
-  
-  // Add some padding in order to make our stack to start at the byte boundary 
-  uintptr_t remainder = (uintptr_t)new_stacksize % (uintptr_t)BYTE_BOUNDARY;
-  stack_beginning = stack_beginning - remainder;
-
-  // TODO: add a check to see if the new_stacksize < BYTE_BOUNDARY
-  // it should never, but it is worth putting that in.. prob perror and exit()
+  // ======================================================================== 
  
-  // TODO: get rid of these
-  void* lwp_wrap_value = (void*) lwp_wrap;
-  lwpfun argument_value = argument;
-  void* function_value = function;
-
-  uintptr_t lwp_wrap_stack_address = stack_beginning;
-  uintptr_t argument_stack_address = lwp_wrap_stack_address - (uintptr_t)sizeof(lwp_wrap_value);
-  uintptr_t function_stack_address = argument_stack_address - (uintptr_t)sizeof(argument_value);
-  uintptr_t current_stack_pointer = function_stack_address - (uintptr_t)sizeof(function_value);
-
-  new->state.rbp = (unsigned long) lwp_wrap_stack_address;
-  new->state.rsi = (unsigned long) argument_stack_address;
-  new->state.rdi = (unsigned long) function_stack_address;
-  new->state.rsp = (unsigned long) current_stack_pointer;
+  // TODO: make sure the byte allignment is correct
+  // Calculate the top of the stack (highest address)
+  unsigned long *stack_top = (unsigned long *)((char *)new_stack + new_stacksize);
+  
+  // Push the return address
+  stack_top--;
+  *stack_top = (unsigned long)lwp_wrap;
+  
+  // Ensure 16-byte alignment
+  // The stack pointer must be 16-byte aligned
+  size_t remainder = (uintptr_t)stack_top % BYTE_ALLIGNMENT;
+  if (remainder != 0) {
+    size_t adjustment = BYTE_ALLIGNMENT - remainder;
+    
+    // Move down to align, then write return address
+    stack_top = (unsigned long *)((char *)stack_top - adjustment);
+    *stack_top = (unsigned long)lwp_wrap;
+  }
+  
+  // Registers
+  // Points to the return address 
+  new->state.rsp = (unsigned long)stack_top;  
+  // Doesn't matter?
+  new->state.rbp = (unsigned long)stack_top;
+  
+  // first argument (lwpfun) - the function
+  new->state.rdi = (unsigned long)function;
+  // second argument (void*) - the argument
+  new->state.rsi = (unsigned long)argument;
+  
+  // floating point registers
   new->state.fxsave = FPU_INIT;
   
-  // ========================================================================
+  // For my own sanity 
+  new->state.rax = 0;
+  new->state.rbx = 0;
+  new->state.rcx = 0;
+  new->state.rdx = 0;
+  new->state.r8 = 0;
+  new->state.r9 = 0;
+  new->state.r10 = 0;
+  new->state.r11 = 0;
+  new->state.r12 = 0;
+  new->state.r13 = 0;
+  new->state.r14 = 0;
+  new->state.r15 = 0;
+  
+  // ======================================================================== 
 
   // Create a new id (just using a counter)
   new->tid = tid_counter;
@@ -288,6 +310,28 @@ void lwp_yield(void) {
   #endif
   thread old = curr;
   curr = next;
+
+
+
+  // // TAKEOUT
+  // printf("About to swap to thread %lu\n", next->tid);
+  // printf("  next->state.rsp = %p\n", (void*)next->state.rsp);
+  // printf("  next->state.rbp = %p\n", (void*)next->state.rbp);
+  // if (next->state.rsp != 0) {
+  //     unsigned long *sp = (unsigned long *)next->state.rsp;
+  //     printf("  Stack contents at rsp:\n");
+  //     printf("    [%p] = %p\n", (void*)&sp[0], (void*)sp[0]);
+  //     printf("    [%p] = %p\n", (void*)&sp[1], (void*)sp[1]);
+  // }
+
+
+
+
+
+
+
+
+
   
   #ifdef DEBUG
   printf("[lwp_yield] swap_rfiles (save old registers and load next's)\n");
@@ -321,8 +365,13 @@ void lwp_exit(int exitval) {
   // TODO: how do I know that curr is the thread that blck is waiting for?
   // Is this just implied that it will "just work"
   if (blck_head != NULL) {
+    thread unblocked = blck_head;
+
+    // Remove it from the blocked queue.
+    lwp_list_remove(&blck_head, &blck_tail, unblocked);
+
     // Set the blocked .exited status to this current thread.
-    blck_head->exited = curr;
+    unblocked->exited = curr;
 
     // Add the unblocked thread to the scheduler again.;
     sched->admit(blck_head);
@@ -422,6 +471,8 @@ tid_t lwp_wait(int *status) {
     // At this point, we have returned!
     // NOTE: curr->exited has been populated with the exited thread
     // 4) Remove curr from the blocked queue
+    lwp_list_remove(&blck_head, &blck_tail, curr);
+
     // 5) Put the curr onto the live list.
     lwp_list_enqueue(&live_head, &live_tail, curr);
 
@@ -435,7 +486,7 @@ tid_t lwp_wait(int *status) {
   // blocked process.
   lwp_list_remove(&term_head, &term_tail, t);
 
-  if (munmap(t->stack, t->stacksize) == -1) {
+  if (t->stack != NULL && munmap(t->stack, t->stacksize) == -1) {
     // Something terribly wrong has happened. This syscall failed, so we
     // note the error and give up. In prod, we might try to limp along, but
     // for now, we are just bailing. 
