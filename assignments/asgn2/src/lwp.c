@@ -350,10 +350,10 @@ void lwp_exit(int exitval) {
     unblocked->exited = curr;
 
     // Add the unblocked thread to the scheduler again.;
-    sched->admit(blck_head);
+    sched->admit(unblocked);
     
     // Reset this to "live" by adding it back to the live list
-    lwp_list_enqueue(&live_head, &live_tail, blck_head);
+    lwp_list_enqueue(&live_head, &live_tail, unblocked);
   }
 
   // Yield to the next thread that the scheduler chooses.
