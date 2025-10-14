@@ -7,13 +7,8 @@
 #include "lwp.h"
 #include "roundrobin.h"
 
-// TODO: make sure the stack frame is properly alligned to begin with
-
-// three words are going to be spaced from something in the stack
-
-
 // === MACROS ================================================================
-// #define DEBUG 1
+#define DEBUG 1
 
 // These are the variable names in the given Thread struct.
 // Arbitrarily, one will represent the 'next' pointer in the lib's doubly
@@ -62,7 +57,6 @@ static size_t get_stacksize();
 // with the given argument.
 // lwp create() returns the (lightweight) thread id of the new thread
 // or NO_THREAD if the thread cannot be created.
-// TODO: what the hell do I do with this lwpfun function?
 tid_t lwp_create(lwpfun function, void *argument){
   #ifdef DEBUG
   printf("\n[lwp_create] ENTER\n");
@@ -117,6 +111,8 @@ tid_t lwp_create(lwpfun function, void *argument){
   // ======================================================================== 
  
   // TODO: make sure the byte allignment is correct
+  // I think leave and ret belong to it's own stack frame?
+
   // Calculate the top of the stack (highest address)
   unsigned long *stack_top = (unsigned long *)((char *)new_stack + new_stacksize);
   
@@ -234,10 +230,6 @@ void lwp_start(void){
   // Indicate that it is a live and running process.
   new->status = LWP_LIVE;
  
-  // rfile rf = {};
-  // rf.fxsave = FPU_INIT;
-  // new->state = rf;
-
   new->lib_one = NULL;
   new->lib_two = NULL;
   new->sched_one = NULL;
@@ -288,9 +280,6 @@ void lwp_yield(void) {
   scheduler sched = lwp_get_scheduler();
   thread next = sched->next();
   if (next == NULL) {
-    // TODO: I have a feeling this does not work?
-    // aren't we supposed to do something with qlen?
-
     #ifdef DEBUG
     printf("[lwp_yield] the scheduler has no more \"next\" threads!\n");
     #endif
@@ -299,6 +288,7 @@ void lwp_yield(void) {
     printf("[lwp_yield] MYYYYY EXIT\n\n");
     #endif
 
+    free(curr);
     exit(curr->status);
   }
 
@@ -338,8 +328,6 @@ void lwp_exit(int exitval) {
   lwp_list_enqueue(&term_head, &term_tail, curr);
  
   // Do some blocking checks if there are blocked threads.
-  // TODO: how do I know that curr is the thread that blck is waiting for?
-  // Is this just implied that it will "just work"
   if (blck_head != NULL) {
     thread unblocked = blck_head;
 
@@ -359,7 +347,6 @@ void lwp_exit(int exitval) {
   // Yield to the next thread that the scheduler chooses.
   lwp_yield();
 
-  // TODO: I guess in theory this should never happen?
   #ifdef DEBUG
   printf("[lwp_exit] EXIT\n\n");
   #endif
