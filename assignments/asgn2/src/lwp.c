@@ -8,7 +8,7 @@
 #include "roundrobin.h"
 
 // === MACROS ================================================================
-// #define DEBUG 1
+// #define VERBOSE 1
 
 // These are the variable names in the given Thread struct.
 // Arbitrarily, one will represent the 'next' pointer in the lib's doubly
@@ -58,16 +58,13 @@ static size_t get_stacksize();
 // lwp create() returns the (lightweight) thread id of the new thread
 // or NO_THREAD if the thread cannot be created.
 tid_t lwp_create(lwpfun function, void *argument){
-  #ifdef DEBUG
+  #ifdef VERBOSE
   printf("\n[lwp_create] ENTER\n");
   #endif
 
   // Get the current scheduler
   scheduler sched = lwp_get_scheduler();
 
-  #ifdef DEBUG
-  printf("[lwp_create] malloc new thread\n");
-  #endif
   // Save the context somewhere that persists against toggling
   thread new = malloc(sizeof(context));
   if (new == NULL) {
@@ -83,9 +80,6 @@ tid_t lwp_create(lwpfun function, void *argument){
   }
   new->stacksize = new_stacksize;
 
-  #ifdef DEBUG
-  printf("[lwp_create] mmap new stack\n");
-  #endif
   // mmap() a new stack for this thread. 
   void *new_stack = mmap(
       NULL, 
@@ -102,11 +96,6 @@ tid_t lwp_create(lwpfun function, void *argument){
   // NOTE: this is not the real stack pointer... this is just used for the
   // unmmap() cleaning process. Stacks grow from high -> low addresses.
   new->stack = new_stack;
-
-  #ifdef DEBUG
-  printf("[lwp_create] setting up the rfile\n");
-  #endif
-
 
   // ======================================================================== 
  
@@ -152,7 +141,7 @@ tid_t lwp_create(lwpfun function, void *argument){
   // Floating point registers
   new->state.fxsave = FPU_INIT;
 
-  // For my own sanity 
+  // For sanity sake...
   new->state.rax = 0;
   new->state.rbx = 0;
   new->state.rcx = 0;
@@ -182,40 +171,27 @@ tid_t lwp_create(lwpfun function, void *argument){
   new->sched_two = NULL;
   new->exited = NULL;
   
-  #ifdef DEBUG
-  printf("[lwp_create] adding thread to lib live list\n");
-  #endif
   // Add this to the rolling global list of items
   lwp_list_enqueue(&live_head, &live_tail, new);
 
-  #ifdef DEBUG
-  printf("[lwp_create] admitting new thread to scheduler\n");
-  #endif
   // Admit the newly created "main" thread to the current scheduler
   sched->admit(new);
 
-  #ifdef DEBUG
-  printf("[lwp_create] EXIT\n\n");
-  #endif
   return new->tid;
 }
 
 // Starts the LWP system. Converts the calling thread into a LWP
 // and lwp yield()s to whichever thread the scheduler chooses.
 void lwp_start(void){
-  #ifdef DEBUG
+  #ifdef VERBOSE
   printf("\n[lwp_start] ENTER\n");
   #endif
 
-  // Setup the context for the very first thead (using the original system
-  // thread).
+  // Setup the context for the original system thread 
 
   // Get the current scheduler
   scheduler sched = lwp_get_scheduler();
 
-  #ifdef DEBUG
-  printf("[lwp_start] malloc new thread\n");
-  #endif
   // Save the context somewhere that persists against toggling
   thread new = malloc(sizeof(context));
   if (new == NULL) {
@@ -223,9 +199,6 @@ void lwp_start(void){
     exit(EXIT_FAILURE);
   }
 
-  #ifdef DEBUG
-  printf("[lwp_start] original process is NOT mmap()ing a new stack\n");
-  #endif
   // Use the current stack for this special thread only.
   new->stack = NULL; 
   new->stacksize = 0;
@@ -236,39 +209,24 @@ void lwp_start(void){
 
   // Indicate that it is a live and running process.
   new->status = LWP_LIVE;
- 
+
+  // For sanity
   new->lib_one = NULL;
   new->lib_two = NULL;
   new->sched_one = NULL;
   new->sched_two = NULL;
   new->exited = NULL;
 
-  #ifdef DEBUG
-  printf("[lwp_start] set the curr thread to be the newly created thread\n");
-  #endif
   curr = new;
-
-  #ifdef DEBUG
-  printf("[lwp_start] adding thread to lib live list\n");
-  #endif
+  
   // Add this to the rolling global list of items
   lwp_list_enqueue(&live_head, &live_tail, new);
 
-  #ifdef DEBUG
-  printf("[lwp_start] admitting new thread to scheduler\n");
-  #endif
   // Admit the newly created "main" thread to the current scheduler
   sched ->admit(new);
 
-  #ifdef DEBUG
-  printf("[lwp_start] yield()ing to next thread.\n");
-  #endif
   // Start the yielding process.
   lwp_yield();
-
-  #ifdef DEBUG
-  printf("\n[lwp_start] EXIT\n\n");
-  #endif
 }
 
 // Yields control to another LWP. Which one depends on the sched-
@@ -276,67 +234,41 @@ void lwp_start(void){
 // that thread’s context, and returns. If there is no next thread, ter-
 // minates the program.
 void lwp_yield(void) {
-  #ifdef DEBUG
+  #ifdef VERBOSE
   printf("\n[lwp_yield] ENTER\n");
   #endif
 
-  #ifdef DEBUG
-  printf("[lwp_yield] get sched->next() thread\n");
-  #endif
   // Get the thread that the scheduler gives next.
   scheduler sched = lwp_get_scheduler();
   thread next = sched->next();
 
   // If the scheduler has nothing more to give, then we can safely finish!
   if (next == NULL) {
-    #ifdef DEBUG
-    printf("[lwp_yield] the scheduler has no more \"next\" threads!\n");
-    #endif
-
     free(curr);
     exit(curr->status);
   }
 
   // The current thread is now the new thread the scheduler just chose.
-  #ifdef DEBUG
-  printf("[lwp_yield] have the lib's curr thread point to next\n");
-  #endif
   thread old = curr;
   curr = next;
   
-  #ifdef DEBUG
-  printf("[lwp_yield] swap_rfiles (save old registers and load next's)\n");
-  #endif
   swap_rfiles(&old->state, &next->state);
-
-  #ifdef DEBUG
-  printf("[lwp_yield] EXIT\n\n");
-  #endif
 }
 
 // Terminates the current LWP and yields to whichever thread the
 // scheduler chooses. lwp exit() does not return.
 void lwp_exit(int exitval) {
-  #ifdef DEBUG
+  #ifdef VERBOSE
   printf("\n[lwp_exit] ENTER\n");
   #endif
-
-  #ifdef DEBUG
-  printf("\n[lwp_exit] removing from scheduler\n");
-  #endif
+  
   // Remove from the scheduler.
   scheduler sched = lwp_get_scheduler();
   sched->remove(curr);
 
-  #ifdef DEBUG
-  printf("\n[lwp_exit] combining status and exit val\n");
-  #endif
   // Combine the status and the exitval, and set it as the thread's new status.
   curr->status = MKTERMSTAT(curr->status, exitval);
 
-  #ifdef DEBUG
-  printf("\n[lwp_exit] transfer curr from live to terminated queue\n");
-  #endif
   // Add the current thread to the queue of terminated threads.
   // This also effectively removes the current thread from the live stack also.
   lwp_list_remove(&live_head, &live_tail, curr);
@@ -344,64 +276,41 @@ void lwp_exit(int exitval) {
  
   // Do some blocking checks if there are blocked threads.
   if (blck_head != NULL) {
-    #ifdef DEBUG
-    printf("\n[lwp_exit] there are blocked threads\n");
-    #endif
     thread unblocked = blck_head;
 
-    #ifdef DEBUG
-    printf("\n[lwp_exit] remove blocked thread from blocked queue\n");
-    #endif
     // Remove it from the blocked queue.
     lwp_list_remove(&blck_head, &blck_tail, unblocked);
 
-    #ifdef DEBUG
-    printf("\n[lwp_exit] set .exited in unblocked thread\n");
-    #endif
     // Set the blocked .exited status to this current thread.
     unblocked->exited = curr;
 
-    #ifdef DEBUG
-    printf("\n[lwp_exit] readmit the unblocked thread to the scheduler\n");
-    #endif
     // Add the unblocked thread to the scheduler again.;
     sched->admit(unblocked);
     
-    #ifdef DEBUG
-    printf("\n[lwp_exit] add the unblocked thread to the live queue\n");
-    #endif
     // Reset this to "live" by adding it back to the live list
     lwp_list_enqueue(&live_head, &live_tail, unblocked);
   }
 
   // Yield to the next thread that the scheduler chooses.
   lwp_yield();
-
-  #ifdef DEBUG
-  printf("[lwp_exit] EXIT\n\n");
-  #endif
 }
 
 // Returns the tid of the calling LWP or NO_THREAD if not called by a LWP.
 tid_t lwp_gettid(void) {
-  #ifdef DEBUG
+  #ifdef VERBOSE
   printf("\n[lwp_getid] ENTER\n");
   #endif
 
   if (curr == NULL) {
     return NO_THREAD;
   }
-
-  #ifdef DEBUG
-  printf("[lwp_getid] EXIT\n\n");
-  #endif
   return curr->tid;
 }
 
 // Returns the thread corresponding to the given thread ID, or NULL if the ID
 // is invalid
 thread tid2thread(tid_t tid) {
-  #ifdef DEBUG
+  #ifdef VERBOSE
   printf("[tid2thread] ENTER\n");
   #endif
   
@@ -423,10 +332,6 @@ thread tid2thread(tid_t tid) {
     t = t->NEXT;
   }
 
-  #ifdef DEBUG
-  printf("[tid2thread] EXIT\n\n");
-  #endif
-
   // If we have reached this point, then there is no id that matches
   return NULL;
 }
@@ -435,7 +340,7 @@ thread tid2thread(tid_t tid) {
 // termination status if status is non-NULL. Returns the tid of the terminated
 // thread or NO_THREAD.
 tid_t lwp_wait(int *status) {
-  #ifdef DEBUG
+  #ifdef VERBOSE
   printf("\n[lwp_wait] ENTER\n");
   #endif
   
@@ -496,10 +401,6 @@ tid_t lwp_wait(int *status) {
   // free the memory malloced for the thread
   free(t);
 
-  #ifdef DEBUG
-  printf("[lwp_wait] EXIT\n\n");
-  #endif
-
   return id;
 }
 
@@ -508,9 +409,9 @@ tid_t lwp_wait(int *status) {
 // to the new one in next() order. If scheduler is NULL the library
 // should return to round-robin scheduling.
 void lwp_set_scheduler(scheduler sched) {
-  // #ifdef DEBUG
-  // printf("\n[lwp_set_scheduler] ENTER\n");
-  // #endif
+  #ifdef VERBOSE
+  printf("\n[lwp_set_scheduler] ENTER\n");
+  #endif
 
   // Default to MyRoundRobin
   // After this condition, sched is not going to be NULL
@@ -520,9 +421,6 @@ void lwp_set_scheduler(scheduler sched) {
 
   // If both are the same (and both not NULL), then don't do anything.
   if (sched == curr_sched) {
-    // #ifdef DEBUG
-    // printf("[lwp_set_scheduler] EXIT\n\n");
-    // #endif
     return;
   }
 
@@ -558,25 +456,13 @@ void lwp_set_scheduler(scheduler sched) {
   
   // Set the currently used scheduler to the scheduler that we just created
   curr_sched = sched;
-
-  // #ifdef DEBUG
-  // printf("[lwp_set_scheduler] EXIT\n\n");
-  // #endif
 }
 
 // Returns the pointer to the current scheduler.
 scheduler lwp_get_scheduler(void) {
-  // #ifdef DEBUG
-  // printf("[lwp_get_scheduler] ENTER\n");
-  // #endif
-
   if (curr_sched == NULL) {
     curr_sched  = MyRoundRobin;
   }
-
-  // #ifdef DEBUG
-  // printf("[lwp_get_scheduler] EXIT\n\n");
-  // #endif
 
   return curr_sched;
 }
@@ -592,6 +478,7 @@ scheduler lwp_get_scheduler(void) {
 static void lwp_list_enqueue(thread *head, thread *tail, thread new) {
   if ((*head == NULL) ^ (*tail == NULL)) {
     // This should never happen. Either they are both NULL, or both something.
+    // If this occurs, then I have made a grave mistake...
     perror("[lwp_list_enqueue] mismatching tail and head pointers");
     return;
   }
@@ -619,6 +506,7 @@ static void lwp_list_enqueue(thread *head, thread *tail, thread new) {
 static void lwp_list_remove(thread *head, thread *tail, thread victim) {
   if ((*head == NULL) ^ (*tail == NULL)) {
     // This should never happen. Either they are both NULL, or both something.
+    // If this occurs, then I have made a grave mistake...
     perror("[lwp_list_dequeue] mismatching tail and head pointers");
     return;
   }
@@ -628,7 +516,7 @@ static void lwp_list_remove(thread *head, thread *tail, thread victim) {
       victim->PREV->NEXT = victim->NEXT;
     }
     else {
-      // we are at the head...
+      // We are at the head.
       *head = victim->NEXT;
     }
 
@@ -636,7 +524,7 @@ static void lwp_list_remove(thread *head, thread *tail, thread victim) {
       victim->NEXT->PREV = victim->PREV;
     }
     else {
-      // we are at the tail...
+      // We are at the tail.
       *tail = victim->PREV;
     }
 
@@ -658,9 +546,9 @@ static void lwp_wrap(lwpfun fun, void *arg) {
 // If any of the system calls error, then the return value is 0, and should
 // be handled in function who called get_stacksize()
 static size_t get_stacksize() {
-  // #ifdef DEBUG
-  // printf("\n[get_stacksize] ENTER\n");
-  // #endif
+  #ifdef VERBOSE
+  printf("\n[get_stacksize] ENTER\n");
+  #endif
 
   struct rlimit rlim;
   rlim_t limit = 0;
@@ -687,15 +575,8 @@ static size_t get_stacksize() {
   uintptr_t remainder = (uintptr_t)limit%(uintptr_t)page_size;
 
   if (remainder == 0) {
-    // #ifdef DEBUG
-    // printf("[get_stacksize] EXIT\n\n");
-    // #endif
     return (size_t)limit;
   }
-
-  // #ifdef DEBUG
-  // printf("[get_stacksize] EXIT\n\n");
-  // #endif
 
   // Return the limit rounded to the nearest page_size.
   return (size_t)((uintptr_t)limit + ((uintptr_t)page_size - remainder));

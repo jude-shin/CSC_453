@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "roundrobin.h"
 
-// #define DEBUG 1
+// #define VERBOSE 1
 
 // These are the variable names in the given Thread struct.
 // Arbitrarily, one will represent the 'next' pointer in the sched's circular 
@@ -31,8 +31,8 @@ static thread curr = NULL;
 // Add the passed context to the scheduler’s scheduling pool.
 // For round robin, this thread is added to the end of the list.
 void rr_admit(thread new) {
-  #ifdef DEBUG
-  printf("[debug] rr_admit\n");
+  #ifdef VERBOSE
+  printf("\n[rr_admit] ENTER\n");
   #endif
 
   // If there is currently nothing in the list, set both the head and the tail
@@ -68,8 +68,8 @@ void rr_admit(thread new) {
 
 // Remove the passed context from the scheduler’s scheduling pool.
 void rr_remove(thread victim) {
-  #ifdef DEBUG
-  printf("[debug] rr_remove\n");
+  #ifdef VERBOSE
+  printf("\n[rr_remove] ENTER\n");
   #endif
 
   // If the victim happens to be the only one in the list, then just remove
@@ -101,8 +101,8 @@ void rr_remove(thread victim) {
 }
 
 thread rr_next(void) {
-  #ifdef DEBUG
-  printf("[debug] rr_next\n");
+  #ifdef VERBOSE
+  printf("\n[rr_next] ENTER\n");
   #endif
 
   // There is no next thread if there are no threads available.
@@ -122,8 +122,8 @@ thread rr_next(void) {
 // Return the number of runnable threads. This will be useful for lwp wait() in
 // determining if waiting makes sense.
 int rr_qlen(void) {
-  #ifdef DEBUG
-  printf("[debug] rr_qlen\n");
+  #ifdef VERBOSE
+  printf("\n[rr_qlen] ENTER\n");
   #endif
   
   if (head == NULL)  {
