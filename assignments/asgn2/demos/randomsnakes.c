@@ -78,11 +78,12 @@ int main(int argc, char *argv[]){
   install_handler(SIGINT, SIGINT_handler);   /* SIGINT will kill a snake */
   install_handler(SIGQUIT,SIGQUIT_handler);  /* SIGQUIT will end lwp     */
 
-  /* wait to gdb  */
-  if (getenv("WAITFORIT") ) {
-    fprintf(stderr,"This is %d (hit enter to continue)\n",getpid());
-    getchar();
-  }
+  // /* wait to gdb  */
+  // if (getenv("WAITFORIT") ) {
+  // }
+  // fprintf(stderr,"This is %d (hit enter to continue)\n",getpid());
+  // getchar();
+
 
   start_windowing();            /* start up curses windowing */
 
@@ -101,12 +102,12 @@ int main(int argc, char *argv[]){
   /* Draw each snake */
   draw_all_snakes();
 
+  lwp_set_scheduler(MyRoundRobin);
+
   /* turn each snake loose as an individual LWP */
   for(i=0;i<cnt;i++) {
     s[i]->lw_pid = lwp_create((lwpfun)run_snake,(void*)(s+i));
   }
-
-  lwp_set_scheduler(MyRoundRobin);
 
   lwp_start();                     
 

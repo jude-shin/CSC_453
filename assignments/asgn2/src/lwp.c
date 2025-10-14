@@ -8,7 +8,7 @@
 #include "roundrobin.h"
 
 // === MACROS ================================================================
-#define DEBUG 1
+// #define DEBUG 1
 
 // These are the variable names in the given Thread struct.
 // Arbitrarily, one will represent the 'next' pointer in the lib's doubly
@@ -116,19 +116,27 @@ tid_t lwp_create(lwpfun function, void *argument){
   // Calculate the top of the stack (highest address)
   unsigned long *stack_top = (unsigned long *)((char *)new_stack + new_stacksize);
   
-  // Push the return address
+  // Push a dummy return address for lwp_wrap (it will never return, but needs one)
+  stack_top--;
+  *stack_top = 0;  // NULL - if lwp_wrap ever returns, we'll segfault obviously
+  
+  // Push the return address to lwp_wrap
   stack_top--;
   *stack_top = (unsigned long)lwp_wrap;
   
-  // Ensure 16-byte alignment
-  // The stack pointer must be 16-byte aligned
-  size_t remainder = (uintptr_t)stack_top % BYTE_ALLIGNMENT;
-  if (remainder != 0) {
-    size_t adjustment = BYTE_ALLIGNMENT - remainder;
+  // Ensure 16-byte alignment of the stack after the first return
+  // When we "return" to lwp_wrap, rsp will point to the dummy address (stack_top + 1)
+  // That address should be 16-byte aligned
+  if (((uintptr_t)(stack_top + 1)) % BYTE_ALLIGNMENT != 0) {
+    size_t misalignment = ((uintptr_t)(stack_top + 1)) % BYTE_ALLIGNMENT;
+    size_t adjustment = BYTE_ALLIGNMENT - misalignment;
     
-    // Move down to align, then write return address
+    // Rebuild with proper alignment
     stack_top = (unsigned long *)((char *)stack_top - adjustment);
     *stack_top = (unsigned long)lwp_wrap;
+    stack_top--;
+    *stack_top = 0;  // dummy return
+    stack_top++;
   }
   
   // Registers
@@ -136,7 +144,7 @@ tid_t lwp_create(lwpfun function, void *argument){
   new->state.rsp = (unsigned long)stack_top;  
   // Doesn't matter?
   new->state.rbp = (unsigned long)stack_top;
-  
+
   // first argument (lwpfun) - the function
   new->state.rdi = (unsigned long)function;
   // second argument (void*) - the argument
@@ -279,13 +287,11 @@ void lwp_yield(void) {
   // Get the thread that the scheduler gives next.
   scheduler sched = lwp_get_scheduler();
   thread next = sched->next();
+
+  // If the scheduler has nothing more to give, then we can safely finish!
   if (next == NULL) {
     #ifdef DEBUG
     printf("[lwp_yield] the scheduler has no more \"next\" threads!\n");
-    #endif
-
-    #ifdef DEBUG
-    printf("[lwp_yield] MYYYYY EXIT\n\n");
     #endif
 
     free(curr);

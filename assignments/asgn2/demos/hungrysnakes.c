@@ -80,10 +80,9 @@ int main(int argc, char *argv[]){
   install_handler(SIGQUIT,SIGQUIT_handler);  /* SIGQUIT will end lwp     */
 
 
-  /* wait to gdb
-  fprintf(stderr,"%d\n",getpid());
-  sleep(5);
-  */
+  // // wait to gdb
+  // fprintf(stderr,"%d\n",getpid());
+  // sleep(5);
 
   #ifdef FAST_SNAKES
   /*PLN*/set_snake_delay(1);
@@ -105,12 +104,12 @@ int main(int argc, char *argv[]){
   /* Draw each snake */
   draw_all_snakes();
 
+  lwp_set_scheduler(MyRoundRobin);
+
   /* turn each snake loose as an individual LWP */
   for(i=0;i<cnt;i++) {
     s[i]->lw_pid = lwp_create((lwpfun)run_hungry_snake,(void*)(s+i));
   }
-
-  lwp_set_scheduler(MyRoundRobin);
 
   lwp_start();                    
 
