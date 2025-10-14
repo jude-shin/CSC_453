@@ -331,6 +331,7 @@ void lwp_exit(int exitval) {
 
   // Add the current thread to the queue of terminated threads.
   // This also effectively removes the current thread from the live stack also.
+  lwp_list_remove(&live_head, &live_tail, curr);
   lwp_list_enqueue(&term_head, &term_tail, curr);
  
   // Do some blocking checks if there are blocked threads.
