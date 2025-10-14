@@ -322,13 +322,22 @@ void lwp_exit(int exitval) {
   printf("\n[lwp_exit] ENTER\n");
   #endif
 
+  #ifdef DEBUG
+  printf("\n[lwp_exit] removing from scheduler\n");
+  #endif
   // Remove from the scheduler.
   scheduler sched = lwp_get_scheduler();
   sched->remove(curr);
 
+  #ifdef DEBUG
+  printf("\n[lwp_exit] combining status and exit val\n");
+  #endif
   // Combine the status and the exitval, and set it as the thread's new status.
   curr->status = MKTERMSTAT(curr->status, exitval);
 
+  #ifdef DEBUG
+  printf("\n[lwp_exit] transfer curr from live to terminated queue\n");
+  #endif
   // Add the current thread to the queue of terminated threads.
   // This also effectively removes the current thread from the live stack also.
   lwp_list_remove(&live_head, &live_tail, curr);
@@ -336,17 +345,32 @@ void lwp_exit(int exitval) {
  
   // Do some blocking checks if there are blocked threads.
   if (blck_head != NULL) {
+    #ifdef DEBUG
+    printf("\n[lwp_exit] there are blocked threads\n");
+    #endif
     thread unblocked = blck_head;
 
+    #ifdef DEBUG
+    printf("\n[lwp_exit] remove blocked thread from blocked queue\n");
+    #endif
     // Remove it from the blocked queue.
     lwp_list_remove(&blck_head, &blck_tail, unblocked);
 
+    #ifdef DEBUG
+    printf("\n[lwp_exit] set .exited in unblocked thread\n");
+    #endif
     // Set the blocked .exited status to this current thread.
     unblocked->exited = curr;
 
+    #ifdef DEBUG
+    printf("\n[lwp_exit] readmit the unblocked thread to the scheduler\n");
+    #endif
     // Add the unblocked thread to the scheduler again.;
     sched->admit(unblocked);
     
+    #ifdef DEBUG
+    printf("\n[lwp_exit] add the unblocked thread to the live queue\n");
+    #endif
     // Reset this to "live" by adding it back to the live list
     lwp_list_enqueue(&live_head, &live_tail, unblocked);
   }
