@@ -101,25 +101,23 @@ tid_t lwp_create(lwpfun function, void *argument){
 
   // Push a dummy return address for lwp_wrap (it will never return, but needs one)
   stack_top--;
-  *stack_top = 0;  // NULL - if lwp_wrap ever returns, we'll segfault obviously
+  // contents don't matter
+  *stack_top = 0;  
   
   // Push the return address to lwp_wrap
   stack_top--;
   *stack_top = (unsigned long)lwp_wrap;
   
-  // Ensure 16-byte alignment of the stack after the first return
+  // Ensure byte alignment of the stack after the first return
   // When we "return" to lwp_wrap, rsp will point to the dummy address (stack_top + 1)
   // That address should be 16-byte aligned
-  if (((uintptr_t)(stack_top + 1)) % BYTE_ALLIGNMENT != 0) {
-    size_t misalignment = ((uintptr_t)(stack_top + 1)) % BYTE_ALLIGNMENT;
-    size_t adjustment = BYTE_ALLIGNMENT - misalignment;
+  size_t remainder = ((uintptr_t)(stack_top + 1)) % BYTE_ALLIGNMENT;
+  if (remainder != 0) {
+    size_t adjustment = BYTE_ALLIGNMENT - remainder;
     
     // Rebuild with proper alignment
     stack_top = (unsigned long *)((char *)stack_top - adjustment);
     *stack_top = (unsigned long)lwp_wrap;
-    stack_top--;
-    *stack_top = 0;  // dummy return
-    stack_top++;
   }
   
   // Registers
