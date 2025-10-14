@@ -115,7 +115,7 @@ tid_t lwp_create(lwpfun function, void *argument){
 
   // Calculate the top of the stack (highest address)
   unsigned long *stack_top = (unsigned long *)((char *)new_stack + new_stacksize);
-  
+
   // Push a dummy return address for lwp_wrap (it will never return, but needs one)
   stack_top--;
   *stack_top = 0;  // NULL - if lwp_wrap ever returns, we'll segfault obviously
@@ -140,19 +140,18 @@ tid_t lwp_create(lwpfun function, void *argument){
   }
   
   // Registers
-  // Points to the return address 
+  // Stack and Base Pointers
   new->state.rsp = (unsigned long)stack_top;  
-  // Doesn't matter?
   new->state.rbp = (unsigned long)stack_top;
 
-  // first argument (lwpfun) - the function
+  // First argument (lwpfun) - the function
   new->state.rdi = (unsigned long)function;
-  // second argument (void*) - the argument
+  // Second argument (void*) - the argument
   new->state.rsi = (unsigned long)argument;
   
-  // floating point registers
+  // Floating point registers
   new->state.fxsave = FPU_INIT;
-  
+
   // For my own sanity 
   new->state.rax = 0;
   new->state.rbx = 0;
@@ -488,17 +487,13 @@ tid_t lwp_wait(int *status) {
     exit(EXIT_FAILURE);
   }
 
-  // // TODO: t->status is an integer... shouldn't it always be non-NULL?
-  // if (t->status != NULL) {
-  //   *status = t->status;
-  // }
-
-  *status = t->status;
+  if (status != NULL) {
+    *status = t->status;
+  }
 
   tid_t id = t->tid;
 
   // free the memory malloced for the thread
-
   free(t);
 
   #ifdef DEBUG
