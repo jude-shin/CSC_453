@@ -45,7 +45,7 @@ static thread curr = NULL;
 
 // A counter for all the ids. We assume the domain will never be more than
 // 2^64 - 2 threads.
-static tid_t tid_counter = 0;
+static tid_t tid_counter = 1;
 
 
 // === HELPER FUCNTIONS ======================================================
@@ -103,19 +103,49 @@ tid_t lwp_create(lwpfun function, void *argument){
     perror("[lwp_create] Error when mmapp()ing a new stack.");
     return NO_THREAD;
   }
+  // NOTE: this is not the real stack pointer... this is just used for the
+  // unmmap() cleaning process. Stacks grow from high -> low addresses.
   new->stack = new_stack;
 
   #ifdef DEBUG
-  printf("[lwp_create] setting up stack\n");
+  printf("[lwp_create] setting up the rfile\n");
   #endif
 
-  // TODO: "setup" the stack ================================================
-   
-  printf("[lwp_create] NOT IMPLEMENTED YET\n");
+  // ========================================================================
+
+  #define BYTE_BOUNDARY 16 // 16 bytes
+
+  // Get the highest address space mmap gave us.
+  uintptr_t stack_beginning = (uintptr_t)new_stack + (uintptr_t)new_stacksize;
+  
+  // Add some padding in order to make our stack to start at the byte boundary 
+  uintptr_t remainder = (uintptr_t)new_stacksize % (uintptr_t)BYTE_BOUNDARY;
+  stack_beginning = stack_beginning - remainder;
+
+  // TODO: add a check to see if the new_stacksize < BYTE_BOUNDARY
+  // it should never, but it is worth putting that in.. prob perror and exit()
+ 
+  // TODO: get rid of these
+  void* lwp_wrap_value = (void*) lwp_wrap;
+  lwpfun argument_value = argument;
+  void* function_value = function;
+
+  uintptr_t lwp_wrap_stack_address = stack_beginning;
+  uintptr_t argument_stack_address = lwp_wrap_stack_address - (uintptr_t)sizeof(lwp_wrap_value);
+  uintptr_t function_stack_address = argument_stack_address - (uintptr_t)sizeof(argument_value);
+  uintptr_t current_stack_pointer = function_stack_address - (uintptr_t)sizeof(function_value);
+
+  new->state.rbp = (unsigned long) lwp_wrap_stack_address;
+  new->state.rsi = (unsigned long) argument_stack_address;
+  new->state.rdi = (unsigned long) function_stack_address;
+  new->state.rsp = (unsigned long) current_stack_pointer;
+  new->state.fxsave = FPU_INIT;
+  
   // ========================================================================
 
   // Create a new id (just using a counter)
-  new->tid = tid_counter++;
+  new->tid = tid_counter;
+  tid_counter = tid_counter + 1;
 
   // Indicate that it is a live and running process.
   new->status = LWP_LIVE;
@@ -159,7 +189,7 @@ void lwp_start(void){
   scheduler sched = lwp_get_scheduler();
 
   #ifdef DEBUG
-  printf("[lwp_create] malloc new thread\n");
+  printf("[lwp_start] malloc new thread\n");
   #endif
   // Save the context somewhere that persists against toggling
   thread new = malloc(sizeof(context));
@@ -168,25 +198,23 @@ void lwp_start(void){
     exit(EXIT_FAILURE);
   }
 
-  // Get the soft stack size.
-  size_t new_stacksize = get_stacksize();
-  if (new_stacksize == -1) {
-    perror("[lwp_start] Error when getting RLIMIT_STACK.");
-    exit(EXIT_FAILURE);
-  }
-  new->stacksize = new_stacksize;
-
   #ifdef DEBUG
-  printf("[lwp_create] original process is NOT mmap()ing a new stack\n");
+  printf("[lwp_start] original process is NOT mmap()ing a new stack\n");
   #endif
   // Use the current stack for this special thread only.
   new->stack = NULL; 
+  new->stacksize = 0;
   
   // Create a new id (just using a counter)
-  new->tid = tid_counter++;
+  new->tid = tid_counter;
+  tid_counter = tid_counter + 1;
 
   // Indicate that it is a live and running process.
   new->status = LWP_LIVE;
+ 
+  // rfile rf = {};
+  // rf.fxsave = FPU_INIT;
+  // new->state = rf;
 
   new->lib_one = NULL;
   new->lib_two = NULL;
@@ -195,24 +223,24 @@ void lwp_start(void){
   new->exited = NULL;
 
   #ifdef DEBUG
-  printf("[lwp_create] set the curr thread to be the newly created thread\n");
+  printf("[lwp_start] set the curr thread to be the newly created thread\n");
   #endif
   curr = new;
 
   #ifdef DEBUG
-  printf("[lwp_create] adding thread to lib live list\n");
+  printf("[lwp_start] adding thread to lib live list\n");
   #endif
   // Add this to the rolling global list of items
   lwp_list_enqueue(&live_head, &live_tail, new);
 
   #ifdef DEBUG
-  printf("[lwp_create] admitting new thread to scheduler\n");
+  printf("[lwp_start] admitting new thread to scheduler\n");
   #endif
   // Admit the newly created "main" thread to the current scheduler
   sched ->admit(new);
 
   #ifdef DEBUG
-  printf("[lwp_create] yield()ing to next thread.\n");
+  printf("[lwp_start] yield()ing to next thread.\n");
   #endif
   // Start the yielding process.
   lwp_yield();
@@ -254,23 +282,17 @@ void lwp_yield(void) {
 
   printf("\n\n-- next tid: %lu --\n\n", next->tid);
 
-  #ifdef DEBUG
-  printf("[lwp_yield] save floating pt registers\n");
-  #endif
-  // Save the current register values to curr->state
-  // Load next->state to the current register values
-  next->state.fxsave = FPU_INIT;
-  
-  #ifdef DEBUG
-  printf("[lwp_yield] swap_rfiles (save old registers and load next's)\n");
-  #endif
-  swap_rfiles(&curr->state, &next->state);
-
   // The current thread is now the new thread the scheduler just chose.
   #ifdef DEBUG
   printf("[lwp_yield] have the lib's curr thread point to next\n");
   #endif
+  thread old = curr;
   curr = next;
+  
+  #ifdef DEBUG
+  printf("[lwp_yield] swap_rfiles (save old registers and load next's)\n");
+  #endif
+  swap_rfiles(&old->state, &next->state);
 
   #ifdef DEBUG
   printf("[lwp_yield] EXIT\n\n");
@@ -394,7 +416,7 @@ tid_t lwp_wait(int *status) {
     // 2) Put curr on the blocked queue (which "removes" it from the live list)
     lwp_list_enqueue(&blck_head, &blck_tail, curr);
 
-    // 3) yeild to another process
+    // 3) yield to another process
     lwp_yield();
     
     // At this point, we have returned!
@@ -589,9 +611,7 @@ static void lwp_list_remove(thread *head, thread *tail, thread victim) {
 // Calls the given lwpfun with the given argument. After it is finished with 
 // the lwpfun, it valles lwp_exit() with the appropriate return value.
 static void lwp_wrap(lwpfun fun, void *arg) {
-  int rval;
-  rval = fun(arg);
-  lwp_exit(rval);
+  lwp_exit(fun(arg));
 }
 
 // Gets the size of the stack that we should use.
