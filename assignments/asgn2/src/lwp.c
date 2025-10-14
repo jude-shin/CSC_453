@@ -8,8 +8,6 @@
 #include "roundrobin.h"
 
 // === MACROS ================================================================
-// #define VERBOSE 1
-
 // These are the variable names in the given Thread struct.
 // Arbitrarily, one will represent the 'next' pointer in the lib's doubly
 // linked list, and the other will represent the 'prev' pointer.
@@ -58,10 +56,6 @@ static size_t get_stacksize();
 // lwp create() returns the (lightweight) thread id of the new thread
 // or NO_THREAD if the thread cannot be created.
 tid_t lwp_create(lwpfun function, void *argument){
-  #ifdef VERBOSE
-  printf("\n[lwp_create] ENTER\n");
-  #endif
-
   // Get the current scheduler
   scheduler sched = lwp_get_scheduler();
 
@@ -183,10 +177,6 @@ tid_t lwp_create(lwpfun function, void *argument){
 // Starts the LWP system. Converts the calling thread into a LWP
 // and lwp yield()s to whichever thread the scheduler chooses.
 void lwp_start(void){
-  #ifdef VERBOSE
-  printf("\n[lwp_start] ENTER\n");
-  #endif
-
   // Setup the context for the original system thread 
 
   // Get the current scheduler
@@ -234,10 +224,6 @@ void lwp_start(void){
 // that thread’s context, and returns. If there is no next thread, ter-
 // minates the program.
 void lwp_yield(void) {
-  #ifdef VERBOSE
-  printf("\n[lwp_yield] ENTER\n");
-  #endif
-
   // Get the thread that the scheduler gives next.
   scheduler sched = lwp_get_scheduler();
   thread next = sched->next();
@@ -258,10 +244,6 @@ void lwp_yield(void) {
 // Terminates the current LWP and yields to whichever thread the
 // scheduler chooses. lwp exit() does not return.
 void lwp_exit(int exitval) {
-  #ifdef VERBOSE
-  printf("\n[lwp_exit] ENTER\n");
-  #endif
-  
   // Remove from the scheduler.
   scheduler sched = lwp_get_scheduler();
   sched->remove(curr);
@@ -297,10 +279,6 @@ void lwp_exit(int exitval) {
 
 // Returns the tid of the calling LWP or NO_THREAD if not called by a LWP.
 tid_t lwp_gettid(void) {
-  #ifdef VERBOSE
-  printf("\n[lwp_getid] ENTER\n");
-  #endif
-
   if (curr == NULL) {
     return NO_THREAD;
   }
@@ -310,10 +288,6 @@ tid_t lwp_gettid(void) {
 // Returns the thread corresponding to the given thread ID, or NULL if the ID
 // is invalid
 thread tid2thread(tid_t tid) {
-  #ifdef VERBOSE
-  printf("[tid2thread] ENTER\n");
-  #endif
-  
   // Linear search through all live threads
   thread t = live_head;
   while (t != NULL) {
@@ -340,10 +314,6 @@ thread tid2thread(tid_t tid) {
 // termination status if status is non-NULL. Returns the tid of the terminated
 // thread or NO_THREAD.
 tid_t lwp_wait(int *status) {
-  #ifdef VERBOSE
-  printf("\n[lwp_wait] ENTER\n");
-  #endif
-  
   // Grab the first element of the terminated queue, following the FIFO spec.
   thread t = term_head;
 
@@ -409,10 +379,6 @@ tid_t lwp_wait(int *status) {
 // to the new one in next() order. If scheduler is NULL the library
 // should return to round-robin scheduling.
 void lwp_set_scheduler(scheduler sched) {
-  #ifdef VERBOSE
-  printf("\n[lwp_set_scheduler] ENTER\n");
-  #endif
-
   // Default to MyRoundRobin
   // After this condition, sched is not going to be NULL
   if (sched == NULL) {
@@ -546,10 +512,6 @@ static void lwp_wrap(lwpfun fun, void *arg) {
 // If any of the system calls error, then the return value is 0, and should
 // be handled in function who called get_stacksize()
 static size_t get_stacksize() {
-  #ifdef VERBOSE
-  printf("\n[get_stacksize] ENTER\n");
-  #endif
-
   struct rlimit rlim;
   rlim_t limit = 0;
 
