@@ -9,8 +9,6 @@
 #define NEXT sched_one
 #define PREV sched_two
 
-static void rr_init(void);
-static void rr_shutdown(void);
 static void rr_admit(thread new);
 static void rr_remove(thread victim);
 static thread rr_next(void);
