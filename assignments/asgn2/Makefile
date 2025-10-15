@@ -73,7 +73,10 @@ bin/hungrysnakes.o: demos/hungrysnakes.c include/lwp.h include/snakes.h
 bin/randomsnakes.o: demos/randomsnakes.c include/lwp.h include/snakes.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-bin/numbersmain.o: demos/numbersmain.c include/lwp.h
+# bin/numbersmain.o: demos/numbersmain.c include/lwp.h
+# 	$(CC) $(CFLAGS) -c $< -o $@
+
+bin/numbersmain.o: ~pn-cs453/lib/asgn2/testlib/12_numbersBackwards/numbersmain.c include/lwp.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 bin/util.o: demos/util.c include/lwp.h include/util.h include/snakes.h

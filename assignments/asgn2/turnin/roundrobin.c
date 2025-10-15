@@ -90,6 +90,10 @@ void rr_remove(thread victim) {
   if (victim->NEXT == victim) {
     head = NULL;
     curr = NULL;
+
+    // For my own sanity
+    victim->NEXT = NULL;
+    victim->PREV = NULL;
     return;
   }
   
@@ -137,6 +141,7 @@ thread rr_next(void) {
 // @param void.
 // @return int The number of threads in our scheduling pool.
 int rr_qlen(void) {
+  printf("I have entered qlen\n");
   // If there is no head, then there are no threads present.
   if (head == NULL)  {
     return 0;
