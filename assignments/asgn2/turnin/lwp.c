@@ -222,14 +222,11 @@ void lwp_yield(void) {
   scheduler sched = lwp_get_scheduler();
   thread next = sched->next();
 
-  // If the scheduler has nothing more to give, then something has gone wrong.
+  // The scheduler has nothing more to give.
   if (next == NULL) {
-    perror("[lwp_yeild] this point should not be reached.\n");
-    // thread old = curr;
-    // lwp_list_remove(&live_head, &live_tail, old);
-    // curr = NULL;
-    // free(old);
-    return;
+    tid_t t = curr->tid;
+    free(curr);
+    exit(t);
   }
 
   // The current thread is now the new thread the scheduler just chose.
@@ -275,16 +272,7 @@ void lwp_exit(int exitval) {
     lwp_list_enqueue(&live_head, &live_tail, unblocked);
   }
 
-  if (sched->qlen() >= 0) {
-    // Yield to the next thread that the scheduler chooses.
-    lwp_yield();
-  }
-  else{
-    // Save the status as we are about to free the memory. Don't want to use 
-    // dangling pointers.
-    unsigned int s = curr->status;
-    free(curr);
-  }
+  lwp_yield();
 }
 
 // Returns the tid of the calling LWP or NO_THREAD if not called by a LWP.
