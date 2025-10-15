@@ -239,9 +239,12 @@ void lwp_yield(void) {
 
   // If the scheduler has nothing more to give, then we can safely finish!
   if (next == NULL) {
+    // Save the status as we are about to free the memory. Don't want to use 
+    // dangling pointers.
+    unsigned int s = curr->status;
     free(curr);
     // TODO: do I need to call lwp_exit()?
-    exit(curr->status);
+    exit(s);
   }
 
   // The current thread is now the new thread the scheduler just chose.
