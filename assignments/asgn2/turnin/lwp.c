@@ -52,7 +52,7 @@ static thread curr = NULL;
 
 // A counter for all the ids. We assume the domain will never be more than
 // 2^64 - 2 threads, so keeping a rolling counter is just fine.
-tid_t tid_counter = 1;
+static tid_t tid_counter = 1;
 
 
 // === LWP FUCNTIONS =========================================================
@@ -224,20 +224,11 @@ void lwp_yield(void) {
 
   // If the scheduler has nothing more to give, then something has gone wrong.
   if (next == NULL) {
-<<<<<<< Updated upstream
-    // // Save the status as we are about to free the memory. Don't want to use 
-    // // dangling pointers.
-    // unsigned int s = curr->status;
-    // free(curr);
-    // exit(s);
-    perror("[lwp_yield] we should never reach this point");
-=======
     perror("[lwp_yeild] this point should not be reached.\n");
     // thread old = curr;
     // lwp_list_remove(&live_head, &live_tail, old);
     // curr = NULL;
     // free(old);
->>>>>>> Stashed changes
     return;
   }
 
