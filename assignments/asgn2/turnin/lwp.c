@@ -20,7 +20,16 @@
 #define BYTE_ALIGNMENT 16 // 16 bytes
 
 
-// === GLOBAL VARIABLES (don't freak out, its unavoidable) ===================
+// === HELPER FUCNTIONS ======================================================
+// Adds a thread to the scheduler.
+static void lwp_list_enqueue(thread *head, thread *tail, thread victim);
+// Removes a thread from the scheduler.
+static void lwp_list_remove(thread *head, thread *tail, thread victim);
+static void lwp_wrap(lwpfun fun, void *arg);
+static size_t get_stacksize();
+
+
+// === GLOBAL VARIABLES ======================================================
 // The scheduler that the package is currently using to manage the thread
 static scheduler curr_sched = NULL;
 
@@ -41,13 +50,6 @@ static thread curr = NULL;
 // A counter for all the ids. We assume the domain will never be more than
 // 2^64 - 2 threads.
 static tid_t tid_counter = 1;
-
-
-// === HELPER FUCNTIONS ======================================================
-static void lwp_list_enqueue(thread *head, thread *tail, thread victim);
-static void lwp_list_remove(thread *head, thread *tail, thread victim);
-static void lwp_wrap(lwpfun fun, void *arg);
-static size_t get_stacksize();
 
 
 // === LWP FUCNTIONS =========================================================
