@@ -17,7 +17,7 @@
 // The size of the RLIMIT_STACK in bytes if none is set.
 #define RLIMIT_STACK_DEFAULT 8000000 // 8MB
 // Byte allignment for making the stacks
-#define BYTE_ALLIGNMENT 16 // 16 bytes
+#define BYTE_ALIGNMENT 16 // 16 bytes
 
 
 // === GLOBAL VARIABLES (don't freak out, its unavoidable) ===================
@@ -92,38 +92,24 @@ tid_t lwp_create(lwpfun function, void *argument){
   new->stack = new_stack;
 
   // ======================================================================== 
+  // Magical stack creation
  
-  // TODO: make sure the byte allignment is correct
-  // I think leave and ret belong to it's own stack frame?
+  uintptr_t *stack = (uintptr_t*)(new_stack + new_stacksize);
 
-  // Calculate the top of the stack (highest address)
-  unsigned long *stack_top = (unsigned long *)((char *)new_stack + new_stacksize);
+  // Offset the address we will put lwp_wrap to a multuple of BYTE_ALIGNMENT
+  stack = stack - (uintptr_t)(BYTE_ALIGNMENT);
 
-  // Push a dummy return address for lwp_wrap (it will never return, but needs one)
-  stack_top--;
-  // contents don't matter
-  *stack_top = 0;  
+  // Fill in the return address (lwp_wrap)
+  *stack = (uintptr_t)lwp_wrap;
   
-  // Push the return address to lwp_wrap
-  stack_top--;
-  *stack_top = (unsigned long)lwp_wrap;
-  
-  // Ensure byte alignment of the stack after the first return
-  // When we "return" to lwp_wrap, rsp will point to the dummy address (stack_top + 1)
-  // That address should be 16-byte aligned
-  size_t remainder = ((uintptr_t)(stack_top + 1)) % BYTE_ALLIGNMENT;
-  if (remainder != 0) {
-    size_t adjustment = BYTE_ALLIGNMENT - remainder;
-    
-    // Rebuild with proper alignment
-    stack_top = (unsigned long *)((char *)stack_top - adjustment);
-    *stack_top = (unsigned long)lwp_wrap;
-  }
-  
-  // Registers
-  // Stack and Base Pointers
-  new->state.rsp = (unsigned long)stack_top;  
-  new->state.rbp = (unsigned long)stack_top;
+  // Make room for the base pointer
+  stack--;
+
+  // Filling in the Registers
+  // Stack now points to where the base pointer will be.
+  new->state.rbp = (unsigned long)stack;
+  // rsp doesn't matter... we will just point it to the same spot
+  new->state.rsp = (unsigned long)stack;  
 
   // First argument (lwpfun) - the function
   new->state.rdi = (unsigned long)function;
@@ -133,7 +119,7 @@ tid_t lwp_create(lwpfun function, void *argument){
   // Floating point registers
   new->state.fxsave = FPU_INIT;
 
-  // For sanity sake...
+  // For sanity
   new->state.rax = 0;
   new->state.rbx = 0;
   new->state.rcx = 0;
