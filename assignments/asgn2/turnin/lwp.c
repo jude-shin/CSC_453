@@ -29,7 +29,7 @@ static void lwp_list_remove(thread *head, thread *tail, thread victim);
 // A wrapper for functions that a thread will execute.
 static void lwp_wrap(lwpfun fun, void *arg);
 // Gets the size of the virtual stack each thread will have.
-static size_t get_stacksize();
+static size_t get_stacksize(void);
 
 
 // === GLOBAL VARIABLES ======================================================
@@ -230,8 +230,8 @@ void lwp_start(void){
 // Yields control to another LWP. Which one depends on the scheduler.
 // Saves the current LWP’s context, picks the next one, restores that thread’s
 // context, and returns. If there is no next thread, it terminates the program.
-// @param void
-// @return void
+// @param void.
+// @return void.
 void lwp_yield(void) {
   // Get the thread that the scheduler gives next.
   scheduler sched = lwp_get_scheduler();
@@ -414,10 +414,12 @@ tid_t lwp_wait(int *status) {
   return id;
 }
 
-// Causes the LWP package to use the given scheduler to choose the
-// next process to run. Transfers all threads from the old scheduler
-// to the new one in next() order. If scheduler is NULL the library
-// should return to round-robin scheduling.
+// Causes the LWP package to use the given scheduler to choose the next process
+// to run. Transfers all threads from the old scheduler to the new one in 
+// next() order. If scheduler is NULL, this defaults to the MyRoundRobin 
+// scheduling.
+// @param sched The new scheduler.
+// @return void.
 void lwp_set_scheduler(scheduler sched) {
   // Default to MyRoundRobin
   // After this condition, sched is not going to be NULL
@@ -431,27 +433,28 @@ void lwp_set_scheduler(scheduler sched) {
   }
 
   // Init the scheduler before any theads are admit()ed
+  // TODO: do this in lwp_get_scheduler()
   if (sched->init != NULL) {
     sched->init();
   }
 
-  // If there is a current scheduler must transfer the threads from 
+  // If there is a current scheduler, we must transfer the threads from 
   // the curr_sched(old) to sched(new).
   // If not, skip on ahead... No need to move around threads from one scheduler
   // to another for no reason.
   if (curr_sched != NULL) {
-    thread nxt = curr_sched->next();
-    while(nxt != NULL) { 
+    thread next = curr_sched->next();
+    while(next != NULL) { 
       // Remove the thread from the old scheduler.
-      curr_sched->remove(nxt); 
+      curr_sched->remove(next); 
 
       // Add that thread to the new scheduler.
       // This automatically overwrites the next and prev pointers, so we don't
       // need to worry about that.
-      sched->admit(nxt); 
+      sched->admit(next); 
     
       // Onto the next thread in the old scheduler.
-      nxt = curr_sched->next();
+      next = curr_sched->next();
     }
 
     // Shutdown the old scheduler only after all threads are remove()ed
@@ -464,10 +467,12 @@ void lwp_set_scheduler(scheduler sched) {
   curr_sched = sched;
 }
 
-// Returns the pointer to the current scheduler.
+// Returns the pointer to the current scheduler. If there is none, it defaults
+// to roundrobin.
+// 
 scheduler lwp_get_scheduler(void) {
   if (curr_sched == NULL) {
-    curr_sched  = MyRoundRobin;
+    curr_sched = MyRoundRobin;
   }
 
   return curr_sched;
@@ -481,14 +486,27 @@ scheduler lwp_get_scheduler(void) {
 // threads are added does not matter.
 // WARNING: Make sure head and tail represent the same list. If not, bad things
 // are going to happen...
+// @param head A pointer to the global head of the list.
+// @param tail A pointer to the global tail of the list.
+// @param new The new thread to be added.
+// @return void.
 static void lwp_list_enqueue(thread *head, thread *tail, thread new) {
-  if ((*head == NULL) ^ (*tail == NULL)) {
-    // This should never happen. Either they are both NULL, or both something.
-    // If this occurs, then I have made a grave mistake...
-    perror("[lwp_list_enqueue] mismatching tail and head pointers");
+  if (new == NULL) {
+    // This should never happen. Please always call this with a valid 
+    // non-NULL thead.
+    perror("[lwp_list_enqueue] thread new cannot be NULL");
     return;
   }
 
+  if ((*head == NULL) ^ (*tail == NULL)) {
+    // This should never happen. Either they are both NULL, or both something.
+    // If this occurs, then someone has made a big mistake. 
+    perror("[lwp_list_enqueue] mismatching tail and head pointers");
+    return;
+  }
+  
+  // There is nothing in the list, so add it and set the head/tail to the same
+  // thread, updating their next and prev pointers.
   if (*head == NULL && *tail == NULL) {
     new->NEXT = NULL;
     new->PREV = NULL;
@@ -498,43 +516,61 @@ static void lwp_list_enqueue(thread *head, thread *tail, thread new) {
     return;
   }
 
+  // Otherwise, enqueue to the back of the line (at the tail) as normal.
   new->NEXT = NULL;
   new->PREV = *tail;
-
+  
+  // Set the tail's next value to point to the new thread.
   (*tail)->NEXT = new;
-
+  
+  // Set the value at this address to new.
   *tail = new;
 }
 
 // Remove a thread from either the queue of termiated threads, the queue of 
 // blocked threads, or the doubly linked list of live threads. 
-// To dequeue, call lwp_list_remove(head, tail, head)
+// To dequeue properly, call lwp_list_remove(head, tail, head)
+// @param head A pointer to the global head of the list.
+// @param tail A pointer to the global tail of the list.
+// @param new The new thread to be added.
+// @return void.
 static void lwp_list_remove(thread *head, thread *tail, thread victim) {
+  if (victim == NULL) {
+    // This should never happen. Please always call this with a valid 
+    // non-NULL thead.
+    perror("[lwp_list_remove] thread victim cannot be NULL");
+    return;
+  }
+
   if ((*head == NULL) ^ (*tail == NULL)) {
     // This should never happen. Either they are both NULL, or both something.
-    // If this occurs, then I have made a grave mistake...
+    // If this occurs, then someone has made a big mistake.
     perror("[lwp_list_dequeue] mismatching tail and head pointers");
     return;
   }
 
   if (*head != NULL && victim != NULL) {
     if (victim->PREV != NULL) {
+      // Tell victim's previous node to skip over the victim and onto the next
+      // thread
       victim->PREV->NEXT = victim->NEXT;
     }
     else {
-      // We are at the head.
+      // We are at the head. Update accordingly.
       *head = victim->NEXT;
     }
 
     if (victim->NEXT != NULL) {
+      // Tell victim's next node to skip over the victim and onto the previous 
+      // thread
       victim->NEXT->PREV = victim->PREV;
     }
     else {
-      // We are at the tail.
+      // We are at the tail. Update accordingly.
       *tail = victim->PREV;
     }
 
-    // For sanity, set the pointers to NULL
+    // For sanity, set the pointers to NULL, even though we don't really care
     victim->NEXT = NULL;
     victim->PREV = NULL;
   }
@@ -543,18 +579,24 @@ static void lwp_list_remove(thread *head, thread *tail, thread victim) {
 
 // === LWP HELPER FUNCTIONS ==================================================
 // Calls the given lwpfun with the given argument. After it is finished with 
-// the lwpfun, it valles lwp_exit() with the appropriate return value.
+// the lwpfun, it fills lwp_exit() with the appropriate return value.
+// @param fun The lwpfun which will actually execute.
+// @param arg The void* that will be the arguments for the lwpfun
+// @return void.
 static void lwp_wrap(lwpfun fun, void *arg) {
   lwp_exit(fun(arg));
 }
 
-// Gets the size of the stack that we should use.
-// If any of the system calls error, then the return value is 0, and should
-// be handled in function who called get_stacksize()
-static size_t get_stacksize() {
+// Gets the size of the stack that we should use for each thread's virtual
+// stack. If any of the system calls error, then the return value is 0, and 
+// should be handled in function who called get_stacksize()
+// @param void.
+// @return The size_t of the virtual stack we should be creating.
+static size_t get_stacksize(void) {
   struct rlimit rlim;
   rlim_t limit = 0;
 
+  // Try to get the rlimit. Set to the default if the call gives garbage.
   if(getrlimit(RLIMIT_STACK, &rlim) == -1 || rlim.rlim_cur == RLIM_INFINITY) {
     // Set the default to RLIMIT_STACK_DEFAULT
     limit = RLIMIT_STACK_DEFAULT;
