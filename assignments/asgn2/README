@@ -1,0 +1,7 @@
+Jude Shin (jshin53)
+No special instructions for running the program.
+MyRoundRobin was the scheduler that I created. Its header file is in
+"roundrobin.h" and it's source file is in "roundrobin.c". The lwp library's
+header file was unchanged from the given header file and the source file is in
+"lwp.c".
+
