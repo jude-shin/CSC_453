@@ -337,10 +337,9 @@ tid_t lwp_wait(int *status) {
     // has 1 element in it).
     scheduler sched = lwp_get_scheduler();
 
-    // if (sched->qlen() <= 1) {
-    //   // TODO: what to set the status to be here?
-    //   return NO_THREAD;
-    // }
+    if (sched->qlen() <= 1) {
+      return NO_THREAD;
+    }
 
     // We must be blocked... How sad.
     // Deschedule the current thread.
