@@ -16,59 +16,63 @@
 
 // The size of the RLIMIT_STACK in bytes if none is set.
 #define RLIMIT_STACK_DEFAULT 8000000 // 8MB
+
 // Byte allignment for making the stacks
-#define BYTE_ALIGNMENT 16 // 16 bytes
+#define BYTE_STACK_ALIGNMENT 16 // 16 bytes
 
 
 // === HELPER FUCNTIONS ======================================================
-// Adds a thread to the scheduler.
+// Adds a thread to any one of the lists/queues (live, term, blck).
 static void lwp_list_enqueue(thread *head, thread *tail, thread victim);
-// Removes a thread from the scheduler.
+// Removes a thread to any one of the lists/queues (live, term, blck).
 static void lwp_list_remove(thread *head, thread *tail, thread victim);
+// A wrapper for functions that a thread will execute.
 static void lwp_wrap(lwpfun fun, void *arg);
+// Gets the size of the virtual stack each thread will have.
 static size_t get_stacksize();
 
 
 // === GLOBAL VARIABLES ======================================================
-// The scheduler that the package is currently using to manage the thread
+// The scheduler that the package is currently using to manage our threads.
 static scheduler curr_sched = NULL;
 
 // Global doubly linked lists.
 // The term and blocked lists should be treated as queues.
 // No list should contain a duplicate thread, as only two pointers are
 // shared between all three of these lists.
-static thread live_head = NULL;  // Holds live threads
+static thread live_head = NULL;  // Holds live threads.
 static thread live_tail = NULL;
-static thread term_head = NULL;  // Holds termiated threads
+static thread term_head = NULL;  // Holds termiated threads.
 static thread term_tail = NULL;
-static thread blck_head = NULL;  // Holds blocked threads
+static thread blck_head = NULL;  // Holds blocked threads.
 static thread blck_tail = NULL;
 
 // The thread that is currently in context.
 static thread curr = NULL;
 
 // A counter for all the ids. We assume the domain will never be more than
-// 2^64 - 2 threads.
+// 2^64 - 2 threads, so keeping a rolling counter is just fine.
 static tid_t tid_counter = 1;
 
 
 // === LWP FUCNTIONS =========================================================
 // Creates a new lightweight process which executes the given function
-// with the given argument.
-// lwp create() returns the (lightweight) thread id of the new thread
-// or NO_THREAD if the thread cannot be created.
+// with the given argument (wrapped by lwp_wrap).
+// @param function A lwpfun that will be executed by this thread.
+// @param argument A void* to an argument.
+// @return A tid_t thread id of the process that we have just created. (Or
+// NO_THREAD if a thead could not be created).
 tid_t lwp_create(lwpfun function, void *argument){
-  // Get the current scheduler
-  scheduler sched = lwp_get_scheduler();
-
-  // Save the context somewhere that persists against toggling
+  // "Create" a new thread by saving the context of a thread somewhere in
+  // memory. If the syscall fails, catch it and bail; something has gone wrong.
   thread new = malloc(sizeof(context));
   if (new == NULL) {
     perror("[lwp_create] Error when getting malloc()ing a new thread.");
     return NO_THREAD;
   }
 
-  // Get the soft stack size.
+  // Get the soft stack size and update the new thread's context with it. If 
+  // the syscall fails, catch it and bail.
   size_t new_stacksize = get_stacksize();
   if (new_stacksize == 0) {
     perror("[lwp_create] Error when getting RLIMIT_STACK.");
@@ -76,7 +80,9 @@ tid_t lwp_create(lwpfun function, void *argument){
   }
   new->stacksize = new_stacksize;
 
-  // mmap() a new stack for this thread. 
+  // mmap() a new chunk of memory for this thread. This acts as the virtual 
+  // stack this thread can have. Give it read and write permissions (not
+  // execute). The offset should also be zero.
   void *new_stack = mmap(
       NULL, 
       new_stacksize, 
@@ -85,43 +91,54 @@ tid_t lwp_create(lwpfun function, void *argument){
       -1, 
       0);
 
+  // If the syscall fails, catch it and bail; something has gone wrong.
   if (new_stack == MAP_FAILED) {
     perror("[lwp_create] Error when mmapp()ing a new stack.");
     return NO_THREAD;
   }
-  // NOTE: this is not the real stack pointer... this is just used for the
-  // unmmap() cleaning process. Stacks grow from high -> low addresses.
+  // Update the new thread's context with this pointer to the "lowest" point
+  // in memory of the stack. Arithmetic is done later.
   new->stack = new_stack;
 
   // ======================================================================== 
-  // Magical stack creation
- 
+  // Virual Stack Creation
+  // This is where a lot of the magic happens. This allows for the this to be
+  // "returned to", allowing for the instruction pointer to go to the function
+  // we really want to be executed, with the correct arguments.
+
+  // This is the reall "bottom" of the virtual stack. It is the highest address
+  // in our mmap()ed space, and it will grow towards the lower addresses.
   uintptr_t *stack = (uintptr_t*)(new_stack + new_stacksize);
 
-  // Offset the address we will put lwp_wrap to a multuple of BYTE_ALIGNMENT
-  stack = stack - (uintptr_t)(BYTE_ALIGNMENT);
+  // Offset the address we will put lwp_wrap to a multuple of the
+  // BYTE_STACK_ALIGNMENT. All stack frames must be built on that boundary.
+  stack = stack - (uintptr_t)(BYTE_STACK_ALIGNMENT);
 
-  // Fill in the return address (lwp_wrap)
+  // Fill in the return address (lwp_wrap); where we will go.
   *stack = (uintptr_t)lwp_wrap;
   
-  // Make room for the base pointer
+  // Make room for the base pointer. (Contents don't matter).
   stack--;
 
   // Filling in the Registers
   // Stack now points to where the base pointer will be.
   new->state.rbp = (unsigned long)stack;
-  // rsp doesn't matter... we will just point it to the same spot
+
+  // Rsp doesn't matter... we will just point it to the same spot.
+  // This will return to the stackframe we just set to lwp_wait.
   new->state.rsp = (unsigned long)stack;  
 
   // First argument (lwpfun) - the function
   new->state.rdi = (unsigned long)function;
+
   // Second argument (void*) - the argument
   new->state.rsi = (unsigned long)argument;
   
   // Floating point registers
   new->state.fxsave = FPU_INIT;
 
-  // For sanity
+  // For sanity, these are zeroed out. Their contents do not affect the
+  // lwp_create functionality.
   new->state.rax = 0;
   new->state.rbx = 0;
   new->state.rcx = 0;
@@ -137,78 +154,88 @@ tid_t lwp_create(lwpfun function, void *argument){
   
   // ======================================================================== 
 
-  // Create a new id (just using a counter)
+  // Create a new id (just incrementing a counter).
   new->tid = tid_counter;
-  tid_counter = tid_counter + 1;
+  // TODO:
+  // tid_counter = tid_counter + 1;
+  tid_counter++; 
 
   // Indicate that it is a live and running process.
   new->status = LWP_LIVE;
 
-  // For sanity...
+  // For sanity these are all set to NULL. This is a habbit I picked up for 
+  // debugging.
   new->lib_one = NULL;
   new->lib_two = NULL;
   new->sched_one = NULL;
   new->sched_two = NULL;
   new->exited = NULL;
   
-  // Add this to the rolling global list of items
+  // Add this to the global list of live threads. The order doesn't matter: I 
+  // put them on the back of the list.
   lwp_list_enqueue(&live_head, &live_tail, new);
 
-  // Admit the newly created "main" thread to the current scheduler
+  // Admit the newly created thread to the current scheduler.
+  scheduler sched = lwp_get_scheduler();
   sched->admit(new);
 
   return new->tid;
 }
 
-// Starts the LWP system. Converts the calling thread into a LWP
-// and lwp yield()s to whichever thread the scheduler chooses.
+// Starts the LWP system. Converts the calling thread (the original system
+// thread) into a LWP and lwp yield()s to whichever thread the scheduler 
+// chooses.
+// @param void.
+// @return void.
 void lwp_start(void){
-  // Setup the context for the original system thread 
-
-  // Get the current scheduler
-  scheduler sched = lwp_get_scheduler();
-
-  // Save the context somewhere that persists against toggling
+  // "Create" a new thread by saving the context of a thread somewhere in
+  // memory. If the syscall fails, catch it and bail; something has gone wrong.
   thread new = malloc(sizeof(context));
   if (new == NULL) {
     perror("[lwp_start] Error when malloc()ing a the original thread.");
     exit(EXIT_FAILURE);
   }
 
-  // Use the current stack for this special thread only.
+  // Use the current stack for this special thread only. There is no need to
+  // create a new stack.
   new->stack = NULL; 
   new->stacksize = 0;
   
-  // Create a new id (just using a counter)
+  // Create a new id (just using a counter).
   new->tid = tid_counter;
-  tid_counter = tid_counter + 1;
+  // TODO:
+  // tid_counter = tid_counter + 1;
+  tid_counter++;
 
   // Indicate that it is a live and running process.
   new->status = LWP_LIVE;
 
-  // For sanity
+  // For sanity, these are all set to NULL.
   new->lib_one = NULL;
   new->lib_two = NULL;
   new->sched_one = NULL;
   new->sched_two = NULL;
   new->exited = NULL;
 
+  // Set the current thread to be the one we just created.
   curr = new;
   
-  // Add this to the rolling global list of items
+  // Add this to the rolling global list of items.
   lwp_list_enqueue(&live_head, &live_tail, new);
 
-  // Admit the newly created "main" thread to the current scheduler
+  // Admit the newly created "main" thread to the current scheduler.
+  scheduler sched = lwp_get_scheduler();
   sched ->admit(new);
 
   // Start the yielding process.
   lwp_yield();
 }
 
-// Yields control to another LWP. Which one depends on the sched-
-// uler. Saves the current LWP’s context, picks the next one, restores
-// that thread’s context, and returns. If there is no next thread, ter-
-// minates the program.
+// Yields control to another LWP. Which one depends on the scheduler.
+// Saves the current LWP’s context, picks the next one, restores that thread’s
+// context, and returns. If there is no next thread, it terminates the program.
+// @param void
+// @return void
 void lwp_yield(void) {
   // Get the thread that the scheduler gives next.
   scheduler sched = lwp_get_scheduler();
@@ -217,18 +244,22 @@ void lwp_yield(void) {
   // If the scheduler has nothing more to give, then we can safely finish!
   if (next == NULL) {
     free(curr);
+    // TODO: do I need to call lwp_exit()?
     exit(curr->status);
   }
 
   // The current thread is now the new thread the scheduler just chose.
   thread old = curr;
   curr = next;
-  
+ 
+  // Switch contexts.
   swap_rfiles(&old->state, &next->state);
 }
 
-// Terminates the current LWP and yields to whichever thread the
-// scheduler chooses. lwp exit() does not return.
+// Terminates the current LWP and yields to whichever thread the scheduler 
+// chooses. lwp exit() does not return!
+// @param exitval An int indicating the exit value.
+// @return void.
 void lwp_exit(int exitval) {
   // Remove from the scheduler.
   scheduler sched = lwp_get_scheduler();
@@ -237,13 +268,14 @@ void lwp_exit(int exitval) {
   // Combine the status and the exitval, and set it as the thread's new status.
   curr->status = MKTERMSTAT(curr->status, exitval);
 
-  // Add the current thread to the queue of terminated threads.
-  // This also effectively removes the current thread from the live stack also.
+  // Take the thread off the live list, and add the current thread to the queue
+  // of terminated threads.
   lwp_list_remove(&live_head, &live_tail, curr);
   lwp_list_enqueue(&term_head, &term_tail, curr);
  
   // Do some blocking checks if there are blocked threads.
   if (blck_head != NULL) {
+    // Get the oldest blocked thread that is waiting for a process to end.
     thread unblocked = blck_head;
 
     // Remove it from the blocked queue.
@@ -252,10 +284,10 @@ void lwp_exit(int exitval) {
     // Set the blocked .exited status to this current thread.
     unblocked->exited = curr;
 
-    // Add the unblocked thread to the scheduler again.;
+    // Add the unblocked thread to the scheduler again.
     sched->admit(unblocked);
     
-    // Reset this to "live" by adding it back to the live list
+    // Reset this to "live" by adding it back to the live list.
     lwp_list_enqueue(&live_head, &live_tail, unblocked);
   }
 
@@ -264,6 +296,8 @@ void lwp_exit(int exitval) {
 }
 
 // Returns the tid of the calling LWP or NO_THREAD if not called by a LWP.
+// @param void.
+// @return The tid_t of the calling (current) lwp.
 tid_t lwp_gettid(void) {
   if (curr == NULL) {
     return NO_THREAD;
@@ -272,9 +306,11 @@ tid_t lwp_gettid(void) {
 }
 
 // Returns the thread corresponding to the given thread ID, or NULL if the ID
-// is invalid
+// is invalid.
+// @param tid The tid_t we are searching for.
+// @return The thread whos tid matches the parameter (or NULL if not found).
 thread tid2thread(tid_t tid) {
-  // Linear search through all live threads
+  // Linear search through all live threads.
   thread t = live_head;
   while (t != NULL) {
     if (t->tid == tid) {
@@ -283,8 +319,17 @@ thread tid2thread(tid_t tid) {
     t = t->NEXT;
   }
   
-  // Linear search through all the terminated threads
+  // Linear search through all the terminated threads.
   t = term_head;
+  while (t != NULL) {
+    if (t->tid == tid) {
+      return t;
+    }
+    t = t->NEXT;
+  }
+
+  // Linear search through all the blocked threads.
+  t = blck_head;
   while (t != NULL) {
     if (t->tid == tid) {
       return t;
@@ -299,40 +344,48 @@ thread tid2thread(tid_t tid) {
 // Waits for a thread to terminate, deallocates its resources, and reports its
 // termination status if status is non-NULL. Returns the tid of the terminated
 // thread or NO_THREAD.
+// @param status A pointer to an integer (or NULL) that holds the status of a
+// thread. 
+// @return The tid of the thread who was waited upon.
 tid_t lwp_wait(int *status) {
-  // Grab the first element of the terminated queue, following the FIFO spec.
+  // Grab the first element of the terminated queue.
   thread t = term_head;
 
-  // If there are no zombies to be cleaned, either block, or return NO_THREAD
+  // If there are no termiated to be cleaned, either block, or return NO_THREAD
   if (t == NULL) {
     // If there are no more threads that could possibly block (if the scheduler
     // has 1 element in it).
     scheduler sched = lwp_get_scheduler();
     if (sched->qlen() == 1) {
+      // TODO: what to set the status to be here?
       return NO_THREAD;
     }
   
     // We must be blocked... How sad.
-    // 1) Deschedule curr
+    // Deschedule the current thread.
     sched->remove(curr);
 
-    // 2) Put curr on the blocked queue (which "removes" it from the live list)
+    // Remove the curr thread from the live list, and put it on the blocked
+    // queue.
+    lwp_list_remove(&live_head, &live_tail, curr); // TODO: check
     lwp_list_enqueue(&blck_head, &blck_tail, curr);
 
-    // 3) yield to another process
+    // Yield to another process.
     lwp_yield();
     
     // At this point, we have returned!
     // NOTE: curr->exited has been populated with the exited thread
-    // 4) Remove curr from the blocked queue
+
+    // Remove curr from the blocked queue.
     lwp_list_remove(&blck_head, &blck_tail, curr);
 
-    // 5) Put the curr onto the live list.
+    // Put the curr onto the live list.
     lwp_list_enqueue(&live_head, &live_tail, curr);
 
-    // 6) exited is now the next thread to deallocate (t)
+    // .exited is now the next thread to deallocate (t)
     t = curr->exited;
   }
+
   // Remove the thread from wherever it is
   // 1) it is either the head of the terminated queue
   // 2) it is somewhere in the (beginning, middle or end) of the terminated 
@@ -340,7 +393,7 @@ tid_t lwp_wait(int *status) {
   // blocked process.
   lwp_list_remove(&term_head, &term_tail, t);
 
-  if (t->stack != NULL && munmap(t->stack, t->stacksize) == -1) {
+  if (/* TODO: t->stack != NULL && */munmap(t->stack, t->stacksize) == -1) {
     // Something terribly wrong has happened. This syscall failed, so we
     // note the error and give up. In prod, we might try to limp along, but
     // for now, we are just bailing. 
@@ -348,13 +401,15 @@ tid_t lwp_wait(int *status) {
     exit(EXIT_FAILURE);
   }
 
+  // The parameter status can be null. Don't try to dereference a NULL pointer.
   if (status != NULL) {
     *status = t->status;
   }
 
+  // Save the id because we are going to free the thread soon.
   tid_t id = t->tid;
 
-  // free the memory malloced for the thread
+  // Free the memory malloced for the thread's context.
   free(t);
 
   return id;
