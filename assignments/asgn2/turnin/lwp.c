@@ -224,11 +224,13 @@ void lwp_yield(void) {
 
   // If the scheduler has nothing more to give, then we can safely finish!
   if (next == NULL) {
-    // Save the status as we are about to free the memory. Don't want to use 
-    // dangling pointers.
-    unsigned int s = curr->status;
-    free(curr);
-    exit(s);
+    // // Save the status as we are about to free the memory. Don't want to use 
+    // // dangling pointers.
+    // unsigned int s = curr->status;
+    // free(curr);
+    // exit(s);
+    perror("[lwp_yield] we should never reach this point");
+    return;
   }
 
   // The current thread is now the new thread the scheduler just chose.
@@ -274,8 +276,19 @@ void lwp_exit(int exitval) {
     lwp_list_enqueue(&live_head, &live_tail, unblocked);
   }
 
-  // Yield to the next thread that the scheduler chooses.
-  lwp_yield();
+  // Only yeild if there is something to yeild to.
+  printf("[%lu]qlen(): %d", curr->tid, sched->qlen());
+
+  if (sched->qlen() >= 0) {
+    // Yield to the next thread that the scheduler chooses.
+    lwp_yield();
+  }
+  else{
+    // Save the status as we are about to free the memory. Don't want to use 
+    // dangling pointers.
+    unsigned int s = curr->status;
+    free(curr);
+  }
 }
 
 // Returns the tid of the calling LWP or NO_THREAD if not called by a LWP.
@@ -339,7 +352,7 @@ tid_t lwp_wait(int *status) {
     // If there are no more threads that could possibly block (if the scheduler
     // has 1 element in it).
     scheduler sched = lwp_get_scheduler();
-    if (sched->qlen() == 1) {
+    if (sched->qlen() <= 1) {
       // TODO: what to set the status to be here?
       return NO_THREAD;
     }
@@ -417,7 +430,6 @@ void lwp_set_scheduler(scheduler sched) {
   }
 
   // Init the scheduler before any theads are admit()ed
-  // TODO: do this in lwp_get_scheduler()
   if (sched->init != NULL) {
     sched->init();
   }
@@ -453,7 +465,8 @@ void lwp_set_scheduler(scheduler sched) {
 
 // Returns the pointer to the current scheduler. If there is none, it defaults
 // to roundrobin.
-// 
+// @param void.
+// @return The scheduler that is currently being used.
 scheduler lwp_get_scheduler(void) {
   if (curr_sched == NULL) {
     curr_sched = MyRoundRobin;
