@@ -243,7 +243,6 @@ void lwp_yield(void) {
     // dangling pointers.
     unsigned int s = curr->status;
     free(curr);
-    // TODO: do I need to call lwp_exit()?
     exit(s);
   }
 
@@ -366,7 +365,7 @@ tid_t lwp_wait(int *status) {
 
     // Remove the curr thread from the live list, and put it on the blocked
     // queue.
-    lwp_list_remove(&live_head, &live_tail, curr); // TODO: check
+    lwp_list_remove(&live_head, &live_tail, curr);
     lwp_list_enqueue(&blck_head, &blck_tail, curr);
 
     // Yield to another process.

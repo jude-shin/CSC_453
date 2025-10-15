@@ -4,6 +4,9 @@ nums
 my_hungry
 my_snakes
 my_nums
+gdb_hungry
+gdb_snakes
+gdb_nums
 
 compile_flags.txt
 bin/
