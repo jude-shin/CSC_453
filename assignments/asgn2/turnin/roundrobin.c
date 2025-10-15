@@ -45,7 +45,7 @@ static thread curr = NULL;
 
 
 // === SCHEDULER FUNCTIONS ===================================================
-// Add the passed context to the scheduler’s scheduling pool. For round robin,
+// Add the passed context to the scheduler's scheduling pool. For round robin,
 // this thread is added to the end of the list.
 // @param new The new thread that is going to be added to the pool.
 // @return void.
@@ -80,7 +80,7 @@ void rr_admit(thread new) {
   head->PREV = new;
 }
 
-// Remove the passed context from the scheduler’s scheduling pool. This simply
+// Remove the passed context from the scheduler's scheduling pool. This simply
 // flushes out the scheduler pointers and fixes the edge cases.
 // @param victim The thread we are removing from the schedulers pool.
 // @return void.

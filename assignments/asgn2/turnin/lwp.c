@@ -100,7 +100,7 @@ tid_t lwp_create(lwpfun function, void *argument){
   // in memory of the stack. Arithmetic is done later.
   new->stack = new_stack;
 
-  // ======================================================================== 
+  // ========================================================================
   // Virual Stack Creation
   // This is where a lot of the magic happens. This allows for the this to be
   // "returned to", allowing for the instruction pointer to go to the function
@@ -116,7 +116,7 @@ tid_t lwp_create(lwpfun function, void *argument){
 
   // Fill in the return address (lwp_wrap); where we will go.
   *stack = (uintptr_t)lwp_wrap;
-  
+
   // Make room for the base pointer. (Contents don't matter).
   stack--;
 
@@ -126,33 +126,18 @@ tid_t lwp_create(lwpfun function, void *argument){
 
   // Rsp doesn't matter... we will just point it to the same spot.
   // This will return to the stackframe we just set to lwp_wait.
-  new->state.rsp = (unsigned long)stack;  
+  new->state.rsp = (unsigned long)stack;
 
   // First argument (lwpfun) - the function
   new->state.rdi = (unsigned long)function;
 
   // Second argument (void*) - the argument
   new->state.rsi = (unsigned long)argument;
-  
+
   // Floating point registers
   new->state.fxsave = FPU_INIT;
 
-  // For sanity, these are zeroed out. Their contents do not affect the
-  // lwp_create functionality.
-  new->state.rax = 0;
-  new->state.rbx = 0;
-  new->state.rcx = 0;
-  new->state.rdx = 0;
-  new->state.r8 = 0;
-  new->state.r9 = 0;
-  new->state.r10 = 0;
-  new->state.r11 = 0;
-  new->state.r12 = 0;
-  new->state.r13 = 0;
-  new->state.r14 = 0;
-  new->state.r15 = 0;
-  
-  // ======================================================================== 
+  // ========================================================================
 
   // Create a new id (just incrementing a counter).
   new->tid = tid_counter;
@@ -228,7 +213,7 @@ void lwp_start(void){
 }
 
 // Yields control to another LWP. Which one depends on the scheduler.
-// Saves the current LWP’s context, picks the next one, restores that thread’s
+// Saves the current LWP's context, picks the next one, restores that thread's
 // context, and returns. If there is no next thread, it terminates the program.
 // @param void.
 // @return void.
