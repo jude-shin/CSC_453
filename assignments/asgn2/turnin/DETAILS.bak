@@ -1,0 +1,62 @@
+=================================================
+TEST 12: Five threads, variable iters, exit from back
+
+This is the numbersmain program distributed with the assignment.
+Each thread (1..5) exits after N minus its number of iterations.
+The effect is to always have the last process call lwp_exit().
+
+
+----------
+Reference:
+----------
+Launching LWPS
+    1
+         2
+              3
+                   4
+                        5
+    1
+         2
+              3
+                   4
+    1
+         2
+              3
+    1
+         2
+    1
+Back from LWPS.
+----------
+Submitted:
+----------
+^CParent process (58935) caught signal (Interrupt).
+Forwarding signal (Interrupt) to child.
+Child process (58943) exited due to signal (Interrupt).
+
+---------------------------------
+Differences (< reference > output)
+---------------------------------
+
+1,17c1,3
+< Launching LWPS
+<     1
+<          2
+<               3
+<                    4
+<                         5
+<     1
+<          2
+<               3
+<                    4
+<     1
+<          2
+<               3
+<     1
+<          2
+<     1
+< Back from LWPS.
+---
+> ^CParent process (58935) caught signal (Interrupt).
+> Forwarding signal (Interrupt) to child.
+> Child process (58943) exited due to signal (Interrupt).
+---------
