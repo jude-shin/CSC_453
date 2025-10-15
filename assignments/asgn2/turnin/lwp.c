@@ -275,9 +275,6 @@ void lwp_exit(int exitval) {
     lwp_list_enqueue(&live_head, &live_tail, unblocked);
   }
 
-  // Only yeild if there is something to yeild to.
-  printf("[%lu]qlen(): %d", curr->tid, sched->qlen());
-
   if (sched->qlen() >= 0) {
     // Yield to the next thread that the scheduler chooses.
     lwp_yield();
