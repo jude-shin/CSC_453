@@ -224,9 +224,9 @@ void lwp_yield(void) {
 
   // The scheduler has nothing more to give.
   if (next == NULL) {
-    tid_t t = curr->tid;
+    unsigned int s = curr->status;
     free(curr);
-    exit(t);
+    exit(s);
   }
 
   // The current thread is now the new thread the scheduler just chose.
@@ -337,14 +337,15 @@ tid_t lwp_wait(int *status) {
     // has 1 element in it).
     scheduler sched = lwp_get_scheduler();
 
+    // if (sched->qlen() <= 1) {
+    //   // TODO: what to set the status to be here?
+    //   return NO_THREAD;
+    // }
+
     // We must be blocked... How sad.
     // Deschedule the current thread.
     sched->remove(curr);
 
-    if (sched->qlen() <= 1) {
-      // TODO: what to set the status to be here?
-      return NO_THREAD;
-    }
 
     // Remove the curr thread from the live list, and put it on the blocked
     // queue.
