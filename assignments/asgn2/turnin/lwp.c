@@ -351,18 +351,15 @@ tid_t lwp_wait(int *status) {
     // If there are no more threads that could possibly block (if the scheduler
     // has 1 element in it).
     scheduler sched = lwp_get_scheduler();
-<<<<<<< Updated upstream
+
+    // We must be blocked... How sad.
+    // Deschedule the current thread.
+    sched->remove(curr);
+
     if (sched->qlen() <= 1) {
       // TODO: what to set the status to be here?
       return NO_THREAD;
     }
-  
-=======
-
->>>>>>> Stashed changes
-    // We must be blocked... How sad.
-    // Deschedule the current thread.
-    sched->remove(curr);
 
     if (sched->qlen() <= 1) {
       // TODO: what to set the status to be here?
