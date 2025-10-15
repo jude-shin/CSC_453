@@ -8,7 +8,8 @@ LWP_LIB_FLAG = -lPLN
 LWP_LIB = lib64/libPLN.so 
 
 PROGS = snakes hungry nums 
-ALL_PROGS = $(PROGS) my_snakes my_hungry my_nums
+TEST_PROGS = gdb_nums gdb_snakes gdb_hungry
+ALL_PROGS = $(PROGS) $(TEST_PROGS) my_snakes my_hungry my_nums
 
 SNAKE_OBJS = bin/randomsnakes.o bin/util.o
 SNAKE_LIBS = -lsnakes -lncurses -lrt
@@ -46,22 +47,22 @@ nums: bin/numbersmain.o bin/roundrobin.o lib64/libsnakes.so
 
 # =====================================================================
 
-# my_snakes: bin/randomsnakes.o bin/util.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so 
-# 	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp $(SNAKE_LIBS)
-# 
-# my_hungry: bin/hungrysnakes.o bin/util.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so
-# 	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp $(SNAKE_LIBS)
-# 
-# my_nums: bin/numbersmain.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so 
-# 	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp
+my_snakes: bin/randomsnakes.o bin/util.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so 
+	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp $(SNAKE_LIBS)
 
-my_snakes: bin/randomsnakes.o bin/util.o bin/roundrobin.o bin/magic64.o bin/lwp.o
+my_hungry: bin/hungrysnakes.o bin/util.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so
+	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp $(SNAKE_LIBS)
+
+my_nums: bin/numbersmain.o bin/roundrobin.o bin/magic64.o lib64/liblwp.so 
+	$(LD) $(LDFLAGS) -o $@ $(filter-out %.so, $^) -llwp
+
+gdb_snakes: bin/randomsnakes.o bin/util.o bin/roundrobin.o bin/magic64.o bin/lwp.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(SNAKE_LIBS)
 
-my_hungry: bin/hungrysnakes.o bin/util.o bin/roundrobin.o bin/magic64.o bin/lwp.o
+gdb_hungry: bin/hungrysnakes.o bin/util.o bin/roundrobin.o bin/magic64.o bin/lwp.o
 	$(LD) $(LDFLAGS) -o $@ $^ $(SNAKE_LIBS)
 
-my_nums: bin/numbersmain.o bin/roundrobin.o bin/magic64.o bin/lwp.o
+gdb_nums: bin/numbersmain.o bin/roundrobin.o bin/magic64.o bin/lwp.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 # =====================================================================
