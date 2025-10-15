@@ -9,7 +9,14 @@
 #define NEXT sched_one
 #define PREV sched_two
 
-// The scheduler that is the default for this package
+static void rr_init(void);
+static void rr_shutdown(void);
+static void rr_admit(thread new);
+static void rr_remove(thread victim);
+static thread rr_next(void);
+static int rr_qlen(void);
+
+// The global struct that will be referenced everywhere.
 static struct scheduler rr_publish = {
   .init=NULL, 
   .shutdown=NULL, 
