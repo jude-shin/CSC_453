@@ -141,7 +141,6 @@ thread rr_next(void) {
 // @param void.
 // @return int The number of threads in our scheduling pool.
 int rr_qlen(void) {
-  printf("I have entered qlen\n");
   // If there is no head, then there are no threads present.
   if (head == NULL)  {
     return 0;

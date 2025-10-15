@@ -358,11 +358,6 @@ tid_t lwp_wait(int *status) {
       return NO_THREAD;
     }
 
-    if (sched->qlen() <= 1) {
-      // TODO: what to set the status to be here?
-      return NO_THREAD;
-    }
-  
     // Remove the curr thread from the live list, and put it on the blocked
     // queue.
     lwp_list_remove(&live_head, &live_tail, curr);
