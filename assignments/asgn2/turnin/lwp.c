@@ -156,8 +156,6 @@ tid_t lwp_create(lwpfun function, void *argument){
 
   // Create a new id (just incrementing a counter).
   new->tid = tid_counter;
-  // TODO:
-  // tid_counter = tid_counter + 1;
   tid_counter++; 
 
   // Indicate that it is a live and running process.
@@ -203,8 +201,6 @@ void lwp_start(void){
   
   // Create a new id (just using a counter).
   new->tid = tid_counter;
-  // TODO:
-  // tid_counter = tid_counter + 1;
   tid_counter++;
 
   // Indicate that it is a live and running process.
@@ -393,7 +389,7 @@ tid_t lwp_wait(int *status) {
   // blocked process.
   lwp_list_remove(&term_head, &term_tail, t);
 
-  if (/* TODO: t->stack != NULL && */munmap(t->stack, t->stacksize) == -1) {
+  if (munmap(t->stack, t->stacksize) == -1) {
     // Something terribly wrong has happened. This syscall failed, so we
     // note the error and give up. In prod, we might try to limp along, but
     // for now, we are just bailing. 
