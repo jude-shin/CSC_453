@@ -29,9 +29,9 @@ Back from LWPS.
 ----------
 Submitted:
 ----------
-^CParent process (11653) caught signal (Interrupt).
+^CParent process (16062) caught signal (Interrupt).
 Forwarding signal (Interrupt) to child.
-Child process (11661) exited due to signal (Interrupt).
+Child process (16070) exited due to signal (Interrupt).
 
 ---------------------------------
 Differences (< reference > output)
@@ -56,9 +56,9 @@ Differences (< reference > output)
 <     1
 < Back from LWPS.
 ---
-> ^CParent process (11653) caught signal (Interrupt).
+> ^CParent process (16062) caught signal (Interrupt).
 > Forwarding signal (Interrupt) to child.
-> Child process (11661) exited due to signal (Interrupt).
+> Child process (16070) exited due to signal (Interrupt).
 ---------
 =================================================
 TEST 17: Two Lwps. spawn then exits 50 times.

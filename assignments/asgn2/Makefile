@@ -25,7 +25,7 @@ EXTRA_CLEAN = core
 
 all: $(ALL_PROGS)
 
-cleanall: clean
+allclean: clean
 	@rm -f $(EXTRACLEAN)
 	rm -f $(ALL_PROGS) bin/lwp.o bin/roundrobin.o bin/magic64.o
 

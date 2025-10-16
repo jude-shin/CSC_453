@@ -29,29 +29,36 @@ Back from LWPS.
 ----------
 Submitted:
 ----------
-Launching LWPS
-    1
-         2
-              3
-                   4
-                        5
-    1
-         2
-              3
-                   4
-    1
-         2
-              3
-    1
-         2
-    1
+^CParent process (11653) caught signal (Interrupt).
+Forwarding signal (Interrupt) to child.
+Child process (11661) exited due to signal (Interrupt).
 
 ---------------------------------
 Differences (< reference > output)
 ---------------------------------
 
-17d16
+1,17c1,3
+< Launching LWPS
+<     1
+<          2
+<               3
+<                    4
+<                         5
+<     1
+<          2
+<               3
+<                    4
+<     1
+<          2
+<               3
+<     1
+<          2
+<     1
 < Back from LWPS.
+---
+> ^CParent process (11653) caught signal (Interrupt).
+> Forwarding signal (Interrupt) to child.
+> Child process (11661) exited due to signal (Interrupt).
 ---------
 =================================================
 TEST 17: Two Lwps. spawn then exits 50 times.
