@@ -360,14 +360,6 @@ tid_t lwp_wait(int *status) {
     // At this point, we have returned!
     // NOTE: curr->exited has been populated with the exited thread
 
-
-    // TODO:
-    // // Remove curr from the blocked queue.
-    // lwp_list_remove(&blck_head, &blck_tail, curr);
-
-    // // Put the curr onto the live list.
-    // lwp_list_enqueue(&live_head, &live_tail, curr);
-
     // .exited is now the next thread to deallocate (t)
     t = curr->exited;
   }
