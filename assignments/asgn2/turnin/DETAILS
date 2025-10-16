@@ -1,316 +1,490 @@
 =================================================
-TEST 12: Five threads, variable iters, exit from back
+TEST 28: Is thread library using sched_{one,two}?
 
-This is the numbersmain program distributed with the assignment.
-Each thread (1..5) exits after N minus its number of iterations.
-The effect is to always have the last process call lwp_exit().
+This launches a set of threads, then installs a scheduler that 
+intentionally places bogus values in sched_one and sched_two then 
+calls tid2thread() a bunch.
+
 
 
 ----------
 Reference:
 ----------
 Launching LWPS
-    1
-         2
-              3
-                   4
-                        5
-    1
-         2
-              3
-                   4
-    1
-         2
-              3
-    1
-         2
-    1
+  1
+     2
+        3
+           4
+              5
+                 6
+                    7
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+        3
+           4
+              5
+                 6
+                    7
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+     2
+        3
+           4
+              5
+                 6
+                    7
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+           4
+              5
+                 6
+                    7
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+              5
+                 6
+                    7
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                 6
+                    7
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                    7
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                                                    18
+                                                       19
+                                                          20
+                                                       19
+                                                          20
+                                                          20
 Back from LWPS.
 ----------
 Submitted:
 ----------
-^CParent process (16062) caught signal (Interrupt).
-Forwarding signal (Interrupt) to child.
-Child process (16070) exited due to signal (Interrupt).
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+Launching LWPS
+  1
+     2
+        3
+           4
+              5
+                 6
+                    7
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+        3
+           4
+              5
+                 6
+                    7
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+     2
+        3
+           4
+              5
+                 6
+                    7
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+           4
+              5
+                 6
+                    7
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+tid2thread() is returning bogus values
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+              5
+                 6
+                    7
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                 6
+                    7
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                    7
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                       8
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                          9
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+tid2thread() is returning bogus values
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                            10
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                               11
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                                  12
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                                     13
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                                        14
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                                           15
+                                              16
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                                              16
+                                                 17
+                                                    18
+tid2thread() is returning bogus values
+tid2thread() is returning bogus values
+                                                       19
+                                                          20
+                                                 17
+                                                    18
+                                                       19
+                                                          20
+                                                    18
+                                                       19
+                                                          20
+                                                       19
+                                                          20
+                                                          20
+Back from LWPS.
 
 ---------------------------------
 Differences (< reference > output)
 ---------------------------------
 
-1,17c1,3
-< Launching LWPS
-<     1
-<          2
-<               3
-<                    4
-<                         5
-<     1
-<          2
-<               3
-<                    4
-<     1
-<          2
-<               3
-<     1
-<          2
-<     1
-< Back from LWPS.
----
-> ^CParent process (16062) caught signal (Interrupt).
-> Forwarding signal (Interrupt) to child.
-> Child process (16070) exited due to signal (Interrupt).
----------
-=================================================
-TEST 17: Two Lwps. spawn then exits 50 times.
-
-Two threads creates new ones, then exits.
-
-
-
-----------
-Reference:
-----------
-Counter is 50.  Exiting
-Counter is 50.  Exiting
-Counter is 49.  Exiting
-Counter is 49.  Exiting
-Counter is 48.  Exiting
-Counter is 48.  Exiting
-Counter is 47.  Exiting
-Counter is 47.  Exiting
-Counter is 46.  Exiting
-Counter is 46.  Exiting
-Counter is 45.  Exiting
-Counter is 45.  Exiting
-Counter is 44.  Exiting
-Counter is 44.  Exiting
-Counter is 43.  Exiting
-Counter is 43.  Exiting
-Counter is 42.  Exiting
-Counter is 42.  Exiting
-Counter is 41.  Exiting
-Counter is 41.  Exiting
-Counter is 40.  Exiting
-Counter is 40.  Exiting
-Counter is 39.  Exiting
-Counter is 39.  Exiting
-Counter is 38.  Exiting
-Counter is 38.  Exiting
-Counter is 37.  Exiting
-Counter is 37.  Exiting
-Counter is 36.  Exiting
-Counter is 36.  Exiting
-Counter is 35.  Exiting
-Counter is 35.  Exiting
-Counter is 34.  Exiting
-Counter is 34.  Exiting
-Counter is 33.  Exiting
-Counter is 33.  Exiting
-Counter is 32.  Exiting
-Counter is 32.  Exiting
-Counter is 31.  Exiting
-Counter is 31.  Exiting
-Counter is 30.  Exiting
-Counter is 30.  Exiting
-Counter is 29.  Exiting
-Counter is 29.  Exiting
-Counter is 28.  Exiting
-Counter is 28.  Exiting
-Counter is 27.  Exiting
-Counter is 27.  Exiting
-Counter is 26.  Exiting
-Counter is 26.  Exiting
-Counter is 25.  Exiting
-Counter is 25.  Exiting
-Counter is 24.  Exiting
-Counter is 24.  Exiting
-Counter is 23.  Exiting
-Counter is 23.  Exiting
-Counter is 22.  Exiting
-Counter is 22.  Exiting
-Counter is 21.  Exiting
-Counter is 21.  Exiting
-Counter is 20.  Exiting
-Counter is 20.  Exiting
-Counter is 19.  Exiting
-Counter is 19.  Exiting
-Counter is 18.  Exiting
-Counter is 18.  Exiting
-Counter is 17.  Exiting
-Counter is 17.  Exiting
-Counter is 16.  Exiting
-Counter is 16.  Exiting
-Counter is 15.  Exiting
-Counter is 15.  Exiting
-Counter is 14.  Exiting
-Counter is 14.  Exiting
-Counter is 13.  Exiting
-Counter is 13.  Exiting
-Counter is 12.  Exiting
-Counter is 12.  Exiting
-Counter is 11.  Exiting
-Counter is 11.  Exiting
-Counter is 10.  Exiting
-Counter is 10.  Exiting
-Counter is 9.  Exiting
-Counter is 9.  Exiting
-Counter is 8.  Exiting
-Counter is 8.  Exiting
-Counter is 7.  Exiting
-Counter is 7.  Exiting
-Counter is 6.  Exiting
-Counter is 6.  Exiting
-Counter is 5.  Exiting
-Counter is 5.  Exiting
-Counter is 4.  Exiting
-Counter is 4.  Exiting
-Counter is 3.  Exiting
-Counter is 3.  Exiting
-Counter is 2.  Exiting
-Counter is 2.  Exiting
-Counter is 1.  Exiting
-Counter is 1.  Exiting
-Bye
-Bye
-----------
-Submitted:
-----------
-Counter is 50.  Exiting
-Counter is 50.  Exiting
-Counter is 49.  Exiting
-Counter is 49.  Exiting
-Counter is 48.  Exiting
-Counter is 48.  Exiting
-Counter is 47.  Exiting
-Counter is 47.  Exiting
-Counter is 46.  Exiting
-Counter is 45.  Exiting
-Counter is 44.  Exiting
-Counter is 43.  Exiting
-Counter is 42.  Exiting
-Counter is 41.  Exiting
-Counter is 40.  Exiting
-Counter is 39.  Exiting
-Counter is 38.  Exiting
-Counter is 37.  Exiting
-Counter is 36.  Exiting
-Counter is 35.  Exiting
-Counter is 34.  Exiting
-Counter is 33.  Exiting
-Counter is 32.  Exiting
-Counter is 31.  Exiting
-Counter is 30.  Exiting
-Counter is 29.  Exiting
-Counter is 28.  Exiting
-Counter is 27.  Exiting
-Counter is 26.  Exiting
-Counter is 25.  Exiting
-Counter is 24.  Exiting
-Counter is 23.  Exiting
-Counter is 22.  Exiting
-Counter is 21.  Exiting
-Counter is 20.  Exiting
-Counter is 19.  Exiting
-Counter is 18.  Exiting
-Counter is 17.  Exiting
-Counter is 16.  Exiting
-Counter is 15.  Exiting
-Counter is 14.  Exiting
-Counter is 13.  Exiting
-Counter is 12.  Exiting
-Counter is 11.  Exiting
-Counter is 10.  Exiting
-Counter is 9.  Exiting
-Counter is 8.  Exiting
-Counter is 7.  Exiting
-Counter is 6.  Exiting
-Counter is 5.  Exiting
-Counter is 4.  Exiting
-Counter is 3.  Exiting
-Counter is 2.  Exiting
-Counter is 1.  Exiting
-Bye
-
----------------------------------
-Differences (< reference > output)
----------------------------------
-
-10d9
-< Counter is 46.  Exiting
-12,13d10
-< Counter is 45.  Exiting
-< Counter is 44.  Exiting
-16d12
-< Counter is 43.  Exiting
-18,19d13
-< Counter is 42.  Exiting
-< Counter is 41.  Exiting
-22d15
-< Counter is 40.  Exiting
-24,25d16
-< Counter is 39.  Exiting
-< Counter is 38.  Exiting
-28d18
-< Counter is 37.  Exiting
-30,31d19
-< Counter is 36.  Exiting
-< Counter is 35.  Exiting
-34d21
-< Counter is 34.  Exiting
-36,37d22
-< Counter is 33.  Exiting
-< Counter is 32.  Exiting
-40d24
-< Counter is 31.  Exiting
-42,43d25
-< Counter is 30.  Exiting
-< Counter is 29.  Exiting
-46d27
-< Counter is 28.  Exiting
-48,49d28
-< Counter is 27.  Exiting
-< Counter is 26.  Exiting
-52d30
-< Counter is 25.  Exiting
-54,55d31
-< Counter is 24.  Exiting
-< Counter is 23.  Exiting
-58,59d33
-< Counter is 22.  Exiting
-< Counter is 21.  Exiting
-62d35
-< Counter is 20.  Exiting
-64,65d36
-< Counter is 19.  Exiting
-< Counter is 18.  Exiting
-68d38
-< Counter is 17.  Exiting
-70,71d39
-< Counter is 16.  Exiting
-< Counter is 15.  Exiting
-74d41
-< Counter is 14.  Exiting
-76,77d42
-< Counter is 13.  Exiting
-< Counter is 12.  Exiting
-80,81d44
-< Counter is 11.  Exiting
-< Counter is 10.  Exiting
-84d46
-< Counter is 9.  Exiting
-86,87d47
-< Counter is 8.  Exiting
-< Counter is 7.  Exiting
-90d49
-< Counter is 6.  Exiting
-92,93d50
-< Counter is 5.  Exiting
-< Counter is 4.  Exiting
-96d52
-< Counter is 3.  Exiting
-98,99d53
-< Counter is 2.  Exiting
-< Counter is 1.  Exiting
-101d54
-< Bye
+0a1,5
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
+68a74
+> tid2thread() is returning bogus values
+114a121,131
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
+141a159
+> tid2thread() is returning bogus values
+199a218,219
+> tid2thread() is returning bogus values
+> tid2thread() is returning bogus values
 ---------

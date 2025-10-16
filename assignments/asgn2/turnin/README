@@ -1,12 +1,4 @@
 Jude Shin (jshin53)
-
-Test cases 12 and 17 are not passing. I seem to have an issue where my last
-thread is not being waited on, or something to that effect. Test case 12 gets 
-stuck in a loop where it can't read the qlen() because something keeps
-admitting the same thread which puts an infinite loop in the round robin
-scheduler. The same issue might be what is making the execution of threads 
-in test 17 fail as well. I could not find the issue. 
-
 MyRoundRobin was the scheduler that I created. Its header file is in
 "roundrobin.h" and it's source file is in "roundrobin.c". The lwp library's
 header file was unchanged from the given header file and the source file is in
