@@ -1,4 +1,10 @@
 Jude Shin (jshin53)
+
+All the test cases passed! My Makefile used to link 
+~pn-cs453/Given/Asgn2/src/magic64.S but I was worried that you might grade on
+ a different machine, so I chose to include this in the handin. It is the exact
+ same file as the one provided.
+
 MyRoundRobin was the scheduler that I created. Its header file is in
 "roundrobin.h" and it's source file is in "roundrobin.c". The lwp library's
 header file was unchanged from the given header file and the source file is in

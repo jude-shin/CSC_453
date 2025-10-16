@@ -1,7 +1,7 @@
 CC=/bin/gcc
 CFLAGS = -Wall -g -fPIC -I ./include
 
-GIVEN=~pn-cs453/Given/Asgn2/src/
+GIVEN=~pn-cs453/Given/Asgn2/src/magic64.S
 
 .PHONY: liblwp.so allclean clean
 
@@ -18,7 +18,7 @@ lwp.o: lwp.c lwp.h
 roundrobin.o: roundrobin.c roundrobin.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-magic64.o: $(GIVEN)magic64.S
+magic64.o: magic64.S
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # =====================================================================
