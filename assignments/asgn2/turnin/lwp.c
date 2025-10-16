@@ -270,6 +270,9 @@ void lwp_exit(int exitval) {
 
     // Add the unblocked thread to the scheduler again.
     sched->admit(unblocked);
+
+    // Add it back to the live pool.
+    lwp_list_enqueue(&live_head, &live_tail, unblocked);
   }
 
   lwp_yield();
@@ -357,11 +360,13 @@ tid_t lwp_wait(int *status) {
     // At this point, we have returned!
     // NOTE: curr->exited has been populated with the exited thread
 
-    // Remove curr from the blocked queue.
-    lwp_list_remove(&blck_head, &blck_tail, curr);
 
-    // Put the curr onto the live list.
-    lwp_list_enqueue(&live_head, &live_tail, curr);
+    // TODO:
+    // // Remove curr from the blocked queue.
+    // lwp_list_remove(&blck_head, &blck_tail, curr);
+
+    // // Put the curr onto the live list.
+    // lwp_list_enqueue(&live_head, &live_tail, curr);
 
     // .exited is now the next thread to deallocate (t)
     t = curr->exited;
