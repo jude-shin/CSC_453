@@ -152,7 +152,7 @@ int rr_qlen(void) {
 
   // Keep on walking though the list while counting until you make it back 
   // to the head again (this is a circular-doubly-linked-list)
-  while(next->tid != head->tid) {
+  while(next != head) {
     next = next->NEXT;
     count++;
   }

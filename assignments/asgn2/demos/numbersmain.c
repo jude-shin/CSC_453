@@ -46,9 +46,62 @@
 #include "schedulers.h"
 #include "roundrobin.h"
 
-#define MAXSNAKES  100
+#define NUMTHREADS 5
 
-static void indentnum(void *num);
+typedef void (*sigfun)(int signum);
+static void indentnum(uintptr_t num);
+
+// int main(int argc, char *argv[]){
+//   long i;
+// 
+//   for (i=1;i<argc;i++) {                /* check options */
+//     fprintf(stderr,"%s: unknown option\n",argv[i]);
+//     exit(-1);
+//   }
+// 
+//   printf("Launching LWPS\n");
+// 
+//   /* spawn a number of individual LWPs */
+//   for(i=1;i<=NUMTHREADS;i++) {
+//     lwp_create((lwpfun)indentnum,(void*)i);
+//   }
+// 
+//   lwp_start();                     /* returns when the last lwp exits */
+// 
+//   for(i=1;i<=NUMTHREADS;i++) {
+// 
+//     int status,num;
+//     tid_t t;
+//     t = lwp_wait(&status);
+//     num = LWPTERMSTAT(status);
+//     printf("Thread %ld exited with status %d\n",t,num);
+// 
+//     // lwp_wait(NULL);
+//   }
+// 
+//   printf("Back from LWPS.\n");
+//   lwp_exit(0);
+//   return 0;
+// }
+
+static void indentnum(uintptr_t num) {
+  /* print the number num num times, indented by 5*num spaces
+   * Not terribly interesting, but it is instructive.
+   */
+  int howfar,i;
+
+  howfar=(int)num;              /* interpret num as an integer */
+  for(i=0;i<NUMTHREADS-howfar+1;i++){
+    printf("%*d\n",howfar*5,howfar);
+    lwp_yield();                /* let another have a turn */
+  }
+  lwp_exit(0);                  /* bail when done.  This should
+                                 * be unnecessary if the stack has
+                                 * been properly prepared
+                                 */
+}
+
+
 
 int main(int argc, char *argv[]){
   long i;
@@ -62,22 +115,11 @@ int main(int argc, char *argv[]){
     lwp_create((lwpfun)indentnum,(void*)i);
   }
 
-  printf("Setting Scheduler\n");
-  lwp_set_scheduler(MyRoundRobin);
-
-  printf("Starting...\n");
-
   lwp_start();
-
-  printf("Waiting...\n");
 
   /* wait for the other LWPs */
   for(i=1;i<=5;i++) {
-    int status,num;
-    tid_t t;
-    t = lwp_wait(&status);
-    num = LWPTERMSTAT(status);
-    printf("Thread %ld exited with status %d\n",t,num);
+    lwp_wait(NULL);
   }
 
   printf("Back from LWPS.\n");
@@ -85,21 +127,21 @@ int main(int argc, char *argv[]){
   return 0;
 }
 
-static void indentnum(void *num) {
-  /* print the number num num times, indented by 5*num spaces
-   * Not terribly interesting, but it is instructive.
-   */
-  long i;
-  int howfar;
-
-  howfar=(long)num;              /* interpret num as an integer */
-  for(i=0;i<howfar;i++){
-    printf("%*d\n",howfar*5,howfar);
-    lwp_yield();                /* let another have a turn */
-  }
-  lwp_exit(i);                  /* bail when done.  This should
-                                 * be unnecessary if the stack has
-                                 * been properly prepared
-                                 */
-}
+// static void indentnum(uintptr_t num) {
+//   /* print the number num num times, indented by 5*num spaces
+//    * Not terribly interesting, but it is instructive.
+//    */
+//   long i;
+//   int howfar;
+// 
+//   howfar=(long)num;              /* interpret num as an integer */
+//   for(i=0;i<howfar;i++){
+//     printf("%*d\n",howfar*5,howfar);
+//     lwp_yield();                /* let another have a turn */
+//   }
+//   lwp_exit(i);                  /* bail when done.  This should
+//                                  * be unnecessary if the stack has
+//                                  * been properly prepared
+//                                  */
+// }
 
