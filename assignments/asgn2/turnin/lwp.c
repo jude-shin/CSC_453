@@ -23,9 +23,9 @@
 
 // === HELPER FUCNTIONS ======================================================
 // Adds a thread to any one of the lists/queues (live, term, blck).
-static void lwp_list_enqueue(thread *head, thread *tail, thread victim);
+static tid_t lwp_list_enqueue(thread *head, thread *tail, thread new);
 // Removes a thread to any one of the lists/queues (live, term, blck).
-static void lwp_list_remove(thread *head, thread *tail, thread victim);
+static tid_t lwp_list_remove(thread *head, thread *tail, thread victim);
 // A wrapper for functions that a thread will execute.
 static void lwp_wrap(lwpfun fun, void *arg);
 // Gets the size of the virtual stack each thread will have.
@@ -76,6 +76,7 @@ tid_t lwp_create(lwpfun function, void *argument){
   size_t new_stacksize = get_stacksize();
   if (new_stacksize == 0) {
     perror("[lwp_create] Error when getting RLIMIT_STACK.");
+    free(new);
     return NO_THREAD;
   }
   new->stacksize = new_stacksize;
@@ -94,6 +95,7 @@ tid_t lwp_create(lwpfun function, void *argument){
   // If the syscall fails, catch it and bail; something has gone wrong.
   if (new_stack == MAP_FAILED) {
     perror("[lwp_create] Error when mmapp()ing a new stack.");
+    free(new);
     return NO_THREAD;
   }
   // Update the new thread's context with this pointer to the "lowest" point
@@ -156,7 +158,18 @@ tid_t lwp_create(lwpfun function, void *argument){
   
   // Add this to the global list of live threads. The order doesn't matter: I 
   // put them on the back of the list.
-  lwp_list_enqueue(&live_head, &live_tail, new);
+  if (lwp_list_enqueue(&live_head, &live_tail, new) == -1) {
+    perror("[lwp_create] Error enqueueing new thread to live list");
+    free(new);
+    if (munmap(new_stack, new_stacksize) == -1) {
+      // Something terribly wrong has happened. This syscall failed, so we
+      // note the error and give up. In prod, we might try to limp along, but
+      // for now, we are just bailing. 
+      perror("[lwp_create] Error munmapping lwp! Bailing now...");
+      exit(EXIT_FAILURE);
+    }
+    return NO_THREAD;
+  }
 
   // Admit the newly created thread to the current scheduler.
   scheduler sched = lwp_get_scheduler();
@@ -202,7 +215,11 @@ void lwp_start(void){
   curr = new;
   
   // Add this to the rolling global list of items.
-  lwp_list_enqueue(&live_head, &live_tail, new);
+  if (lwp_list_enqueue(&live_head, &live_tail, new) == -1) {
+    perror("[lwp_start] Error enqueueing new thread to live list");
+    free(new);
+    exit(EXIT_FAILURE); 
+  }
 
   // Admit the newly created "main" thread to the current scheduler.
   scheduler sched = lwp_get_scheduler();
@@ -251,8 +268,14 @@ void lwp_exit(int exitval) {
 
   // Take the thread off the live list, and add the current thread to the queue
   // of terminated threads.
-  lwp_list_remove(&live_head, &live_tail, curr);
-  lwp_list_enqueue(&term_head, &term_tail, curr);
+  if (lwp_list_remove(&live_head, &live_tail, curr) == -1) {
+    perror("[lwp_exit] Error removing new thread from termiated list");
+    exit(EXIT_FAILURE); 
+  }
+  if (lwp_list_enqueue(&term_head, &term_tail, curr) == -1) {
+    perror("[lwp_exit] Error enqueueing new thread to live list");
+    exit(EXIT_FAILURE); 
+  }
  
   // Do some blocking checks if there are blocked threads.
   if (blck_head != NULL) {
@@ -260,7 +283,10 @@ void lwp_exit(int exitval) {
     thread unblocked = blck_head;
 
     // Remove it from the blocked queue.
-    lwp_list_remove(&blck_head, &blck_tail, unblocked);
+    if (lwp_list_remove(&blck_head, &blck_tail, unblocked) == -1) {
+      perror("[lwp_exit] Error removing new thread from termiated list");
+      exit(EXIT_FAILURE); 
+    }
 
     // Set the blocked .exited status to this current thread.
     unblocked->exited = curr;
@@ -272,7 +298,10 @@ void lwp_exit(int exitval) {
     sched->admit(unblocked);
 
     // Add it back to the live pool.
-    lwp_list_enqueue(&live_head, &live_tail, unblocked);
+    if (lwp_list_enqueue(&live_head, &live_tail, unblocked) == -1) {
+      perror("[lwp_exit] Error enqueueing new thread to live list");
+      exit(EXIT_FAILURE); 
+    }
   }
 
   lwp_yield();
@@ -348,11 +377,16 @@ tid_t lwp_wait(int *status) {
     // Deschedule the current thread.
     sched->remove(curr);
 
-
     // Remove the curr thread from the live list, and put it on the blocked
     // queue.
-    lwp_list_remove(&live_head, &live_tail, curr);
-    lwp_list_enqueue(&blck_head, &blck_tail, curr);
+    if (lwp_list_remove(&live_head, &live_tail, curr) == -1) {
+      perror("[lwp_wait] Error removing new thread from termiated list");
+      exit(EXIT_FAILURE); 
+    }
+    if (lwp_list_enqueue(&blck_head, &blck_tail, curr) == -1) {
+      perror("[lwp_wait] Error enqueueing new thread to live list");
+      exit(EXIT_FAILURE); 
+    }
 
     // Yield to another process.
     lwp_yield();
@@ -369,7 +403,10 @@ tid_t lwp_wait(int *status) {
   // 2) it is somewhere in the (beginning, middle or end) of the terminated 
   // queue (but it is chosen as the next thread to remove as it is from a 
   // blocked process.
-  lwp_list_remove(&term_head, &term_tail, t);
+  if (lwp_list_remove(&term_head, &term_tail, t) == -1) {
+    perror("[lwp_wait] Error removing new thread from termiated list");
+    exit(EXIT_FAILURE); 
+  }
 
   if (munmap(t->stack, t->stacksize) == -1) {
     // Something terribly wrong has happened. This syscall failed, so we
@@ -468,20 +505,20 @@ scheduler lwp_get_scheduler(void) {
 // @param head A pointer to the global head of the list.
 // @param tail A pointer to the global tail of the list.
 // @param new The new thread to be added.
-// @return void.
-static void lwp_list_enqueue(thread *head, thread *tail, thread new) {
+// @return the tid of the new thread. More importantly, -1 upon error.
+static tid_t lwp_list_enqueue(thread *head, thread *tail, thread new) {
   if (new == NULL) {
     // This should never happen. Please always call this with a valid 
     // non-NULL thead.
     perror("[lwp_list_enqueue] thread new cannot be NULL");
-    return;
+    return -1;
   }
 
   if ((*head == NULL) ^ (*tail == NULL)) {
     // This should never happen. Either they are both NULL, or both something.
     // If this occurs, then someone has made a big mistake. 
     perror("[lwp_list_enqueue] mismatching tail and head pointers");
-    return;
+    return -1;
   }
   
   // There is nothing in the list, so add it and set the head/tail to the same
@@ -492,7 +529,7 @@ static void lwp_list_enqueue(thread *head, thread *tail, thread new) {
 
     *head = new;
     *tail = new;
-    return;
+    return new->tid;
   }
 
   // Otherwise, enqueue to the back of the line (at the tail) as normal.
@@ -504,6 +541,7 @@ static void lwp_list_enqueue(thread *head, thread *tail, thread new) {
   
   // Set the value at this address to new.
   *tail = new;
+  return new->tid;
 }
 
 // Remove a thread from either the queue of termiated threads, the queue of 
@@ -512,20 +550,20 @@ static void lwp_list_enqueue(thread *head, thread *tail, thread new) {
 // @param head A pointer to the global head of the list.
 // @param tail A pointer to the global tail of the list.
 // @param new The new thread to be added.
-// @return void.
-static void lwp_list_remove(thread *head, thread *tail, thread victim) {
+// @return the tid of the victim. More importantly, -1 upon error.
+static tid_t lwp_list_remove(thread *head, thread *tail, thread victim) {
   if (victim == NULL) {
     // This should never happen. Please always call this with a valid 
     // non-NULL thead.
     perror("[lwp_list_remove] thread victim cannot be NULL");
-    return;
+    return -1;
   }
 
   if ((*head == NULL) ^ (*tail == NULL)) {
     // This should never happen. Either they are both NULL, or both something.
     // If this occurs, then someone has made a big mistake.
     perror("[lwp_list_dequeue] mismatching tail and head pointers");
-    return;
+    return -1;
   }
 
   if (*head != NULL && victim != NULL) {
@@ -553,6 +591,7 @@ static void lwp_list_remove(thread *head, thread *tail, thread victim) {
     victim->NEXT = NULL;
     victim->PREV = NULL;
   }
+  return victim->tid;
 }
 
 
