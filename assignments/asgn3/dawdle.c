@@ -1,12 +1,15 @@
 #include <limits.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #ifndef DAWDLEFACTOR
 #define DAWDLEFACTOR 1000
 #endif
+
 void dawdle() {
   /*
    * sleep for a random amount of time between 0 and DAWDLEFACTOR

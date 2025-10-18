@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/time.h>
 
 #include "dine.h"
 #include "phil.h"
@@ -10,11 +11,21 @@
 #define NUM_PHILOSOPHERS 5
 #endif 
 
+void set_seed() {
+  struct timeval tp;
+  if (gettimeofday(&tp, NULL) == -1) {
+    perror("[set_seed] error getting time of the day");
+    exit(EXIT_FAILURE);
+  }
+  srandom(tp.tv_sec + tp.tv_usec);
+}
+
+
+
 int main (int argc, char *argv[]) {
   // How many times each philosopher should go though their eat-think lifecycle
   // before exiting.
   int lifetime = 3; 
- 
 
   // The only (optional) command line argument is to change the lifecycle of a 
   // philosopher.
@@ -39,6 +50,9 @@ int main (int argc, char *argv[]) {
   }
 
   // ------------------------------------------------------------------------ 
+
+  set_seed();
+
   // Do whatever you want now
   // sem_overview
 
