@@ -1,7 +1,7 @@
 CC=/bin/gcc
 CFLAGS = -Wall -g -pedantic -fPIC -I ./include
 LD = /bin/gcc
-LDFLAGS = -Wall -g -pedantic -lrt
+LDFLAGS = -Wall -g -pedantic -lrt -lpthreads
 DEMO_DIR = ~pn-cs453/demos/
 
 ALL_PROGS = dine
