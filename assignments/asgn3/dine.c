@@ -2,9 +2,10 @@
 #include <stdio.h>
 
 #include "dine.h"
-// #include "phil.h"
+#include "phil.h"
 
-// How many philosophers will be
+// How many philosophers will be fighting to the death for their spagetti
+// NOTE: there will be an equal number of forks as there are philosophers
 #ifndef NUM_PHILOSOPHERS
 #define NUM_PHILOSOPHERS 5
 #endif 
@@ -23,6 +24,7 @@ int main (int argc, char *argv[]) {
     err++;
   }
   if (argc == 2) {
+    // TODO: somehow check to see that this really is an integer
     int l = atoi(argv[1]);
     if (l == 0) {
       perror("[main] error parsing lifetime argument.");
@@ -36,5 +38,11 @@ int main (int argc, char *argv[]) {
     exit(err);
   }
 
+  // ------------------------------------------------------------------------ 
   // Do whatever you want now
+  // sem_overview
+
+  // printf("lifetime: %d", lifetime);
+
+
 }

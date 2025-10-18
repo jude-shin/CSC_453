@@ -1,4 +1,6 @@
 
+char get_label(int i);
+
 typedef struct PhilContext {
   // Ascii value of this philosopher's name
   char name;
