@@ -16,7 +16,7 @@
 // 1 + (#of phils) + 1 + (len longest message) + 1
 // #define COL_WIDTH 1+NUM_PHILOSOPHERS+1+CHNG_MSG+1
 // #define CHAR_IN_FULL_LINE 1+(COL_WIDTH+1)*NUM_PHILOSOPHERS
-// 
+
 // ===========================================================================
 
 // What the philosopher IS DOING
