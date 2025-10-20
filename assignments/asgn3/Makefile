@@ -22,8 +22,8 @@ allclean: clean
 clean:	
 	rm -f $(OBJS)
 
-test: 
-	echo notImplementedYet....
+test: all
+	./dine
 
 # =====================================================================
 
