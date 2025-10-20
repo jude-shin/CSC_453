@@ -7,20 +7,21 @@
 
 // How many philosophers will be fighting to the death for their spagetti
 // NOTE: there will be an equal number of forks as there are philosophers
+// TODO: Will be shared across all files?
 #ifndef NUM_PHILOSOPHERS
-#define NUM_PHILOSOPHERS 5
+#define NUM_PHILOSOPHERS 2
 #endif 
 
-void set_seed() {
-  struct timeval tp;
-  if (gettimeofday(&tp, NULL) == -1) {
-    perror("[set_seed] error getting time of the day");
-    exit(EXIT_FAILURE);
-  }
-  srandom(tp.tv_sec + tp.tv_usec);
-}
+#ifndef TRUE
+#define TRUE 1
+#endif
 
+#ifndef FALSE
+#define FALSE 0
+#endif
 
+void set_seed(void);
+Phil* init_table(void);
 
 int main (int argc, char *argv[]) {
   // How many times each philosopher should go though their eat-think lifecycle
@@ -38,7 +39,7 @@ int main (int argc, char *argv[]) {
     // TODO: somehow check to see that this really is an integer
     int l = atoi(argv[1]);
     if (l == 0) {
-      perror("[main] error parsing lifetime argument.");
+      fprintf(stderr, "[main] error parsing lifetime argument.");
       err++;
     }
     lifetime = l;
@@ -50,13 +51,89 @@ int main (int argc, char *argv[]) {
   }
 
   // ------------------------------------------------------------------------ 
-
+  // Sets the seed for the prng
   set_seed();
 
-  // Do whatever you want now
-  // sem_overview
+  // Initalize all of the philosophers
+  // TODO: is there is 1 philosopher, do we do nothing?
+  if (NUM_PHILOSOPHERS <= 1) {
+    fprintf(stderr, "[main] You need at least 2 philosophers!");
+    exit(EXIT_FAILURE);
+  }
 
-  // printf("lifetime: %d", lifetime);
-
-
+  // For every philosopher and fork, append them together like a regular doubly
+  // linked list.
+  Phil *head = init_table();
+  if (head == NULL) {
+    fprintf(stderr, "[main] error setting the table (head is NULL)");
+    exit(EXIT_FAILURE);
+  }
+  
+  printf("All Done!\n");
 }
+
+// Mallocs and sets up the pointers for all forks and philosophers in 
+// sequential order.
+// @param void.
+// @return a pointer to the head philosopher. All people are created equal, 
+// so "head" just gives us a way to reference the table.
+Phil* init_table(void) {
+  Phil *head = NULL;
+
+  // Phil *prev_phil = head;
+  Fork *prev_fork = NULL; 
+
+  for (int i=0; i < NUM_PHILOSOPHERS; i++) {
+    // Calloc space for the new philosopher
+    Phil *new_phil = malloc(sizeof(Phil));
+    if (new_phil == NULL) {
+      fprintf(stderr, "[main] error malloc()ing philosopher no. %d", i);
+      return NULL;
+    }
+
+    Fork *new_fork = malloc(sizeof(Fork));
+    if (new_phil == NULL) {
+      fprintf(stderr, "[main] error malloc()ing fork no. %d", i);
+      return NULL;
+    }
+
+    new_phil->id = i;
+    new_phil->doing = CHANGING;
+    new_phil->wants = HUNGRY;
+    new_phil->right = new_fork;
+    new_phil->left = prev_fork;
+
+    new_fork->id = i;
+    new_fork->in_use = FALSE; // TODO: check this
+    new_fork->right = NULL;
+    new_fork->left = new_phil; 
+
+    if (prev_fork != NULL) {
+      prev_fork->right = new_phil;
+    }
+    
+    // Update the previous pointers for the fork and phil so the correct
+    // information is updated on the next iteration of the loop
+    if (head == NULL) {
+      head = new_phil;
+    }
+    // prev_phil = new_phil;
+    prev_fork = new_fork;
+  }
+
+  head->left = prev_fork;
+
+  prev_fork->right = head;
+  
+  return head;
+}
+
+void set_seed(void) {
+  struct timeval tp;
+  if (gettimeofday(&tp, NULL) == -1) {
+    fprintf(stderr, "[set_seed] error getting time of the day");
+    exit(EXIT_FAILURE);
+  }
+  srandom(tp.tv_sec + tp.tv_usec);
+}
+
