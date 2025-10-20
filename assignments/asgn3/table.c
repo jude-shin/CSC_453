@@ -9,6 +9,7 @@ void print_name_lines(Phil *head);
 void print_status_lines(Phil *head);
 char get_label(int id);
 
+// you want six semaphores
 
 // TODO: ask him if this is good or if I should make a macro
 // TODO: errorcheck strlen
@@ -39,7 +40,10 @@ void print_status(Phil *head) {
 // Prints a line of "=" with occasional "|" for the number of philosophers
 void print_break_lines() {
   int full_line_width = 1+(col_width+1)*NUM_PHILOSOPHERS;
-  char l[full_line_width];
+
+  char l[full_line_width+1];
+  l[full_line_width] = '\0';
+
   for (int i=0; i<full_line_width; i++) {
     l[i] = '=';
 
@@ -53,23 +57,24 @@ void print_break_lines() {
 
 void print_name_lines(Phil *head) {
   int full_line_width = 1+(col_width+1)*NUM_PHILOSOPHERS;
-  char l[full_line_width];
+
+  char l[full_line_width+1];
+  l[full_line_width] = '\0';
+
+  Phil *curr = head;
   int middle = (col_width+1)/2;
 
-  l[0] = '|';
+  for (int i=0; i<full_line_width; i++) {
+    l[i] = ' ';
 
-  int i = 0;
-  Phil *curr = head->right->right;
-  while (curr != head) {
-    char label = get_label(curr->id);
-    for (int j=0; j<col_width; j++) {
-      l[i+j] = ' ';
-      if ((i+j) == middle) {
-        l[i+j] = label;
-      }
+    if (i%(col_width+1) == 0) {
+      l[i] = '|';
     }
-
-    curr = curr->right->right;
+    else if (i%middle == 0) {
+      char label = get_label(curr->id);
+      curr = curr->right->right;
+      l[i] = label;
+    }
   }
 
   printf("%s\n", l);
