@@ -8,18 +8,6 @@
 // How many philosophers will be fighting to the death for their spagetti
 // NOTE: there will be an equal number of forks as there are philosophers
 // TODO: Will be shared across all files?
-#ifndef NUM_PHILOSOPHERS
-#define NUM_PHILOSOPHERS 2
-#endif 
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 void set_seed(void);
 Phil* init_table(void);
 

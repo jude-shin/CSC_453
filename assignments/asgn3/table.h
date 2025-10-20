@@ -1,20 +1,39 @@
 #ifndef TABLE 
 #define TABLE 
 
+#ifndef NUM_PHILOSOPHERS
+#define NUM_PHILOSOPHERS 2
+#endif 
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+// 1 + (#of phils) + 1 + (len longest message) + 1
+// #define COL_WIDTH 1+NUM_PHILOSOPHERS+1+CHNG_MSG+1
+// #define CHAR_IN_FULL_LINE 1+(COL_WIDTH+1)*NUM_PHILOSOPHERS
+// 
+// ===========================================================================
+
 // What the philosopher IS DOING
 #define THINKING 0
 #define EATING   1
 #define CHANGING 2
 
-// For printing
-#define CHNG_MSG = "     "
-#define EAT_MSG  = " Eat "
-#define THNK_MSG = "Think"
-
 // What the philosopher WANTS
 // These are different from what the IS DOING so I don't royally mess up
 #define THINKY 3
 #define HUNGRY 4
+
+// For printing
+// NOTE: you must make all of these the same size so the printing looks nice
+#define CHNG_MSG "     "
+#define EAT_MSG  " Eat "
+#define THNK_MSG "Think"
 
 #endif 
 
