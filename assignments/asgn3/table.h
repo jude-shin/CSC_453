@@ -2,7 +2,7 @@
 #define TABLE 
 
 #ifndef NUM_PHILOSOPHERS
-#define NUM_PHILOSOPHERS 2
+#define NUM_PHILOSOPHERS 5
 #endif 
 
 #ifndef TRUE
@@ -53,3 +53,8 @@ typedef struct Fork {
   struct Phil *right; // The philosopher to the right
   struct Phil *left;  // The philosopher to the left
 } Fork;
+
+
+void print_status(Phil *head);
+
+

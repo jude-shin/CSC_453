@@ -43,7 +43,7 @@ void print_break_lines() {
   for (int i=0; i<full_line_width; i++) {
     l[i] = '=';
 
-    if (i%col_width+1 == 1) {
+    if (i%(col_width+1) == 0) {
       l[i] = '|';
     }
   }
@@ -54,7 +54,7 @@ void print_break_lines() {
 void print_name_lines(Phil *head) {
   int full_line_width = 1+(col_width+1)*NUM_PHILOSOPHERS;
   char l[full_line_width];
-  int middle = col_width/2;
+  int middle = (col_width+1)/2;
 
   l[0] = '|';
 

@@ -56,6 +56,8 @@ int main (int argc, char *argv[]) {
     fprintf(stderr, "[main] error setting the table (head is NULL)");
     exit(EXIT_FAILURE);
   }
+
+  print_status(head);
   
   printf("All Done!\n");
 }
