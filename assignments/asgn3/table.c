@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "phil.h"
+#include "table.h"
 
 
 // Prints the status for a given philosopher

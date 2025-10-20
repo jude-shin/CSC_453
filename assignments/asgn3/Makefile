@@ -8,7 +8,7 @@ ALL_PROGS = dine
 SAMPLE_PROGS = $(DEMO_DIR)dine
 TEST_PROGS = $(DEMO_DIR)tryAsgn3~ $(DEMO_DIR)tryAsgn3
 
-OBJS = dine.o phil.o dawdle.o
+OBJS = dine.o table.o dawdle.o
 
 .PHONY: all allclean clean 
 
