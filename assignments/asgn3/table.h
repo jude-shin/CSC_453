@@ -13,16 +13,16 @@
 #define FALSE 0
 #endif
 
-// 1 + (#of phils) + 1 + (len longest message) + 1
-// #define COL_WIDTH 1+NUM_PHILOSOPHERS+1+CHNG_MSG+1
-// #define CHAR_IN_FULL_LINE 1+(COL_WIDTH+1)*NUM_PHILOSOPHERS
+#ifndef START_CHAR 
+#define START_CHAR 'A'
+#endif 
 
 // ===========================================================================
 
 // What the philosopher IS DOING
-#define THINKING 0
+#define CHANGING 0
 #define EATING   1
-#define CHANGING 2
+#define THINKING 2
 
 // What the philosopher WANTS
 // These are different from what the IS DOING so I don't royally mess up
@@ -32,7 +32,7 @@
 // For printing
 // NOTE: you must make all of these the same size so the printing looks nice
 #define CHNG_MSG "     "
-#define EAT_MSG  " Eat "
+#define EAT_MSG  "Eat  "
 #define THNK_MSG "Think"
 
 #endif 
@@ -55,7 +55,7 @@ typedef struct Fork {
 } Fork;
 
 
-void print_status(Phil *head, int col_width, int full_line_width);
+void print_test(Phil *head, int col_width, int full_line_width);
 void print_break_lines(int col_width, int full_line_width);
 void print_name_lines(Phil *head, int col_width, int full_line_width);
 void print_status_lines(Phil *head, int col_width, int full_line_width);

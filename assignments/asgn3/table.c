@@ -1,68 +1,122 @@
 #include <stdio.h>
+#include <string.h>
 #include "table.h"
 
 
 // you want six semaphores
+void print_status(Phil *curr, int col_width, int full_line_width);
 
 // Prints the status line for ALL philosophers 
-void print_status(Phil *head, int col_width, int full_line_width) {
+void print_test(Phil *head, int col_width, int full_line_width) {
+
   print_break_lines(col_width, full_line_width);
   print_name_lines(head, col_width, full_line_width);
   print_break_lines(col_width, full_line_width);
 
-  // print all of the statuses here
+  print_status_lines(head, col_width, full_line_width);
+  print_status_lines(head, col_width, full_line_width);
+  print_status_lines(head, col_width, full_line_width);
+  print_status_lines(head, col_width, full_line_width);
+  print_status_lines(head, col_width, full_line_width);
+  print_status_lines(head, col_width, full_line_width);
 
   print_break_lines(col_width, full_line_width);
 }
 
 // Prints a line of "=" with occasional "|" for the number of philosophers
 void print_break_lines(int col_width, int full_line_width) {
-  char l[full_line_width+1];
-  l[full_line_width] = '\0';
-
-  for (int i=0; i<full_line_width; i++) {
-    l[i] = '=';
-
-    if (i%(col_width+1) == 0) {
-      l[i] = '|';
+  printf("|");
+  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+    for (int j=0; j<col_width; j++) {
+      printf("=");
     }
+    printf("|");
   }
-
-  printf("%s\n", l);
+  printf("\n");
 }
 
 void print_name_lines(Phil *head, int col_width, int full_line_width) {
-  char l[full_line_width+1];
-  l[full_line_width] = '\0';
-
   Phil *curr = head;
-  int middle = (col_width+1)/2;
+  int padding = (col_width-1)/2;
 
-  for (int i=0; i<full_line_width; i++) {
-    l[i] = ' ';
+  printf("|");
 
-    if (i%(col_width+1) == 0) {
-      l[i] = '|';
+  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+    char label = get_label(curr->id);
+    for (int j=0; j<padding; j++) {
+      printf(" ");
     }
-    else if (i%middle == 0) {
-      char label = get_label(curr->id);
-      curr = curr->right->right;
-      l[i] = label;
+
+    printf("%c", label);
+
+    for (int j=0; j<padding; j++) {
+      printf(" ");
+    }
+    printf("|");
+    curr = curr->right->right;
+  }
+  printf("\n");
+}
+
+// prints just one status
+void print_status(Phil *curr, int col_width, int full_line_width) {
+  const char *msg = "";
+  switch (curr->doing) {
+    case CHANGING:
+      // msg = CHNG_MSG;
+      msg = "chang";
+      break;
+    case EATING:
+      // msg = EAT_MSG;
+      msg = "eatys";
+      break;
+    case THINKING:
+      // msg = THNK_MSG;
+      msg = "think";
+      break;
+    default:
+      // TODO: do something interesting
+      perror("hello");
+      break;
+  }
+
+  printf(" ");
+  
+  Fork *left = curr->left;
+  Fork *right = curr->right;
+  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+    if (i == left->id && left->in_use == TRUE) {
+      printf("%d", i);
+    }
+    else if (i == right->id && right->in_use == TRUE) {
+      printf("%d", i);
+    }
+    else {
+      printf("-");
     }
   }
 
-  printf("%s\n", l);
+  printf(" %s", msg);
+  printf(" |");
 }
 
-
+// Prints ALL the statuses 
 void print_status_lines(Phil *head, int col_width, int full_line_width) {
+  Phil *curr = head;
+  int middle = (col_width+1)/2;
 
+  printf("|");
+  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+    print_status(curr, col_width, full_line_width);
+    curr = curr->right->right;
+  }
+  printf("\n");
 }
 
 // Get label for the philosopher based on an i
 char get_label(int id) {
   // Start at ascii character 'A'
-  char c = 'A';
+  char c = START_CHAR;
 
   // Increment the ascii value a number of times
   return c + id;

@@ -72,7 +72,7 @@ int main (int argc, char *argv[]) {
   int full_line_width = 1+(col_width+1)*NUM_PHILOSOPHERS;
 
 
-  print_status(head, col_width, full_line_width);
+  print_test(head, col_width, full_line_width);
   
   printf("All Done!\n");
 }
@@ -109,7 +109,7 @@ Phil* init_table(void) {
     new_phil->left = prev_fork;
 
     new_fork->id = i;
-    new_fork->in_use = FALSE; // TODO: check this
+    new_fork->in_use = TRUE; // TODO: check this
     new_fork->right = NULL;
     new_fork->left = new_phil; 
 
