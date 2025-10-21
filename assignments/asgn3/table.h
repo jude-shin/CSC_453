@@ -55,6 +55,9 @@ typedef struct Fork {
 } Fork;
 
 
-void print_status(Phil *head);
-
+void print_status(Phil *head, int col_width, int full_line_width);
+void print_break_lines(int col_width, int full_line_width);
+void print_name_lines(Phil *head, int col_width, int full_line_width);
+void print_status_lines(Phil *head, int col_width, int full_line_width);
+char get_label(int id);
 

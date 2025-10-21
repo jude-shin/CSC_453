@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/time.h>
 
 #include "dine.h"
@@ -57,7 +58,21 @@ int main (int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  print_status(head);
+  // TODO: ask him if this is good or if I should make a macro
+  // TODO: errorcheck strlen
+  // 1 for the leftmost padding
+  // n for the number of philosophers // TODO: or is it forks?
+  // 1 for dividing padding
+  // msg_len for the length of it's status 
+  // 1 for the rightmost padding
+  int col_width = 1+NUM_PHILOSOPHERS+1+(strlen(CHNG_MSG))+1;
+  
+  // // 1 for the leftmost "wall"
+  // // for each of the philosophers: add the col width + 1 for the rightmost edge
+  int full_line_width = 1+(col_width+1)*NUM_PHILOSOPHERS;
+
+
+  print_status(head, col_width, full_line_width);
   
   printf("All Done!\n");
 }
