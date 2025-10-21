@@ -35,7 +35,6 @@
 #define EAT_MSG  "Eat  "
 #define THNK_MSG "Think"
 
-#endif 
 
 // A Philosopher
 typedef struct Phil {
@@ -55,9 +54,7 @@ typedef struct Fork {
 } Fork;
 
 
-void print_test(Phil *head, int col_width, int full_line_width);
-void print_break_lines(int col_width, int full_line_width);
-void print_name_lines(Phil *head, int col_width, int full_line_width);
-void print_status_lines(Phil *head, int col_width, int full_line_width);
+void dine(void *phil);
 char get_label(int id);
 
+#endif 

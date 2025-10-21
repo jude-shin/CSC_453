@@ -3,8 +3,8 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include "dine.h"
 #include "table.h"
+#include "status.h"
 
 // How many philosophers will be fighting to the death for their spagetti
 // NOTE: there will be an equal number of forks as there are philosophers
