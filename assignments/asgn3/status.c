@@ -1,17 +1,23 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include "table.h"
 
+// TODO: test that all of the strings that are
+
 // you want six semaphores
-void print_break_line(int col_width, int full_line_width);
-void print_name_line(Phil *head, int col_width, int full_line_width);
-void print_status(Phil *curr, int col_width, int full_line_width);
+void print_break_line();
+void print_name_line(Phil *head);
+void print_status(Phil *curr);
+int get_col_width();
+
+static int col_width = 0;
 
 // Prints a line of "=" with occasional "|" for the number of philosophers
-void print_break_line(int col_width, int full_line_width) {
+void print_break_line() {
   printf("|");
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
-    for (int j=0; j<col_width; j++) {
+    for (int j=0; j<get_col_width(); j++) {
       printf("=");
     }
     printf("|");
@@ -19,9 +25,9 @@ void print_break_line(int col_width, int full_line_width) {
   printf("\n");
 }
 
-void print_name_line(Phil *head, int col_width, int full_line_width) {
+void print_name_line(Phil *head) {
   Phil *curr = head;
-  int padding = (col_width-1)/2;
+  int padding = (get_col_width()-1)/2;
 
   printf("|");
 
@@ -43,20 +49,20 @@ void print_name_line(Phil *head, int col_width, int full_line_width) {
 }
 
 // Prints ALL the statuses 
-void print_status_line(Phil *head, int col_width, int full_line_width) {
+void print_status_line(Phil *head) {
   Phil *curr = head;
-  int middle = (col_width+1)/2;
+  int middle = (get_col_width()+1)/2;
 
   printf("|");
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
-    print_status(curr, col_width, full_line_width);
+    print_status(curr);
     curr = curr->right->right;
   }
   printf("\n");
 }
 
 // prints just one status
-void print_status(Phil *curr, int col_width, int full_line_width) {
+void print_status(Phil *curr) {
   const char *msg = "";
   switch (curr->doing) {
     case CHANGING:
@@ -94,5 +100,23 @@ void print_status(Phil *curr, int col_width, int full_line_width) {
   printf(" |");
 }
 
+int get_col_width() {
+  // 1 for the leftmost padding
+  // n for the number of philosophers
+  // 1 for dividing padding
+  // msg_len for the length of it's status 
+  // 1 for the rightmost padding
+  if (col_width == 0) {
+    int msg_len = strlen(CHNG_MSG);
+    if (msg_len != 0 && 
+        !(msg_len == strlen(EAT_MSG) && 
+          msg_len == strlen(CHNG_MSG))) {
+      fprintf(stderr, "[main] message lengths are not equal!");
+    }
 
+    col_width = 1+NUM_PHILOSOPHERS+1+(msg_len)+1;
+  }
+
+  return col_width;
+}
 

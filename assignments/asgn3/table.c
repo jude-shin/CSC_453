@@ -2,9 +2,7 @@
 #include <stdlib.h>
 #include "table.h"
 #include "dawdle.h"
-#include "status.h"
 #include "dine.h"
-
 
 void *test_dine(void *p) {
   Phil *curr = (Phil*)p;
@@ -17,7 +15,11 @@ void *test_dine(void *p) {
 }
 
 void *dine(void *p) {
-  // TODO: error check to see if this casts into a Phil?
+  if (p == NULL) {
+    fprintf(stderr, "[dine] dine was passed a NULL pointer");
+    exit(EXIT_FAILURE);
+  }
+
   Phil *curr = (Phil*)p;
 
   for (int i=0; i<lifetime; i++) {
@@ -45,9 +47,7 @@ void *dine(void *p) {
     curr->doing = EATING;
     dawdle();
 
-    // 5) relinquish your forks
-    // TODO: does the order in which you relinquish the forks matter?
-    // 
+    // TODO: 5) relinquish your forks
 
     // 6) set status to changing
     curr->doing = CHANGING;
@@ -76,13 +76,13 @@ Phil* init_table(void) {
     // Calloc space for the new philosopher
     Phil *new_phil = malloc(sizeof(Phil));
     if (new_phil == NULL) {
-      fprintf(stderr, "[main] error malloc()ing philosopher no. %d", i);
+      fprintf(stderr, "[init_table] error malloc()ing philosopher no. %d", i);
       return NULL;
     }
 
     Fork *new_fork = malloc(sizeof(Fork));
     if (new_phil == NULL) {
-      fprintf(stderr, "[main] error malloc()ing fork no. %d", i);
+      fprintf(stderr, "[init_table] error malloc()ing fork no. %d", i);
       return NULL;
     }
 
@@ -92,7 +92,7 @@ Phil* init_table(void) {
     new_phil->left = prev_fork;
 
     new_fork->id = i;
-    new_fork->in_use = TRUE; // TODO: check this
+    new_fork->in_use = FALSE;
     new_fork->right = NULL;
     new_fork->left = new_phil; 
 

@@ -30,8 +30,6 @@ void dawdle(void) {
    * could be interrupted for some legitimate reason.
    */
 
-  // TODO: ask if we need to make a different function, or if this "unreliable"
-  // routine is good enough
   struct timespec tv;
   int msec = (int)((((double)random()) / RAND_MAX) * DAWDLEFACTOR);
   tv.tv_sec = 0;

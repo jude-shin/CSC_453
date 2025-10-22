@@ -3,6 +3,6 @@
 
 #include "table.h"
 
-void print_status_line(Phil *head, int col_width, int full_line_width);
+void print_status_line(Phil *head);
 
 #endif
