@@ -53,7 +53,6 @@ int main (int argc, char *argv[]) {
   // Sets the seed for the prng
   set_seed();
 
-
   // STRING MATH INIT -------------------------------------------------------
 
   // TODO: ask him if this is good or if I should make a macro
@@ -86,13 +85,11 @@ int main (int argc, char *argv[]) {
   }
 
   // THREADS INIT -----------------------------------------------------------
-  Phil *curr = head; 
-
-  pid_t ppid = getpid();
-  // TODO: make a list of threads
+  // pid_t ppid = getpid(); // TODO: get rid of this
   pthread_t thread_ids[NUM_PHILOSOPHERS];
 
-  // make NUM_PHILOSOPHERS times the threads
+  // Make a thread for each of the philosophers.
+  Phil *curr = head; 
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
     int res = pthread_create(
         &thread_ids[i],
@@ -101,22 +98,28 @@ int main (int argc, char *argv[]) {
         (void*)(curr)
         );
 
-    if (res == -1) {
-      fprintf(stderr, "[main] error creating child %d", i);
+    if (res != 0) {
+      fprintf(stderr, "[main] error creating child %d. errno %d", i, res);
       exit(EXIT_FAILURE);
     }
-
+    
+    // Move onto the next Phil
     curr = curr->right->right;
   }
+  
 
+  // Wait for all of the threads to finish.
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
-    pthread_join(thread_ids[i], NULL);
-    // the child index might not be true... the last created one could have 
-    // finished first
-    printf("Parent (%d): child %d exited!\n\n", (int)ppid, i);
+    int res = pthread_join(thread_ids[i], NULL);
+    if (res != 0) {
+      fprintf(stderr, "[main] error creating child %d. errno %d", i, res);
+      exit(EXIT_FAILURE);
+    }
+    // printf("Parent (%d): child %d exited!\n\n", (int)ppid, i); //TODO remove
   }
 
-  printf("All Done!\n");
+  // printf("All Done!\n");
+  // TODO: print the last break line?
 }
 
 // Mallocs and sets up the pointers for all forks and philosophers in 

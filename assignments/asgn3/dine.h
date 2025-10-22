@@ -1,6 +1,7 @@
 #ifndef DINE
 #define DINE
 
-static int lifetime;
+// The number of cycles that a philosopher will eat/think before dying 
+int lifetime;
 
 #endif
