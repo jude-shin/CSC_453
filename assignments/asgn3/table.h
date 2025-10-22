@@ -24,11 +24,6 @@
 #define EATING   1
 #define THINKING 2
 
-// What the philosopher WANTS
-// These are different from what the IS DOING so I don't royally mess up
-#define THINKY 3
-#define HUNGRY 4
-
 // For printing
 // NOTE: you must make all of these the same size so the printing looks nice
 #define CHNG_MSG "     "
@@ -40,7 +35,6 @@
 typedef struct Phil {
   int id;      // The identifier of the philosopher (converted to ascii later) 
   int doing;   // What the philosopher is doing (thinking, eating, or changing)
-  int wants;   // What the philosopher currently wants (thinky, hungry)
   struct Fork *right; // The fork to the right
   struct Fork *left;  // The fork to the left 
 } Phil;
@@ -54,7 +48,7 @@ typedef struct Fork {
 } Fork;
 
 
-void dine(void *phil);
+void dine(void *phil, int lifetime);
 char get_label(int id);
 
 #endif 

@@ -10,7 +10,7 @@
 #define DAWDLEFACTOR 1000
 #endif
 
-void dawdle() {
+void dawdle(void) {
   /*
    * sleep for a random amount of time between 0 and DAWDLEFACTOR
    * milliseconds. This routine is somewhat unreliable, since it

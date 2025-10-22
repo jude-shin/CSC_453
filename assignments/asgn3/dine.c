@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
+#include <pthread.h>
 
 #include "table.h"
 #include "status.h"
@@ -39,10 +40,6 @@ int main (int argc, char *argv[]) {
     exit(err);
   }
 
-  // ------------------------------------------------------------------------ 
-  // Sets the seed for the prng
-  set_seed();
-
   // Initalize all of the philosophers
   // TODO: is there is 1 philosopher, do we do nothing?
   if (NUM_PHILOSOPHERS <= 1) {
@@ -50,6 +47,34 @@ int main (int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  // PRNG INIT --------------------------------------------------------------
+  // Sets the seed for the prng
+  set_seed();
+
+
+  // STRING MATH INIT -------------------------------------------------------
+
+  // TODO: ask him if this is good or if I should make a macro
+  // TODO: make this a seperate function
+  // 1 for the leftmost padding
+  // n for the number of philosophers // TODO: or is it forks?
+  // 1 for dividing padding
+  // msg_len for the length of it's status 
+  // 1 for the rightmost padding
+  int msg_len = strlen(CHNG_MSG);
+  if (msg_len != 0 && 
+      !(msg_len == strlen(EAT_MSG) && 
+        msg_len == strlen(CHNG_MSG))) {
+    fprintf(stderr, "[main] message lengths are not equal!");
+  }
+
+  int col_width = 1+NUM_PHILOSOPHERS+1+(msg_len)+1;
+  
+  // 1 for the leftmost "wall"
+  // for each of the philosophers: add the col width + 1 for the rightmost edge
+  int full_line_width = 1+(col_width+1)*NUM_PHILOSOPHERS;
+  
+  // PHIL/FORK INIT ---------------------------------------------------------
   // For every philosopher and fork, append them together like a regular doubly
   // linked list.
   Phil *head = init_table();
@@ -58,22 +83,24 @@ int main (int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  // TODO: ask him if this is good or if I should make a macro
-  // TODO: errorcheck strlen
-  // 1 for the leftmost padding
-  // n for the number of philosophers // TODO: or is it forks?
-  // 1 for dividing padding
-  // msg_len for the length of it's status 
-  // 1 for the rightmost padding
-  int col_width = 1+NUM_PHILOSOPHERS+1+(strlen(CHNG_MSG))+1;
-  
-  // // 1 for the leftmost "wall"
-  // // for each of the philosophers: add the col width + 1 for the rightmost edge
-  int full_line_width = 1+(col_width+1)*NUM_PHILOSOPHERS;
+  // THREADS INIT -----------------------------------------------------------
+  // TODO: make a list of threads
+  int thread_ids[NUM_PHILOSOPHERS];
+  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+    thread_ids[i]=i;
+  }
 
+  // make NUM_PHILOSOPHERS times the threads
+  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+    if (pthread_create() == -1) {
+      fprintf(stderr, "[main] error creating child %d", i);
+      exit(EXIT_FAILURE);
+    }
+  }
 
-  print_test(head, col_width, full_line_width);
-  
+  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+    pthread_join();
+  }
   printf("All Done!\n");
 }
 
@@ -104,7 +131,6 @@ Phil* init_table(void) {
 
     new_phil->id = i;
     new_phil->doing = CHANGING;
-    new_phil->wants = HUNGRY;
     new_phil->right = new_fork;
     new_phil->left = prev_fork;
 

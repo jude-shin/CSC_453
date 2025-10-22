@@ -1,29 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "table.h"
-#include "status.h"
 
 // you want six semaphores
-void print_status(Phil *curr, int col_width, int full_line_width);
 void print_break_line(int col_width, int full_line_width);
 void print_name_line(Phil *head, int col_width, int full_line_width);
-void print_status_lines(Phil *head, int col_width, int full_line_width);
-
-
-// Prints the status line for ALL philosophers 
-void print_test(Phil *head, int col_width, int full_line_width) {
-  print_break_line(col_width, full_line_width);
-  print_name_line(head, col_width, full_line_width);
-  print_break_line(col_width, full_line_width);
-
-  print_status_lines(head, col_width, full_line_width);
-  print_status_lines(head, col_width, full_line_width);
-  print_status_lines(head, col_width, full_line_width);
-  print_status_lines(head, col_width, full_line_width);
-  print_status_lines(head, col_width, full_line_width);
-  print_status_lines(head, col_width, full_line_width);
-
-  print_break_line(col_width, full_line_width);
-}
+void print_status(Phil *curr, int col_width, int full_line_width);
 
 // Prints a line of "=" with occasional "|" for the number of philosophers
 void print_break_line(int col_width, int full_line_width) {
@@ -60,25 +42,35 @@ void print_name_line(Phil *head, int col_width, int full_line_width) {
   printf("\n");
 }
 
+// Prints ALL the statuses 
+void print_status_line(Phil *head, int col_width, int full_line_width) {
+  Phil *curr = head;
+  int middle = (col_width+1)/2;
+
+  printf("|");
+  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+    print_status(curr, col_width, full_line_width);
+    curr = curr->right->right;
+  }
+  printf("\n");
+}
+
 // prints just one status
 void print_status(Phil *curr, int col_width, int full_line_width) {
   const char *msg = "";
   switch (curr->doing) {
     case CHANGING:
-      // msg = CHNG_MSG;
-      msg = "chang";
+      msg = CHNG_MSG;
       break;
     case EATING:
-      // msg = EAT_MSG;
-      msg = "eatys";
+      msg = EAT_MSG;
       break;
     case THINKING:
-      // msg = THNK_MSG;
-      msg = "think";
+      msg = THNK_MSG;
       break;
     default:
-      // TODO: do something interesting
-      perror("hello");
+      printf(stderr, "error parding curr->doing. unknown: %s", msg);
+      exit(EXIT_FAILURE);
       break;
   }
 
@@ -102,17 +94,5 @@ void print_status(Phil *curr, int col_width, int full_line_width) {
   printf(" |");
 }
 
-// Prints ALL the statuses 
-void print_status_lines(Phil *head, int col_width, int full_line_width) {
-  Phil *curr = head;
-  int middle = (col_width+1)/2;
-
-  printf("|");
-  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
-    print_status(curr, col_width, full_line_width);
-    curr = curr->right->right;
-  }
-  printf("\n");
-}
 
 
