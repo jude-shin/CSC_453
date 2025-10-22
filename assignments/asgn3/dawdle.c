@@ -10,6 +10,18 @@
 #define DAWDLEFACTOR 1000
 #endif
 
+
+// Sets the seed to be the number or seconds since the epoch plus the number of
+// microseconds since the last second
+void set_seed(void) {
+  struct timeval tp;
+  if (gettimeofday(&tp, NULL) == -1) {
+    fprintf(stderr, "[set_seed] error getting time of the day");
+    exit(EXIT_FAILURE);
+  }
+  srandom(tp.tv_sec + tp.tv_usec);
+}
+
 void dawdle(void) {
   /*
    * sleep for a random amount of time between 0 and DAWDLEFACTOR

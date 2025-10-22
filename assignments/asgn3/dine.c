@@ -9,10 +9,7 @@
 #include "status.h"
 #include "dine.h"
 
-// How many philosophers will be fighting to the death for their spagetti
-// NOTE: there will be an equal number of forks as there are philosophers
 // TODO: Will be shared across all files?
-void set_seed(void);
 Phil* init_table(void);
 
 int main (int argc, char *argv[]) {
@@ -175,14 +172,5 @@ Phil* init_table(void) {
   prev_fork->right = head;
   
   return head;
-}
-
-void set_seed(void) {
-  struct timeval tp;
-  if (gettimeofday(&tp, NULL) == -1) {
-    fprintf(stderr, "[set_seed] error getting time of the day");
-    exit(EXIT_FAILURE);
-  }
-  srandom(tp.tv_sec + tp.tv_usec);
 }
 
