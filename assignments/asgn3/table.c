@@ -3,8 +3,21 @@
 #include "table.h"
 #include "dawdle.h"
 #include "status.h"
+#include "dine.h"
 
-void dine(void *p, int lifetime) {
+
+void *test_dine(void *p) {
+  Phil *curr = (Phil*)p;
+
+  printf("[%d] dining... \n", curr->id);
+  dawdle();
+  printf("[%d] finished dining! \n", curr->id);
+
+  return NULL;
+}
+
+void *dine(void *p) {
+  // TODO: error check to see if this casts into a Phil?
   Phil *curr = (Phil*)p;
 
   for (int i=0; i<lifetime; i++) {
@@ -40,18 +53,14 @@ void dine(void *p, int lifetime) {
     curr->doing = CHANGING;
     dawdle();
   }
-
-  exit(EXIT_SUCCESS);
+  
+  return NULL;
 }
 
 void change_status(Phil *curr) {
   // print status
 }
 
-void print_status() {
-  // print_status_line();
-}
- 
 // Get label for the philosopher based on an i
 char get_label(int id) {
   // Start at ascii character 'A'

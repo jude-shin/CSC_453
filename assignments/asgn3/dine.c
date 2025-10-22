@@ -1,11 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/time.h>
 #include <pthread.h>
 
 #include "table.h"
 #include "status.h"
+#include "dine.h"
 
 // How many philosophers will be fighting to the death for their spagetti
 // NOTE: there will be an equal number of forks as there are philosophers
@@ -16,7 +18,7 @@ Phil* init_table(void);
 int main (int argc, char *argv[]) {
   // How many times each philosopher should go though their eat-think lifecycle
   // before exiting.
-  int lifetime = 3; 
+  lifetime = 3; 
 
   // The only (optional) command line argument is to change the lifecycle of a 
   // philosopher.
@@ -84,23 +86,36 @@ int main (int argc, char *argv[]) {
   }
 
   // THREADS INIT -----------------------------------------------------------
+  Phil *curr = head; 
+
+  pid_t ppid = getpid();
   // TODO: make a list of threads
-  int thread_ids[NUM_PHILOSOPHERS];
-  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
-    thread_ids[i]=i;
-  }
+  pthread_t thread_ids[NUM_PHILOSOPHERS];
 
   // make NUM_PHILOSOPHERS times the threads
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
-    if (pthread_create() == -1) {
+    int res = pthread_create(
+        &thread_ids[i],
+        NULL,
+        test_dine, 
+        (void*)(curr)
+        );
+
+    if (res == -1) {
       fprintf(stderr, "[main] error creating child %d", i);
       exit(EXIT_FAILURE);
     }
+
+    curr = curr->right->right;
   }
 
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
-    pthread_join();
+    pthread_join(thread_ids[i], NULL);
+    // the child index might not be true... the last created one could have 
+    // finished first
+    printf("Parent (%d): child %d exited!\n\n", (int)ppid, i);
   }
+
   printf("All Done!\n");
 }
 

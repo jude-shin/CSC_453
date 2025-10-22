@@ -69,7 +69,7 @@ void print_status(Phil *curr, int col_width, int full_line_width) {
       msg = THNK_MSG;
       break;
     default:
-      printf(stderr, "error parding curr->doing. unknown: %s", msg);
+      fprintf(stderr, "error parding curr->doing. unknown: %s", msg);
       exit(EXIT_FAILURE);
       break;
   }

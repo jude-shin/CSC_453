@@ -48,7 +48,8 @@ typedef struct Fork {
 } Fork;
 
 
-void dine(void *phil, int lifetime);
+void *dine(void *p);
+void *test_dine(void *p);
 char get_label(int id);
 
 #endif 
