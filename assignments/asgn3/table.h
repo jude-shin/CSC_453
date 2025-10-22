@@ -52,8 +52,15 @@ typedef struct Fork {
 } Fork;
 
 
+// Runs through the lifecycle of a single philosopher, eating and thinking.
 void *dine(void *p);
 void *test_dine(void *p);
+
+// Get the label based on the id of a Phil. (0->'A', 1->'B' ...)
 char get_label(int id);
+
+// Mallocs and sets up the pointers for all forks and philosophers in 
+// sequential order
+Phil* init_table(void);
 
 #endif 
