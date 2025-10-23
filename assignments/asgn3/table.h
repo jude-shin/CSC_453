@@ -61,6 +61,7 @@ char get_label(int id);
 
 // Mallocs and sets up the pointers for all forks and philosophers in 
 // sequential order
-Phil* init_table(void);
+Phil* set_table(void);
+void clean_table(void);
 
 #endif 

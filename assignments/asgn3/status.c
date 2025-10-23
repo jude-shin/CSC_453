@@ -2,14 +2,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include "table.h"
+#include "status.h"
 
 // TODO: test that all of the strings that are
 
 // you want six semaphores
-void print_break_line();
-void print_name_line(Phil *head);
-void print_status(Phil *curr);
-int get_col_width();
 
 static int col_width = 0;
 
@@ -51,8 +48,6 @@ void print_name_line(Phil *head) {
 // Prints ALL the statuses 
 void print_status_line(Phil *head) {
   Phil *curr = head;
-  int middle = (get_col_width()+1)/2;
-
   printf("|");
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
     print_status(curr);
@@ -100,7 +95,7 @@ void print_status(Phil *curr) {
   printf(" |");
 }
 
-int get_col_width() {
+int get_col_width(void) {
   // 1 for the leftmost padding
   // n for the number of philosophers
   // 1 for dividing padding

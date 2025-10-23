@@ -48,7 +48,7 @@ int main (int argc, char *argv[]) {
   // PHIL/FORK INIT ---------------------------------------------------------
   // For every philosopher and fork, append them together like a regular doubly
   // linked list.
-  Phil *head = init_table();
+  Phil *head = set_table();
   if (head == NULL) {
     fprintf(stderr, "[main] error setting the table (head is NULL)");
     exit(EXIT_FAILURE);
@@ -87,7 +87,11 @@ int main (int argc, char *argv[]) {
     }
   }
 
-  // printf("All Done!\n");
-  // TODO: print the last break line?
+
+
+
+  clean_table();
+
+  exit(EXIT_SUCCESS);
 }
 

@@ -27,12 +27,17 @@ void *dine(void *p) {
     curr->doing = THINKING;
     dawdle();
     
-    // 2) try to find your forks
+    // 2b) try to find your forks
     // wait for the first fork (if you are even, pick up left first)
     // (if you are odd, pick up the right first)
     if (curr->id % 2 == 0) {
       // start with trying to use the LEFT fork first
       // then go ahead and try to aquire the RIGHT fork
+      
+      // Try to lock the semaphore
+      curr->left->in_use = TRUE;
+
+      curr->right->in_use = TRUE;
     }
     else {
       // start with trying to use the RIGHT fork first
@@ -47,7 +52,11 @@ void *dine(void *p) {
     curr->doing = EATING;
     dawdle();
 
-    // TODO: 5) relinquish your forks
+    // 5a) relinquish your forks
+    curr->left->in_use = FALSE;
+    curr->right->in_use = FALSE;
+
+    // 5b) unlock the semaphores
 
     // 6) set status to changing
     curr->doing = CHANGING;
@@ -66,7 +75,7 @@ void change_status(Phil *curr) {
 // @param void.
 // @return a pointer to the head philosopher. All people are created equal, 
 // so "head" just gives us a way to reference the table.
-Phil* init_table(void) {
+Phil* set_table(void) {
   Phil *head = NULL;
 
   // Phil *prev_phil = head;
@@ -76,13 +85,13 @@ Phil* init_table(void) {
     // Calloc space for the new philosopher
     Phil *new_phil = malloc(sizeof(Phil));
     if (new_phil == NULL) {
-      fprintf(stderr, "[init_table] error malloc()ing philosopher no. %d", i);
+      fprintf(stderr, "[set_table] error malloc()ing philosopher no. %d", i);
       return NULL;
     }
 
     Fork *new_fork = malloc(sizeof(Fork));
     if (new_phil == NULL) {
-      fprintf(stderr, "[init_table] error malloc()ing fork no. %d", i);
+      fprintf(stderr, "[set_table] error malloc()ing fork no. %d", i);
       return NULL;
     }
 
@@ -114,6 +123,11 @@ Phil* init_table(void) {
   prev_fork->right = head;
   
   return head;
+}
+
+void clean_table(void) {
+  // free all of the threads please
+  // 
 }
 
 // Get label for the philosopher based on an i
