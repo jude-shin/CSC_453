@@ -89,7 +89,8 @@ void change_status() {
 
 void set_table(void) {
   // Set all of the philosophers to CHANGING state
-  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+  int i;
+  for (i=0; i<NUM_PHILOSOPHERS; i++) {
     // Set all the philosophers status states
     philosophers[i] = CHANGING;
 
@@ -101,7 +102,7 @@ void set_table(void) {
   }
 
   // Initalize all of the forks to be unused
-  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+  for (i=0; i<NUM_PHILOSOPHERS; i++) {
     if (sem_init(&fork_sems[i], 0, 1) == -1) {
       fprintf(stderr, "[set_table] error sem_init()ing fork %d sem", i);
       exit(EXIT_FAILURE);
@@ -116,8 +117,10 @@ void set_table(void) {
 }
 
 void clean_table() {
+  int i;
+
   // Destroy all of the fork semaphores
-  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+  for (i=0; i<NUM_PHILOSOPHERS; i++) {
     if (sem_destroy(&fork_sems[i])) {
       fprintf(stderr, "[clean_table] error sem_destroy()ing fork %d sem", i);
       exit(EXIT_FAILURE);

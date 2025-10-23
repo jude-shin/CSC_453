@@ -22,14 +22,16 @@ sem_t fork_sems[NUM_PHILOSOPHERS];
 sem_t print_sem;
 
 int main (int argc, char *argv[]) {
+  int i, err, res;
+
   // How many times each philosopher should go though their eat-think lifecycle
   // before exiting.
   lifetime = 3; 
 
   // The only (optional) command line argument is to change the lifecycle of a 
   // philosopher.
-  int err = 0;
-  for (int i=2; i<argc; i++) {
+  err = 0;
+  for (i=2; i<argc; i++) {
     fprintf(stderr,"%s: too many args!\n",argv[i]);
     err++;
   }
@@ -67,8 +69,8 @@ int main (int argc, char *argv[]) {
   // THREADS INIT -----------------------------------------------------------
   pthread_t thread_ids[NUM_PHILOSOPHERS];
   // Make a thread for each of the philosophers.
-  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
-    int res = pthread_create(
+  for (i=0; i<NUM_PHILOSOPHERS; i++) {
+    res = pthread_create(
         &thread_ids[i],
         NULL,
         dine, 
@@ -83,8 +85,8 @@ int main (int argc, char *argv[]) {
   
 
   // Wait for all of the threads to finish.
-  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
-    int res = pthread_join(thread_ids[i], NULL);
+  for (i=0; i<NUM_PHILOSOPHERS; i++) {
+    res = pthread_join(thread_ids[i], NULL);
     if (res != 0) {
       fprintf(stderr, "[main] error joining pthred %d. errno %d", i, res);
       exit(EXIT_FAILURE);

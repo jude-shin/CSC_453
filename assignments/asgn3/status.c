@@ -11,9 +11,11 @@ static int col_width = 0;
 
 // Prints a line of "=" with occasional "|" for the number of philosophers
 void print_break_line(void) {
+  int i, j;
+
   printf("|");
-  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
-    for (int j=0; j<get_col_width(); j++) {
+  for (i=0; i<NUM_PHILOSOPHERS; i++) {
+    for (j=0; j<get_col_width(); j++) {
       printf("=");
     }
     printf("|");
@@ -22,20 +24,22 @@ void print_break_line(void) {
 }
 
 void print_name_line(void) {
-  int left_padding = (get_col_width())/2;
-  int right_padding = col_width-left_padding-1;
+  int i, j, left_padding, right_padding;
+
+  left_padding = (get_col_width())/2;
+  right_padding = col_width-left_padding-1;
 
   printf("|");
 
-  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+  for (i=0; i<NUM_PHILOSOPHERS; i++) {
     char label = get_label(i);
-    for (int j=0; j<left_padding; j++) {
+    for (j=0; j<left_padding; j++) {
       printf(" ");
     }
 
     printf("%c", label);
 
-    for (int j=0; j<right_padding; j++) {
+    for (j=0; j<right_padding; j++) {
       printf(" ");
     }
     printf("|");
@@ -45,9 +49,11 @@ void print_name_line(void) {
 
 // Prints ALL the statuses 
 void print_status_line(void) {
+  int i;
+
   sem_wait(&print_sem);
   printf("|");
-  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+  for (i=0; i<NUM_PHILOSOPHERS; i++) {
     // The array holds the status of what the philosopher is doing
     print_status(i);
   }
@@ -57,12 +63,14 @@ void print_status_line(void) {
 
 // prints just one status
 void print_status(int i) {
+  int j, left, right;
+
   printf(" ");
 
-  int left = i;
-  int right = (i+1)%NUM_PHILOSOPHERS;
+  left = i;
+  right = (i+1)%NUM_PHILOSOPHERS;
 
-  for (int j=0; j<NUM_PHILOSOPHERS; j++) {
+  for (j=0; j<NUM_PHILOSOPHERS; j++) {
     // if we are printing the left fork, see if it is occupied by the current
     // philosopher (the fork's value will be the index of the philosopher 
     // that is using it)
