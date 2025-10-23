@@ -22,19 +22,20 @@ void print_break_line(void) {
 }
 
 void print_name_line(void) {
-  int padding = (get_col_width()-1)/2;
+  int left_padding = (get_col_width())/2;
+  int right_padding = col_width-left_padding-1;
 
   printf("|");
 
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
     char label = get_label(i);
-    for (int j=0; j<padding; j++) {
+    for (int j=0; j<left_padding; j++) {
       printf(" ");
     }
 
     printf("%c", label);
 
-    for (int j=0; j<padding; j++) {
+    for (int j=0; j<right_padding; j++) {
       printf(" ");
     }
     printf("|");
@@ -101,6 +102,7 @@ void print_status(int i) {
   printf(" |");
 }
 
+// TODO: get rid of this function
 int get_col_width(void) {
   // 1 for the leftmost padding
   // n for the number of philosophers
