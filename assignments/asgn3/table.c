@@ -21,16 +21,18 @@ void *test_dine(void *ip) {
 }
 
 void *dine(void *ip) {
+  int i, j, left, right;
+
   if (ip == NULL) {
     fprintf(stderr, "[dine] cannot be passed a NULL pointer");
     exit(EXIT_FAILURE);
   }
-  int i = *(int*)ip;
-  int left = i;
-  int right = (i+1)%NUM_PHILOSOPHERS;
+  i = *(int*)ip;
+  left = i;
+  right = (i+1)%NUM_PHILOSOPHERS;
 
 
-  for (int j=0; j<lifetime; j++) {
+  for (j=0; j<lifetime; j++) {
     // 1) set status to thinking
     philosophers[i] = THINKING;
     dawdle();
