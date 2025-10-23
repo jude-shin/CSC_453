@@ -67,10 +67,10 @@ void print_status(int i) {
     // that is using it)
     // TODO: make this more efficient
     if (left == j && forks[left] != -1) {
-      printf("%d", forks[left]);
+      printf("%d", j);
     }
     else if (right == j && forks[right] != -1) {
-      printf("%d", forks[right]);
+      printf("%d", j);
     }
     else {
       printf("-");
