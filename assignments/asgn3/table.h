@@ -7,15 +7,6 @@
 #define NUM_PHILOSOPHERS 5
 #endif 
 
-// Booleans
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 // What the first thread should be labeled as
 #ifndef START_CHAR 
 #define START_CHAR 'A'

@@ -71,8 +71,8 @@ void *dine(void *ip) {
     // 5) relinquish your forks
     forks[left] = -1;
     forks[right] = -1;
-    sem_post(&fork_sems[i]);
-    sem_post(&fork_sems[i%NUM_PHILOSOPHERS]);
+    sem_post(&fork_sems[right]);
+    sem_post(&fork_sems[left]);
 
     // 6) set status to changing
     philosophers[i] = CHANGING;
