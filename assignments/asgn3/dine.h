@@ -12,10 +12,16 @@ extern int lifetime;
 // state they are in)
 extern int philosophers[NUM_PHILOSOPHERS];
 
-// All of the forks
-extern sem_t forks[NUM_PHILOSOPHERS];
+extern int phil_i[NUM_PHILOSOPHERS];
+
+// Avaliability of forks 
+extern sem_t fork_sems[NUM_PHILOSOPHERS];
+
+// The index of the philosopher who owns the fork
+// -1 for available
+extern int forks[NUM_PHILOSOPHERS];
 
 // The semaphore for printing
-extern sem_t print;
+extern sem_t print_sem;
 
 #endif

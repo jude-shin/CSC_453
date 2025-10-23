@@ -38,7 +38,7 @@
 
 // Runs through the lifecycle of a single philosopher, eating and thinking.
 void *dine(void *p);
-void *test_dine(void *p);
+void *test_dine(void *ip);
 
 // Get the label based on the index (id) of a Phil. (0->'A', 1->'B' ...)
 char get_label(int id);

@@ -7,13 +7,19 @@
 
 #include "table.h"
 #include "dawdle.h"
+#include "status.h"
 #include "dine.h"
 
 // Initalize the Global Variables
 int lifetime;
+
 int philosophers[NUM_PHILOSOPHERS];
-sem_t forks[NUM_PHILOSOPHERS];
-sem_t print;
+int phil_i[NUM_PHILOSOPHERS];
+
+int forks[NUM_PHILOSOPHERS];
+sem_t fork_sems[NUM_PHILOSOPHERS];
+
+sem_t print_sem;
 
 int main (int argc, char *argv[]) {
   // How many times each philosopher should go though their eat-think lifecycle
@@ -51,22 +57,22 @@ int main (int argc, char *argv[]) {
   // Sets the seed for the prng
   set_seed();
 
-
   // PHIL/FORK INIT ---------------------------------------------------------
-
   set_table();
+  print_break_line();
+  print_name_line();
+  print_break_line();
 
 
   // THREADS INIT -----------------------------------------------------------
   pthread_t thread_ids[NUM_PHILOSOPHERS];
-
   // Make a thread for each of the philosophers.
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
     int res = pthread_create(
         &thread_ids[i],
         NULL,
-        test_dine, 
-        (void*)(philosophers[i])
+        dine, 
+        (void*)&phil_i[i]
         );
 
     if (res != 0) {
@@ -87,6 +93,7 @@ int main (int argc, char *argv[]) {
 
 
   clean_table();
+  print_break_line();
 
   exit(EXIT_SUCCESS);
 }

@@ -7,8 +7,6 @@
 
 // TODO: test that all of the strings that are
 
-// you want six semaphores
-
 static int col_width = 0;
 
 // Prints a line of "=" with occasional "|" for the number of philosophers
@@ -46,30 +44,33 @@ void print_name_line(void) {
 
 // Prints ALL the statuses 
 void print_status_line(void) {
+  sem_wait(&print_sem);
   printf("|");
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
     // The array holds the status of what the philosopher is doing
     print_status(i);
   }
   printf("\n");
+  sem_post(&print_sem);
 }
 
 // prints just one status
 void print_status(int i) {
   printf(" ");
 
-  int left_i = i;
-  int right_i = i%NUM_PHILOSOPHERS;
+  int left = i;
+  int right = (i+1)%NUM_PHILOSOPHERS;
 
   for (int j=0; j<NUM_PHILOSOPHERS; j++) {
     // if we are printing the left fork, see if it is occupied by the current
     // philosopher (the fork's value will be the index of the philosopher 
     // that is using it)
-    if (left_i == j && left_i == i) {
-      printf("%d", j);
+    // TODO: make this more efficient
+    if (left == j && forks[left] != -1) {
+      printf("%d", forks[left]);
     }
-    else if (right_i == j && right_i == i) {
-      printf("%d", j);
+    else if (right == j && forks[right] != -1) {
+      printf("%d", forks[right]);
     }
     else {
       printf("-");
