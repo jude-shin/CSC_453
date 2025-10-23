@@ -11,10 +11,11 @@
 #endif
 
 
-// Sets the seed to be the number or seconds since the epoch plus the number of
-// microseconds since the last second
 void set_seed(void) {
+  /* Sets the seed to be the number or seconds since the epoch plus the number
+     of microseconds since the last second. */
   struct timeval tp;
+
   if (gettimeofday(&tp, NULL) == -1) {
     fprintf(stderr, "[set_seed] error getting time of the day");
     exit(EXIT_FAILURE);
@@ -29,7 +30,6 @@ void dawdle(void) {
    * doesn’t take into account the possiblity that the nanosleep
    * could be interrupted for some legitimate reason.
    */
-
   struct timespec tv;
   int msec = (int)((((double)random()) / RAND_MAX) * DAWDLEFACTOR);
   tv.tv_sec = 0;
