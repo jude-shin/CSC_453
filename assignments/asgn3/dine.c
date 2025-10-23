@@ -3,10 +3,17 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 #include "table.h"
 #include "dawdle.h"
 #include "dine.h"
+
+// Initalize the Global Variables
+int lifetime;
+int philosophers[NUM_PHILOSOPHERS];
+sem_t forks[NUM_PHILOSOPHERS];
+sem_t print;
 
 int main (int argc, char *argv[]) {
   // How many times each philosopher should go though their eat-think lifecycle
@@ -46,35 +53,26 @@ int main (int argc, char *argv[]) {
 
 
   // PHIL/FORK INIT ---------------------------------------------------------
-  // For every philosopher and fork, append them together like a regular doubly
-  // linked list.
-  Phil *head = set_table();
-  if (head == NULL) {
-    fprintf(stderr, "[main] error setting the table (head is NULL)");
-    exit(EXIT_FAILURE);
-  }
+
+  set_table();
 
 
   // THREADS INIT -----------------------------------------------------------
   pthread_t thread_ids[NUM_PHILOSOPHERS];
 
   // Make a thread for each of the philosophers.
-  Phil *curr = head; 
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
     int res = pthread_create(
         &thread_ids[i],
         NULL,
         test_dine, 
-        (void*)(curr)
+        (void*)(philosophers[i])
         );
 
     if (res != 0) {
-      fprintf(stderr, "[main] error creating child %d. errno %d", i, res);
+      fprintf(stderr, "[main] error creating pthread %d. errno %d", i, res);
       exit(EXIT_FAILURE);
     }
-    
-    // Move onto the next Phil
-    curr = curr->right->right;
   }
   
 
@@ -82,12 +80,10 @@ int main (int argc, char *argv[]) {
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
     int res = pthread_join(thread_ids[i], NULL);
     if (res != 0) {
-      fprintf(stderr, "[main] error creating child %d. errno %d", i, res);
+      fprintf(stderr, "[main] error joining pthred %d. errno %d", i, res);
       exit(EXIT_FAILURE);
     }
   }
-
-
 
 
   clean_table();

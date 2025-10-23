@@ -1,43 +1,43 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <semaphore.h>
 #include "table.h"
 #include "dawdle.h"
 #include "dine.h"
 
-void *test_dine(void *p) {
-  Phil *curr = (Phil*)p;
+void *test_dine(void *ip) {
+  if (ip == NULL) {
+    fprintf(stderr, "[test_dine] cannot be passed a NULL pointer");
+    exit(EXIT_FAILURE);
+  }
+  int i = *(int*)ip;
 
-  printf("[%d] dining... \n", curr->id);
-  dawdle();
-  printf("[%d] finished dining! \n", curr->id);
+  printf("[test_dine]: philosophers[%d] = %d", i, philosophers[i]);
 
   return NULL;
 }
 
-void *dine(void *p) {
-  if (p == NULL) {
-    fprintf(stderr, "[dine] dine was passed a NULL pointer");
+void *dine(void *ip) {
+  if (ip == NULL) {
+    fprintf(stderr, "[dine] cannot be passed a NULL pointer");
     exit(EXIT_FAILURE);
   }
+  int i = *(int*)ip;
 
-  Phil *curr = (Phil*)p;
-
-  for (int i=0; i<lifetime; i++) {
+  for (int j=0; j<lifetime; j++) {
     // 1) set status to thinking
-    curr->doing = THINKING;
+    philosophers[i] = THINKING;
     dawdle();
     
     // 2b) try to find your forks
     // wait for the first fork (if you are even, pick up left first)
     // (if you are odd, pick up the right first)
-    if (curr->id % 2 == 0) {
+    if (i % 2 == 0) {
       // start with trying to use the LEFT fork first
       // then go ahead and try to aquire the RIGHT fork
+
       
       // Try to lock the semaphore
-      curr->left->in_use = TRUE;
-
-      curr->right->in_use = TRUE;
     }
     else {
       // start with trying to use the RIGHT fork first
@@ -45,89 +45,64 @@ void *dine(void *p) {
     }
 
     // 3) set status to changing
-    curr->doing = CHANGING;
+    philosophers[i] = CHANGING;
     dawdle();
 
     // 4) set status to eating
-    curr->doing = EATING;
+    philosophers[i] = EATING;
     dawdle();
 
     // 5a) relinquish your forks
-    curr->left->in_use = FALSE;
-    curr->right->in_use = FALSE;
 
     // 5b) unlock the semaphores
 
     // 6) set status to changing
-    curr->doing = CHANGING;
+    philosophers[i] = CHANGING;
     dawdle();
   }
   
   return NULL;
 }
 
-void change_status(Phil *curr) {
+void change_status() {
   // print status
 }
 
-// Mallocs and sets up the pointers for all forks and philosophers in 
-// sequential order.
-// @param void.
-// @return a pointer to the head philosopher. All people are created equal, 
-// so "head" just gives us a way to reference the table.
-Phil* set_table(void) {
-  Phil *head = NULL;
-
-  // Phil *prev_phil = head;
-  Fork *prev_fork = NULL; 
-
-  for (int i=0; i < NUM_PHILOSOPHERS; i++) {
-    // Calloc space for the new philosopher
-    Phil *new_phil = malloc(sizeof(Phil));
-    if (new_phil == NULL) {
-      fprintf(stderr, "[set_table] error malloc()ing philosopher no. %d", i);
-      return NULL;
-    }
-
-    Fork *new_fork = malloc(sizeof(Fork));
-    if (new_phil == NULL) {
-      fprintf(stderr, "[set_table] error malloc()ing fork no. %d", i);
-      return NULL;
-    }
-
-    new_phil->id = i;
-    new_phil->doing = CHANGING;
-    new_phil->right = new_fork;
-    new_phil->left = prev_fork;
-
-    new_fork->id = i;
-    new_fork->in_use = FALSE;
-    new_fork->right = NULL;
-    new_fork->left = new_phil; 
-
-    if (prev_fork != NULL) {
-      prev_fork->right = new_phil;
-    }
-    
-    // Update the previous pointers for the fork and phil so the correct
-    // information is updated on the next iteration of the loop
-    if (head == NULL) {
-      head = new_phil;
-    }
-    // prev_phil = new_phil;
-    prev_fork = new_fork;
+void set_table(void) {
+  // Set all of the philosophers to CHANGING state
+  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+    philosophers[i] = CHANGING;
   }
 
-  head->left = prev_fork;
-
-  prev_fork->right = head;
+  // Initalize all of the forks to be unused
+  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+    if (sem_init(&forks[i], 0, FALSE) == -1) {
+      fprintf(stderr, "[set_table] error sem_init()ing fork %d sem", i);
+      exit(EXIT_FAILURE);
+    }
+  }
   
-  return head;
+  // Initalize the printing semaphore
+  if (sem_init(&print, 0, FALSE) == -1) {
+    fprintf(stderr, "[set_table] error sem_init()ing print sem");
+    exit(EXIT_FAILURE);
+  }
 }
 
-void clean_table(void) {
-  // free all of the threads please
-  // 
+void clean_table() {
+  // Destroy all of the fork semaphores
+  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
+    if (sem_destroy(&forks[i])) {
+      fprintf(stderr, "[clean_table] error sem_destroy()ing fork %d sem", i);
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  // Destroy the print semaphore
+  if (sem_destroy(&print)) {
+    fprintf(stderr, "[clean_table] error sem_destroy()ing print sem");
+    exit(EXIT_FAILURE);
+  }
 }
 
 // Get label for the philosopher based on an i
@@ -138,3 +113,4 @@ char get_label(int id) {
   // Increment the ascii value a number of times
   return c + id;
 }
+

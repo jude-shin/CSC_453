@@ -34,34 +34,18 @@
 #define EAT_MSG  "Eat  "
 #define THNK_MSG "Think"
 
-
-// A Philosopher
-typedef struct Phil {
-  int id;      // The identifier of the philosopher (converted to ascii later) 
-  int doing;   // What the philosopher is doing (thinking, eating, or changing)
-  struct Fork *right; // The fork to the right
-  struct Fork *left;  // The fork to the left 
-} Phil;
-
-// A Fork
-typedef struct Fork {
-  int id;       // The identifier of the fork
-  int in_use;   // If the fork is in use or not (TRUE or FALSE)
-  struct Phil *right; // The philosopher to the right
-  struct Phil *left;  // The philosopher to the left
-} Fork;
-
+#include <semaphore.h>
 
 // Runs through the lifecycle of a single philosopher, eating and thinking.
 void *dine(void *p);
 void *test_dine(void *p);
 
-// Get the label based on the id of a Phil. (0->'A', 1->'B' ...)
+// Get the label based on the index (id) of a Phil. (0->'A', 1->'B' ...)
 char get_label(int id);
 
 // Mallocs and sets up the pointers for all forks and philosophers in 
 // sequential order
-Phil* set_table(void);
+void set_table(void);
 void clean_table(void);
 
 #endif 

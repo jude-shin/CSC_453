@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "table.h"
 #include "status.h"
+#include "dine.h"
 
 // TODO: test that all of the strings that are
 
@@ -11,7 +12,7 @@
 static int col_width = 0;
 
 // Prints a line of "=" with occasional "|" for the number of philosophers
-void print_break_line() {
+void print_break_line(void) {
   printf("|");
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
     for (int j=0; j<get_col_width(); j++) {
@@ -22,14 +23,13 @@ void print_break_line() {
   printf("\n");
 }
 
-void print_name_line(Phil *head) {
-  Phil *curr = head;
+void print_name_line(void) {
   int padding = (get_col_width()-1)/2;
 
   printf("|");
 
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
-    char label = get_label(curr->id);
+    char label = get_label(i);
     for (int j=0; j<padding; j++) {
       printf(" ");
     }
@@ -40,26 +40,47 @@ void print_name_line(Phil *head) {
       printf(" ");
     }
     printf("|");
-    curr = curr->right->right;
   }
   printf("\n");
 }
 
 // Prints ALL the statuses 
-void print_status_line(Phil *head) {
-  Phil *curr = head;
+void print_status_line(void) {
   printf("|");
   for (int i=0; i<NUM_PHILOSOPHERS; i++) {
-    print_status(curr);
-    curr = curr->right->right;
+    // The array holds the status of what the philosopher is doing
+    print_status(i);
   }
   printf("\n");
 }
 
 // prints just one status
-void print_status(Phil *curr) {
+void print_status(int i) {
+  printf(" ");
+
+  int left_i = i;
+  int right_i = i%NUM_PHILOSOPHERS;
+
+  for (int j=0; j<NUM_PHILOSOPHERS; j++) {
+    // if we are printing the left fork, see if it is occupied by the current
+    // philosopher (the fork's value will be the index of the philosopher 
+    // that is using it)
+    if (left_i == j && left_i == i) {
+      printf("%d", j);
+    }
+    else if (right_i == j && right_i == i) {
+      printf("%d", j);
+    }
+    else {
+      printf("-");
+    }
+  }
+
+
+  // What the philosopher is doing (it's status)
+  int stat = philosophers[i];
   const char *msg = "";
-  switch (curr->doing) {
+  switch (stat) {
     case CHANGING:
       msg = CHNG_MSG;
       break;
@@ -73,22 +94,6 @@ void print_status(Phil *curr) {
       fprintf(stderr, "error parding curr->doing. unknown: %s", msg);
       exit(EXIT_FAILURE);
       break;
-  }
-
-  printf(" ");
-  
-  Fork *left = curr->left;
-  Fork *right = curr->right;
-  for (int i=0; i<NUM_PHILOSOPHERS; i++) {
-    if (i == left->id && left->in_use == TRUE) {
-      printf("%d", i);
-    }
-    else if (i == right->id && right->in_use == TRUE) {
-      printf("%d", i);
-    }
-    else {
-      printf("-");
-    }
   }
 
   printf(" %s", msg);
