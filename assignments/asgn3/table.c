@@ -14,64 +14,74 @@
    @param ip A void pointer to the index of the philosopher.
    @return void*. Nothing in particular, it just has to return something. */
 void *dine(void *ip) {
-  int i, j, left, right;
-
   if (ip == NULL) {
     fprintf(stderr, "[dine] cannot be passed a NULL pointer");
     exit(EXIT_FAILURE);
   }
+  /* Index values */
+  int i, j;
+
+  /* Fork indexes to the left and right of the current philosopher. */
+  int left, right;
+
+  /* Dereference the int* we passed in. */ 
   i = *(int*)ip;
+  
+  /* Calculate the left and right indexes for the forks. */
   left = i;
   right = (i+1)%NUM_PHILOSOPHERS;
 
-
+  /* Cycle through lifetime number of times for one philosopher before death. */
   for (j=0; j<lifetime; j++) {
-    // 1) set status to thinking
+    /* Start thinking. */
     philosophers[i] = THINKING;
     dawdle();
     print_status_line();
 
-    // 3) set status to changing
+    /* Find BOTH forks before eating. */
     philosophers[i] = CHANGING;
     dawdle();
     print_status_line();
     
-    // 2b) try to find your forks
-    // wait for the first fork (if you are even, pick up left first)
-    // (if you are odd, pick up the right first)
+    /* Try to eat (you need your forks first). */
+    /* If you are even pick up the left first. */
     if (i % 2 == 0) {
-      // start with trying to use the LEFT fork first
-      // then go ahead and try to aquire the RIGHT fork
       sem_wait(&fork_sems[left]);
       forks[left] = i;
+      print_status_line();
 
       sem_wait(&fork_sems[right]);
       forks[right] = i;
+      print_status_line();
     }
+    /* If you are odd pick up the right first. */
     else {
-      // start with trying to use the RIGHT fork first
-      // then go ahead and try to aquire the LEFT fork
       sem_wait(&fork_sems[right]);
       forks[right] = i;
+      print_status_line();
 
       sem_wait(&fork_sems[left]);
       forks[left] = i;
+      print_status_line();
     }
 
-    // 4) set status to eating
+    /* You are now cleared to eat. */
     philosophers[i] = EATING;
     dawdle();
     print_status_line();
 
-    // 5) relinquish your forks
-    forks[left] = -1;
-    forks[right] = -1;
-    sem_post(&fork_sems[right]);
-    sem_post(&fork_sems[left]);
-
-    // 6) set status to changing
+    /* Go back to changing. */
     philosophers[i] = CHANGING;
     dawdle();
+    print_status_line();
+
+    /* Release your forks while you are changing. */
+    forks[right] = -1;
+    sem_post(&fork_sems[right]);
+    print_status_line();
+
+    forks[left] = -1;
+    sem_post(&fork_sems[left]);
     print_status_line();
   }
   
