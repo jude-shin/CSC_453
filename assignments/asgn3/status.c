@@ -56,18 +56,12 @@ void print_name_line(void) {
   printf("\n");
 }
 
-/* Prints all philosophers' statuses on one line. Locked by a semaphore; this
-   is the only printing function that the threads will call, so this is the
-   only one we must lock.
+/* Prints all philosophers' statuses on one line.
    @param void.
    @return void. */
 void print_status_line(void) {
   /* index value. */
   int i;
-
-  /* Lock the printing semaphore so that no threads try to print at the same
-     time. */
-  sem_wait(&print_sem);
 
   printf("|");
   /* Print the statuses of each philosopher in order. */
@@ -76,8 +70,6 @@ void print_status_line(void) {
     print_status(i);
   }
   printf("\n");
-  /* Unlock the semaphore. */
-  sem_post(&print_sem);
 }
 
 /* Prints the right end of a single philosophers's status. The result is strung

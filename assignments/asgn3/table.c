@@ -8,6 +8,39 @@
 #include "dawdle.h"
 #include "dine.h"
 
+/* Wraps the whole switch for a philosopher with the printing semaphore. 
+   @param i integer index of the philosopher.
+   @param new_state the new state.
+   @return void. */
+void update_phil(int i,int new_state) {
+  /* Lock the printing semaphore so that no threads try to print at the same
+     time. */
+  sem_wait(&print_sem);
+
+  philosophers[i] = new_state;
+  print_status_line();
+  dawdle();
+
+  /* Unlock the semaphore. */
+  sem_post(&print_sem);
+}
+
+/* Wraps the whole switch for a fork with the printing semaphore. 
+   @param i integer index of the fork.
+   @param phil the index of the philosopher who holds this fork (-1 for nobody)
+   @return void. */
+void update_fork(int i, int phil) {
+  /* Lock the printing semaphore so that no threads try to print at the same
+     time. */
+  sem_wait(&print_sem);
+
+  forks[i] = phil;
+  print_status_line();
+
+  /* Unlock the semaphore. */
+  sem_post(&print_sem);
+}
+
 /* The function which philosopher pthreads will execute. It will go through 
    lifetime number of cycles, of eating and thinking. Then it will finish by 
    returning.
@@ -34,54 +67,38 @@ void *dine(void *ip) {
   /* Cycle through lifetime number of times for one philosopher before death. */
   for (j=0; j<lifetime; j++) {
     /* Start thinking. */
-    philosophers[i] = THINKING;
-    print_status_line();
-    dawdle();
+    update_phil(i, THINKING);
 
     /* Find BOTH forks before eating. */
-    philosophers[i] = CHANGING;
-    print_status_line();
-    dawdle();
+    update_phil(i, CHANGING);
     
     /* Try to eat (you need your forks first). */
     /* If you are even pick up the left first. */
     if (i % 2 == 0) {
       sem_wait(&fork_sems[left]);
-      forks[left] = i;
-      print_status_line();
+      update_fork(left, i);
 
       sem_wait(&fork_sems[right]);
-      forks[right] = i;
-      print_status_line();
+      update_fork(right, i);
     }
     /* If you are odd pick up the right first. */
     else {
       sem_wait(&fork_sems[right]);
-      forks[right] = i;
-      print_status_line();
-
+      update_fork(right, i);
       sem_wait(&fork_sems[left]);
-      forks[left] = i;
-      print_status_line();
+      update_fork(left, i);
     }
 
     /* You are now cleared to eat. */
-    philosophers[i] = EATING;
-    print_status_line();
-    dawdle();
+    update_phil(i, EATING);
 
     /* Go back to changing. */
-    philosophers[i] = CHANGING;
-    print_status_line();
-    dawdle();
+    update_phil(i, CHANGING);
 
     /* Release your forks while you are changing. */
-    forks[right] = -1;
-    print_status_line();
+    update_fork(right, -1);
     sem_post(&fork_sems[right]);
-
-    forks[left] = -1;
-    print_status_line();
+    update_fork(left, -1);
     sem_post(&fork_sems[left]);
   }
   
