@@ -43,14 +43,6 @@ void* dine(void *pp) {
 
   /* Cycle through lifetime number of times for one philosopher before death. */
   for (j=0; j<lifetime; j++) {
-    /* Start thinking. */
-    update_phil(i, THINKING);
-    dawdle();
-
-    /* Find BOTH forks before eating. */
-    update_phil(i, CHANGING);
-    dawdle();
-    
     /* Try to eat (you need your forks first). */
     /* If you are even pick up the left first. */
     if (i % 2 == 0) {
@@ -101,6 +93,14 @@ void* dine(void *pp) {
       fprintf(stderr, "[dine] error posting left fork for phil %d", i);
       exit(EXIT_FAILURE);
     }
+
+    /* Start thinking. */
+    update_phil(i, THINKING);
+    dawdle();
+
+    /* Find BOTH forks before eating. */
+    update_phil(i, CHANGING);
+    dawdle();
   }
   
   return NULL;
