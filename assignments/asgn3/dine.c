@@ -131,7 +131,7 @@ void set_globals(void) {
     philosophers[i].id = i;
 
     /* Set the forks' owner to -1 (nobody). */
-    forks[i] = -1;
+    forks[i] = NOBODY;
   }
 
   /* Calculate the width of each column to set the col_width global var. */

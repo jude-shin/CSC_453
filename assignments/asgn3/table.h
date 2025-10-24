@@ -24,6 +24,11 @@
 #define EAT_MSG  "Eat  "
 #define THNK_MSG "Think"
 
+/* The constant which forks will set when they are not bein occupied. */
+#ifndef NOBODY 
+#define NOBODY -1 
+#endif 
+
 /* A philosopher. */
 typedef struct Phil {
   /* This is basically the index of the philosopher. It is mainly used for the

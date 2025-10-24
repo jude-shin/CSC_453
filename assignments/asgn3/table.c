@@ -19,18 +19,17 @@ void update_fork(int i, int phil);
    @param ip A void pointer to the index of the philosopher.
    @return void*. Nothing in particular, it just has to return something. */
 void* dine(void *pp) {
+  /* The philosopher of interest. */
+  Phil* phil_ptr;
+  /* Index values */
+  int i, j;
+  /* Fork indexes to the left and right of the current philosopher. */
+  int left, right;
+
   if (pp == NULL) {
     fprintf(stderr, "[dine] cannot be passed a NULL pointer");
     exit(EXIT_FAILURE);
   }
-  /* The philosopher of interest. */
-  Phil *phil_ptr;
-
-  /* Index values */
-  int i, j;
-
-  /* Fork indexes to the left and right of the current philosopher. */
-  int left, right;
 
   /* Dereference the int* we passed in. */ 
   phil_ptr = (Phil*)pp;
@@ -79,10 +78,10 @@ void* dine(void *pp) {
     dawdle();
 
     /* Release your forks while you are changing. */
-    update_fork(right, -1);
+    update_fork(right, NOBODY);
     sem_post(&fork_sems[right]);
 
-    update_fork(left, -1);
+    update_fork(left, NOBODY);
     sem_post(&fork_sems[left]);
 
   }
