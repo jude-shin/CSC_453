@@ -66,7 +66,7 @@ void print_status_line(void) {
   printf("|");
   /* Print the statuses of each philosopher in order. */
   for (i=0; i<NUM_PHILOSOPHERS; i++) {
-    // The array holds the status of what the philosopher is doing
+    /* The array holds the status of what the philosopher is doing. */
     print_status(i);
   }
   printf("\n");

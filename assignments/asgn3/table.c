@@ -24,7 +24,7 @@ void* dine(void *pp) {
     exit(EXIT_FAILURE);
   }
   /* The philosopher of interest. */
-  Phil* phil_ptr;
+  Phil *phil_ptr;
 
   /* Index values */
   int i, j;
