@@ -79,11 +79,13 @@ void print_status_line(void) {
 void print_status(int i) {
   /* index value */
   int j;
+
   /* The indicies of the forks sitting to the left and right of the current 
      philosopher. */
   int left, right;
+
   /* What the philosopher is doing. */
-  int stat; 
+  int state;
 
   left = i;
   right = (i+1)%NUM_PHILOSOPHERS;
@@ -101,9 +103,9 @@ void print_status(int i) {
     }
   }
 
-  stat = philosophers[i];
+  state = philosophers[i].state;
   const char *msg = "";
-  switch (stat) {
+  switch (state) {
     case CHANGING:
       msg = CHNG_MSG;
       break;

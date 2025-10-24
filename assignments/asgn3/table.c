@@ -18,11 +18,14 @@ void update_fork(int i, int phil);
    returning.
    @param ip A void pointer to the index of the philosopher.
    @return void*. Nothing in particular, it just has to return something. */
-void *dine(void *ip) {
-  if (ip == NULL) {
+void* dine(void *pp) {
+  if (pp == NULL) {
     fprintf(stderr, "[dine] cannot be passed a NULL pointer");
     exit(EXIT_FAILURE);
   }
+  /* The philosopher of interest. */
+  Phil* phil_ptr;
+
   /* Index values */
   int i, j;
 
@@ -30,7 +33,10 @@ void *dine(void *ip) {
   int left, right;
 
   /* Dereference the int* we passed in. */ 
-  i = *(int*)ip;
+  phil_ptr = (Phil*)pp;
+
+  /* The philosophers index/id of all the philosophers. */
+  i = phil_ptr->id;
   
   /* Calculate the left and right indexes for the forks. */
   left = i;
@@ -148,7 +154,7 @@ void update_phil(int i, int new_state) {
      time. */
   sem_wait(&print_sem);
 
-  philosophers[i] = new_state;
+  philosophers[i].state = new_state;
   print_status_line();
 
   /* Unlock the semaphore. */

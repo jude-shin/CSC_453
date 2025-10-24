@@ -14,8 +14,7 @@
 /* Initalize the Global Variables */
 int lifetime;
 int col_width;
-int philosophers[NUM_PHILOSOPHERS];
-int phil_i[NUM_PHILOSOPHERS];
+Phil philosophers[NUM_PHILOSOPHERS];
 int forks[NUM_PHILOSOPHERS];
 sem_t fork_sems[NUM_PHILOSOPHERS];
 sem_t print_sem;
@@ -87,7 +86,7 @@ int main (int argc, char *argv[]) {
         &thread_ids[i],
         NULL,
         dine, 
-        (void*)&phil_i[i]
+        (void*)&philosophers[i]
         );
 
     if (res != 0) {
@@ -125,11 +124,11 @@ void set_globals(void) {
 
   /* Set up philosophers, the index and the forks global variables. */
   for (i=0; i<NUM_PHILOSOPHERS; i++) {
-    /* Set the philosophers to start at the changing state. */
-    philosophers[i] = CHANGING;
+    /* Set the philosopher to start at the changing state. */
+    philosophers[i].state = CHANGING;
 
-    /* Basic index ints that dine can point to. */
-    phil_i[i] = i;
+    /* Set the id to just be the index we are using. */
+    philosophers[i].id = i;
 
     /* Set the forks' owner to -1 (nobody). */
     forks[i] = -1;

@@ -24,6 +24,15 @@
 #define EAT_MSG  "Eat  "
 #define THNK_MSG "Think"
 
+/* A philosopher. */
+typedef struct Phil {
+  /* This is basically the index of the philosopher. It is mainly used for the
+     forks, and to check if it is even or odd. */
+  int id; 
+
+  /* Whether this guy is eating, thinking or changing. */
+  int state; 
+} Phil;
 
 /* Runs through the lifecycle of a single philosopher, eating and thinking. */
 void *dine(void *p);
