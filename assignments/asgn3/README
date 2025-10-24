@@ -4,7 +4,6 @@ file is located in dawdle.h, and the main code is provided in dawdle.c.
 No important compilation instructions.
 
 QUESTIONS:
-Can you explain the macro headings to me in table.h?
 Are there supposed to be large gaps from EATING->CHANGING where the phil is 
 holding onto both (or one) fork?
 
