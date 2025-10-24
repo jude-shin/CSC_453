@@ -8,37 +8,10 @@
 #include "dawdle.h"
 #include "dine.h"
 
-/* Wraps the whole switch for a philosopher with the printing semaphore. 
-   @param i integer index of the philosopher.
-   @param new_state the new state.
-   @return void. */
-void update_phil(int i,int new_state) {
-  /* Lock the printing semaphore so that no threads try to print at the same
-     time. */
-  sem_wait(&print_sem);
-
-  philosophers[i] = new_state;
-  print_status_line();
-
-  /* Unlock the semaphore. */
-  sem_post(&print_sem);
-}
-
-/* Wraps the whole switch for a fork with the printing semaphore. 
-   @param i integer index of the fork.
-   @param phil the index of the philosopher who holds this fork (-1 for nobody)
-   @return void. */
-void update_fork(int i, int phil) {
-  /* Lock the printing semaphore so that no threads try to print at the same
-     time. */
-  sem_wait(&print_sem);
-
-  forks[i] = phil;
-  print_status_line();
-
-  /* Unlock the semaphore. */
-  sem_post(&print_sem);
-}
+/* Updates and prints a philosopher and its state. */
+void update_phil(int i, int new_state);
+/* Updates and prints a fork and its owner. */
+void update_fork(int i, int phil);
 
 /* The function which philosopher pthreads will execute. It will go through 
    lifetime number of cycles, of eating and thinking. Then it will finish by 
@@ -86,6 +59,7 @@ void *dine(void *ip) {
     else {
       sem_wait(&fork_sems[right]);
       update_fork(right, i);
+
       sem_wait(&fork_sems[left]);
       update_fork(left, i);
     }
@@ -101,8 +75,10 @@ void *dine(void *ip) {
     /* Release your forks while you are changing. */
     update_fork(right, -1);
     sem_post(&fork_sems[right]);
+
     update_fork(left, -1);
     sem_post(&fork_sems[left]);
+
   }
   
   return NULL;
@@ -139,13 +115,13 @@ void set_table(void) {
 
   /* Unlock the semaphore. */
   sem_post(&print_sem);
-
 }
 
 /* Cleans up all of the semaphores.
    @param void.
    @return void. */
 void clean_table(void) {
+  /* index value */
   int i;
 
   /* Destroy all of the fork semaphores. */
@@ -162,6 +138,39 @@ void clean_table(void) {
     exit(EXIT_FAILURE);
   }
 }
+
+/* Wraps the whole switch for a philosopher with the printing semaphore. 
+   @param i integer index of the philosopher.
+   @param new_state the new state.
+   @return void. */
+void update_phil(int i, int new_state) {
+  /* Lock the printing semaphore so that no threads try to print at the same
+     time. */
+  sem_wait(&print_sem);
+
+  philosophers[i] = new_state;
+  print_status_line();
+
+  /* Unlock the semaphore. */
+  sem_post(&print_sem);
+}
+
+/* Wraps the whole switch for a fork with the printing semaphore. 
+   @param i integer index of the fork.
+   @param phil the index of the philosopher who holds this fork (-1 for nobody)
+   @return void. */
+void update_fork(int i, int phil) {
+  /* Lock the printing semaphore so that no threads try to print at the same
+     time. */
+  sem_wait(&print_sem);
+
+  forks[i] = phil;
+  print_status_line();
+
+  /* Unlock the semaphore. */
+  sem_post(&print_sem);
+}
+
 
 
 /* Get ASCII label for the philosopher based on an index.
