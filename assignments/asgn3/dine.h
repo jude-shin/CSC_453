@@ -7,6 +7,9 @@
 /* The number of cycles that a philosopher will eat/think before dying. */
 extern int lifetime;
 
+/* The width of each column. This is useful for printing. */
+extern int col_width;
+
 /* All the philosophers (the only information we need to store is what
    state they are in). */
 extern int philosophers[NUM_PHILOSOPHERS];

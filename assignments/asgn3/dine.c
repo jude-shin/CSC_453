@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <string.h>
 
 #include "table.h"
 #include "dawdle.h"
@@ -12,6 +13,7 @@
 
 /* Initalize the Global Variables */
 int lifetime;
+int col_width;
 int philosophers[NUM_PHILOSOPHERS];
 int phil_i[NUM_PHILOSOPHERS];
 int forks[NUM_PHILOSOPHERS];

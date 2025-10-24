@@ -1,19 +1,12 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include "table.h"
 #include "status.h"
 #include "dine.h"
 
-// TODO: make this a global variable
-static int col_width = 0;
-
 /* Prints the right end of a single philosophers's status. The result is strung
    together later in print_status_line(). */
 void print_status(int stat);
-
-/* Gets the col_width global variable */
-int get_col_width(void);
 
 /* Prints a line of "=" with occasional "|" for the number of philosophers. 
    @param void.
@@ -24,7 +17,7 @@ void print_break_line(void) {
 
   printf("|");
   for (i=0; i<NUM_PHILOSOPHERS; i++) {
-    for (j=0; j<get_col_width(); j++) {
+    for (j=0; j<col_width; j++) {
       printf("=");
     }
     printf("|");
@@ -42,7 +35,7 @@ void print_name_line(void) {
   /* Number of spaces on the left or right of the label. */
   int left_padding, right_padding;
 
-  left_padding = (get_col_width())/2;
+  left_padding = col_width/2;
   right_padding = col_width-left_padding-1;
 
   printf("|");
@@ -137,25 +130,3 @@ void print_status(int i) {
   printf(" %s", msg);
   printf(" |");
 }
-
-// TODO: get rid of this function
-int get_col_width(void) {
-  // 1 for the leftmost padding
-  // n for the number of philosophers
-  // 1 for dividing padding
-  // msg_len for the length of it's status 
-  // 1 for the rightmost padding
-  if (col_width == 0) {
-    int msg_len = strlen(CHNG_MSG);
-    if (msg_len != 0 && 
-        !(msg_len == strlen(EAT_MSG) && 
-          msg_len == strlen(CHNG_MSG))) {
-      fprintf(stderr, "[main] message lengths are not equal!");
-    }
-
-    col_width = 1+NUM_PHILOSOPHERS+1+(msg_len)+1;
-  }
-
-  return col_width;
-}
-
