@@ -35,13 +35,13 @@ void *dine(void *ip) {
   for (j=0; j<lifetime; j++) {
     /* Start thinking. */
     philosophers[i] = THINKING;
-    dawdle();
     print_status_line();
+    dawdle();
 
     /* Find BOTH forks before eating. */
     philosophers[i] = CHANGING;
-    dawdle();
     print_status_line();
+    dawdle();
     
     /* Try to eat (you need your forks first). */
     /* If you are even pick up the left first. */
@@ -67,22 +67,22 @@ void *dine(void *ip) {
 
     /* You are now cleared to eat. */
     philosophers[i] = EATING;
-    dawdle();
     print_status_line();
+    dawdle();
 
     /* Go back to changing. */
     philosophers[i] = CHANGING;
-    dawdle();
     print_status_line();
+    dawdle();
 
     /* Release your forks while you are changing. */
     forks[right] = -1;
-    sem_post(&fork_sems[right]);
     print_status_line();
+    sem_post(&fork_sems[right]);
 
     forks[left] = -1;
-    sem_post(&fork_sems[left]);
     print_status_line();
+    sem_post(&fork_sems[left]);
   }
   
   return NULL;

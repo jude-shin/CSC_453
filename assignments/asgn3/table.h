@@ -5,7 +5,7 @@
 /* How many philosophers will be fighting to the death for their spagetti
    NOTE: there will be an equal number of forks as there are philosophers. */
 #ifndef NUM_PHILOSOPHERS
-#define NUM_PHILOSOPHERS 5
+#define NUM_PHILOSOPHERS 3
 #endif 
 
 /* What the first thread should be labeled as. */
