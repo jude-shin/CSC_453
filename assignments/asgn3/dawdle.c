@@ -7,7 +7,7 @@
 #include <sys/time.h>
 
 #ifndef DAWDLEFACTOR
-#define DAWDLEFACTOR 100
+#define DAWDLEFACTOR 1000
 #endif
 
 

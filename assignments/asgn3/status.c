@@ -101,14 +101,13 @@ void print_status(int i) {
     // TODO: make a macro for -1
     /* if the fork is the left or right fork, and that fork is not being
        occupied, print the index. Otherwise, we don't care... print a dash. */
-    if ((left == j || right == j) && forks[j] != -1) {
+    if ((left == j || right == j) && forks[j] == i) {
       printf("%d", j);
     }
     else {
       printf("-");
     }
   }
-
 
   stat = philosophers[i];
   const char *msg = "";
