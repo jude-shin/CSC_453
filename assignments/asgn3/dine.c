@@ -20,6 +20,8 @@ int forks[NUM_PHILOSOPHERS];
 sem_t fork_sems[NUM_PHILOSOPHERS];
 sem_t print_sem;
 
+void set_globals(void);
+
 int main (int argc, char *argv[]) {
   /* index, error no, result, and parsed lifecycle. */
   int i, err, res, l;
@@ -65,15 +67,16 @@ int main (int argc, char *argv[]) {
   /* Sets the seed for the prng. */
   set_seed();
 
-  /* Initalizes the philosophers, forks, and semaphores, setting them to their
-     inital values. */
-  set_table();
+  /* Initalizes the global variables. */
+  set_globals();
 
   /* Print the header that shows the labels on the philosophers. */
   print_break_line();
   print_name_line();
   print_break_line();
 
+  /* Initalizes the semaphores. */
+  set_table();
 
   /* Create a pthread for each of the philosophers, having them execute the
      dine function. The pointer passed in is the address to the location of
@@ -108,5 +111,59 @@ int main (int argc, char *argv[]) {
   print_break_line();
 
   exit(EXIT_SUCCESS);
+}
+
+/* Sets the global variables
+   @param void.
+   @return void. */
+void set_globals(void) {
+  /* index value */
+  int i;
+
+  /* For calculating the message lengths. */
+  int chng_msg_len, eat_msg_len, thnk_msg_len;
+
+  /* Set up philosophers, the index and the forks global variables. */
+  for (i=0; i<NUM_PHILOSOPHERS; i++) {
+    /* Set the philosophers to start at the changing state. */
+    philosophers[i] = CHANGING;
+
+    /* Basic index ints that dine can point to. */
+    phil_i[i] = i;
+
+    /* Set the forks' owner to -1 (nobody). */
+    forks[i] = -1;
+  }
+
+  /* Calculate the width of each column to set the col_width global var. */
+  chng_msg_len = strlen(CHNG_MSG);
+  if (chng_msg_len == 0) {
+    fprintf(stderr, "[set_table] CHNG_MSG message length cannot be 0");
+    exit(EXIT_FAILURE);
+  }
+
+  eat_msg_len = strlen(EAT_MSG);
+  if (eat_msg_len == 0) {
+    fprintf(stderr, "[set_table] EAT_MSG message length cannot be 0");
+    exit(EXIT_FAILURE);
+  }
+
+  thnk_msg_len = strlen(THNK_MSG);
+  if (thnk_msg_len == 0) {
+    fprintf(stderr, "[set_table] THNK_MSG message length cannot be 0");
+    exit(EXIT_FAILURE);
+  }
+
+  if (!(chng_msg_len == eat_msg_len &&
+        eat_msg_len == thnk_msg_len &&
+        thnk_msg_len == chng_msg_len)) {
+    fprintf(stderr, "[set_table] message lengths are not equal!");
+    exit(EXIT_FAILURE);
+  }
+
+  /* There is one ' ' at the beginning and end, and there is NUM_PHILOSOPHERS 
+     spaces for the fork statuses, a section for the message length, and 
+     finally, one more ' ' separating the fork statuses and the messge. */
+  col_width = 1+NUM_PHILOSOPHERS+1+(chng_msg_len)+1;
 }
 

@@ -108,58 +108,12 @@ void *dine(void *ip) {
   return NULL;
 }
 
-/* Sets the global variables, and creates all of the semaphores. 
+/* Creates all of the semaphores. 
    @param void.
    @return void. */
 void set_table(void) {
   /* index value */
   int i;
-
-  /* For calculating the message lengths. */
-  int chng_msg_len, eat_msg_len, thnk_msg_len;
-
-  /* Set up philosophers, the index and the forks global variables. */
-  for (i=0; i<NUM_PHILOSOPHERS; i++) {
-    /* Set the philosophers to start at the changing state. */
-    philosophers[i] = CHANGING;
-
-    /* Basic index ints that dine can point to. */
-    phil_i[i] = i;
-
-    /* Set the forks' owner to -1 (nobody). */
-    forks[i] = -1;
-  }
-
-  /* Calculate the width of each column to set the col_width global var. */
-  chng_msg_len = strlen(CHNG_MSG);
-  if (chng_msg_len == 0) {
-    fprintf(stderr, "[set_table] CHNG_MSG message length cannot be 0");
-    exit(EXIT_FAILURE);
-  }
-
-  eat_msg_len = strlen(EAT_MSG);
-  if (eat_msg_len == 0) {
-    fprintf(stderr, "[set_table] EAT_MSG message length cannot be 0");
-    exit(EXIT_FAILURE);
-  }
-
-  thnk_msg_len = strlen(THNK_MSG);
-  if (thnk_msg_len == 0) {
-    fprintf(stderr, "[set_table] THNK_MSG message length cannot be 0");
-    exit(EXIT_FAILURE);
-  }
-
-  if (!(chng_msg_len == eat_msg_len &&
-        eat_msg_len == thnk_msg_len &&
-        thnk_msg_len == chng_msg_len)) {
-    fprintf(stderr, "[set_table] message lengths are not equal!");
-    exit(EXIT_FAILURE);
-  }
-  /* There is one ' ' at the beginning and end, and there is NUM_PHILOSOPHERS 
-     spaces for the fork statuses, a section for the message length, and 
-     finally, one more ' ' separating the fork statuses and the messge. */
-  col_width = 1+NUM_PHILOSOPHERS+1+(eat_msg_len)+1;
-
 
   /* Initalize all of the fork semaphores to be available. */
   for (i=0; i<NUM_PHILOSOPHERS; i++) {
@@ -174,6 +128,18 @@ void set_table(void) {
     fprintf(stderr, "[set_table] error sem_init()ing print sem");
     exit(EXIT_FAILURE);
   }
+
+  /* Lock the printing semaphore so that no threads try to print at the same
+     time. */
+  sem_wait(&print_sem);
+  
+  /* Print the first line because we just initalized (changed) the values of
+     our philosophers and our forks. */
+  print_status_line();
+
+  /* Unlock the semaphore. */
+  sem_post(&print_sem);
+
 }
 
 /* Cleans up all of the semaphores.
