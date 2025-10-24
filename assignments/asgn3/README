@@ -1,9 +1,6 @@
 Jude Shin (jshin53)
 I used the dawdle() function provided by the manual in the code. It's header
-file is located in dawdle.h, and the main code is provided in dawdle.c.
+file is located in dawdle.h, and the main code is provided in dawdle.c. I added
+a function that sets a seed to make things more interesting. If any errors
+occur, I am going to give up and bail.
 No important compilation instructions.
-
-QUESTIONS:
-Are there supposed to be large gaps from EATING->CHANGING where the phil is 
-holding onto both (or one) fork?
-
