@@ -19,7 +19,6 @@ void update_phil(int i,int new_state) {
 
   philosophers[i] = new_state;
   print_status_line();
-  dawdle();
 
   /* Unlock the semaphore. */
   sem_post(&print_sem);
@@ -68,9 +67,11 @@ void *dine(void *ip) {
   for (j=0; j<lifetime; j++) {
     /* Start thinking. */
     update_phil(i, THINKING);
+    dawdle();
 
     /* Find BOTH forks before eating. */
     update_phil(i, CHANGING);
+    dawdle();
     
     /* Try to eat (you need your forks first). */
     /* If you are even pick up the left first. */
@@ -91,9 +92,11 @@ void *dine(void *ip) {
 
     /* You are now cleared to eat. */
     update_phil(i, EATING);
+    dawdle();
 
     /* Go back to changing. */
     update_phil(i, CHANGING);
+    dawdle();
 
     /* Release your forks while you are changing. */
     update_fork(right, -1);
