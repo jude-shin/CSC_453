@@ -87,6 +87,9 @@ void print_status(int i) {
   /* What the philosopher is doing. */
   int state;
 
+  /* The message indicating the philosophers status. */
+  const char *msg;
+
   left = i;
   right = (i+1)%NUM_PHILOSOPHERS;
 
@@ -103,7 +106,7 @@ void print_status(int i) {
   }
 
   state = philosophers[i].state;
-  const char *msg = "";
+  msg = "";
   switch (state) {
     case CHANGING:
       msg = CHNG_MSG;
