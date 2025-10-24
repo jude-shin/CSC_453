@@ -54,18 +54,30 @@ void* dine(void *pp) {
     /* Try to eat (you need your forks first). */
     /* If you are even pick up the left first. */
     if (i % 2 == 0) {
-      sem_wait(&fork_sems[left]);
+      if (sem_wait(&fork_sems[left]) == -1) {
+        fprintf(stderr, "[dine] error waiting on left fork for phil %d", i);
+        exit(EXIT_FAILURE);
+      }
       update_fork(left, i);
 
-      sem_wait(&fork_sems[right]);
+      if (sem_wait(&fork_sems[right]) == -1) {
+        fprintf(stderr, "[dine] error waiting on right fork for phil %d", i);
+        exit(EXIT_FAILURE);
+      }
       update_fork(right, i);
     }
     /* If you are odd pick up the right first. */
     else {
-      sem_wait(&fork_sems[right]);
+      if (sem_wait(&fork_sems[right]) == -1) {
+        fprintf(stderr, "[dine] error waiting on right fork for phil %d", i);
+        exit(EXIT_FAILURE);
+      }
       update_fork(right, i);
 
-      sem_wait(&fork_sems[left]);
+      if (sem_wait(&fork_sems[left]) == -1) {
+        fprintf(stderr, "[dine] error waiting on left fork for phil %d", i);
+        exit(EXIT_FAILURE);
+      }
       update_fork(left, i);
     }
 
@@ -79,11 +91,16 @@ void* dine(void *pp) {
 
     /* Release your forks while you are changing. */
     update_fork(right, NOBODY);
-    sem_post(&fork_sems[right]);
+    if (sem_post(&fork_sems[right]) == -1) {
+      fprintf(stderr, "[dine] error posting right fork for phil %d", i);
+      exit(EXIT_FAILURE);
+    }
 
     update_fork(left, NOBODY);
-    sem_post(&fork_sems[left]);
-
+    if (sem_post(&fork_sems[left]) == -1) {
+      fprintf(stderr, "[dine] error posting left fork for phil %d", i);
+      exit(EXIT_FAILURE);
+    }
   }
   
   return NULL;
@@ -112,14 +129,20 @@ void set_table(void) {
 
   /* Lock the printing semaphore so that no threads try to print at the same
      time. */
-  sem_wait(&print_sem);
+  if (sem_wait(&print_sem) == -1) {
+    fprintf(stderr, "[set_table] error waiting for print semaphore");
+    exit(EXIT_FAILURE);
+  }
   
   /* Print the first line because we just initalized (changed) the values of
      our philosophers and our forks. */
   print_status_line();
 
   /* Unlock the semaphore. */
-  sem_post(&print_sem);
+  if (sem_post(&print_sem) == -1) {
+    fprintf(stderr, "[set_table] error posting print semaphore");
+    exit(EXIT_FAILURE);
+  }
 }
 
 /* Cleans up all of the semaphores.
@@ -151,13 +174,19 @@ void clean_table(void) {
 void update_phil(int i, int new_state) {
   /* Lock the printing semaphore so that no threads try to print at the same
      time. */
-  sem_wait(&print_sem);
-
+  if (sem_wait(&print_sem) == -1) {
+    fprintf(stderr, "[update_phil] error waiting for print semaphore");
+    exit(EXIT_FAILURE);
+  }
+  
   philosophers[i].state = new_state;
   print_status_line();
 
   /* Unlock the semaphore. */
-  sem_post(&print_sem);
+  if (sem_post(&print_sem) == -1) {
+    fprintf(stderr, "[update_phil] error posting print semaphore");
+    exit(EXIT_FAILURE);
+  }
 }
 
 /* Wraps the whole switch for a fork with the printing semaphore. 
@@ -167,13 +196,19 @@ void update_phil(int i, int new_state) {
 void update_fork(int i, int phil) {
   /* Lock the printing semaphore so that no threads try to print at the same
      time. */
-  sem_wait(&print_sem);
-
+  if (sem_wait(&print_sem) == -1) {
+    fprintf(stderr, "[update_phil] error waiting for print semaphore");
+    exit(EXIT_FAILURE);
+  }
+  
   forks[i] = phil;
   print_status_line();
 
   /* Unlock the semaphore. */
-  sem_post(&print_sem);
+  if (sem_post(&print_sem) == -1) {
+    fprintf(stderr, "[update_phil] error posting print semaphore");
+    exit(EXIT_FAILURE);
+  }
 }
 
 
