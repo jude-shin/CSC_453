@@ -42,6 +42,8 @@ Suppose a computer can execute 1 billion instructions/sec and that a system call
 \section*{Problem 4}
 What is a race condition? What are the symptoms of a race condition? (T\&W 2-9)
 
+A race condition is when there is non-determinism in a system with resources that different processes (or threads) are trying to access; when two or more processes are reading or writing some shared data, and the final result depends on who ran when and in what order. Most of the time it isn't a big deal, but on the rare occasion that multiple processes are trying to access the same resource at the exact same moment, the question becomes who gets to use it first? Will using the resource alter the result of using it for a second time? The answer is we don't know. Maybe process B writes to a file before process A, which would obviously be different from process A writing before process B.
+
 
 \section*{Problem 5}
 Does the busy waiting solution using the turn variable (Fig. 2-10 in T\&W) work when the two processes are running on a shared-memory multiprocessor, that is, two CPUs, sharing a common memory? (T\&W, 2-13)
