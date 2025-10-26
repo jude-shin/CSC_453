@@ -88,4 +88,6 @@ Re-do problem 8a with the modification that job D is IO bound. After each 500ms 
 \section*{Problem 10}
 A CPU-bound process running on CTSS needs 30 quanta to complete. How many times must it be swapped in, including the first time (before it has run at all)? Assume that there are always other runnable jobs and that the number of priority classes is unlimited. (T\&W, 2-29)
 
+Every time the process uses all of the quanta allocated to it, it will move down a "class", which allows a process to have more quanta in powers of 2. This means the process will first use up 1 quantum, then 2 quanta, then 4, then 8, then finally 16. 30-(1+2+2+4+8+16). On the 5th iteration, the process will have NOT used all of it's allocated quanta. It doesn't matter either way because the process has finished using all of it's 30 quanta at the 5th "swap" cycle. 
+
 \end{document}
