@@ -21,43 +21,64 @@
 \bigskip
 
 \section*{Problem 1}
-When the original file is removed, the linked "file" will still be present, 
-however, when user 2 tries to read it, the command will look up that (old)
-i-number in the i-nodes list. There won't be a file associated with it, so 
-there will be an error. A link is not the same thing as copying a file; links
-point to the same data. 
+In Minix (or any other Unix), if user 2 links to a file owned by user 1, then user 1 removes the file, what happens when user 2 tries to read the file? (Tanenbaum and Woodhull, Ch. 1, Ex. 15)
+
+
+When the original file is removed, the linked "file" will still be present. Both files had the same i-number that pointed to the same item in the i-node table. Only when there are no files that have an i-number pointing to a particular file, will the file be fully removed from the disk (there is a field in the i-node that keeps track of how many directory entries are pointing to it). A link is not the same thing as copying a file; links point to the same data. 
 
 
 \section*{Problem 2}
+Under what circumstances is multiprogramming likely to increase CPU utilization? Why?
+
+CPU utilization will increase with multiprogramming when there are processes that will be blocked. Suppose there is a program that waits for I/O. Now suppose there is a user that is taking a nap at work instead of typing input that this program is waiting for. If there was no multiprogramming, then the CPU will idly wait for this one input, only continuing when an input has been given. The more familiar solution is to have a scheduler that switches the contexts of "ready" processes. This allows for programs which are blocked to be "skipped", giving resources to "running" and/or "ready" resources, reducing the CPU's idle waiting time, therefore increasing CPU utilization.
 
 
 \section*{Problem 3}
+Suppose a computer can execute 1 billion instructions/sec and that a system call takes 1000 instructions, including the trap and all the context switching. How many system calls can the computer execute per second and still have half the CPU capacity for running application code? (T\&W 1-21)
+
+1 billion instructions per second multiplied by (1 syscall / 1000 inst) results in the equivalent ratio of 1 million syscalls per second if the CPU ran at full capacity. If it ran at 1/2 capacity, we will divide 1 million by 2. The computer can execute 500,000 system calls per second. 
 
 
 \section*{Problem 4}
+What is a race condition? What are the symptoms of a race condition? (T\&W 2-9)
 
 
 \section*{Problem 5}
+Does the busy waiting solution using the turn variable (Fig. 2-10 in T\&W) work when the two processes are running on a shared-memory multiprocessor, that is, two CPUs, sharing a common memory? (T\&W, 2-13)
 
 
 \section*{Problem 6}
+Describe how an operating system that can disable interrupts could implement semaphores. That is, what steps would have to happen in which order to implement the semaphore operations safely. (T\&W, 2-10)
 
 
 \section*{Problem 7}
-If you wanted to have a particular process be called by the scheduler twice as
-frequent as the other processes due to priority or some other reason, then
-no further modification would have to be done to the very simple scheduler.
-Processes could be "seen" or processed more often because they appear more often
-in the round robin list.
+Round robin schedulers normally maintain a list of all runnable processes, with each process occurring exactly once in the list. What would happen if a process occurred twice in the list? Can you think of any reason for allowing this? (T\&W, 2-25) (And what is the reason. “Yes” or “no” would not be considered a sufficient answer.)
 
+If you wanted to have a particular process be called by the scheduler twice as frequent as the other processes due to priority or some other reason, then no further modification would have to be done to the very simple scheduler. Processes could be "seen" or processed more often because they appear more often in the round robin list.
 
 \section*{Problem 8}
+Five batch jobs, A through E, arrive at a computer center, in alphabetical order, at almost the same time. They have estimated running times of 10, 3, 4, 7, and 6 seconds respectively. Their (externally determined) priorities are 3, 5, 2, 1, and 4, respectively, with 5 being the highest priority. For each of the following scheduling algorithms, determine the time at which each job completes and the mean process turnaround time. Assume a 1 second quantum and ignore process switching overhead. (Modified from T\&W, 2 - 28)
+
+For (a), assume that the system is multiprogrammed, and that each job gets its fair share of the CPU. For (b)–(d) assume that only one job at a time runs, and each job runs until it finished. All jobs are completely CPU bound.
+
+\subsection*{(a) Round robin}
+
+
+\subsection*{(b) Priority scheduling}
+
+
+\subsection*{(c) First-come, first-served (given that they arrive in alphabetical order)}
+
+
+\subsection*{(d) Shortest job first.}
 
 
 \section*{Problem 9}
+Re-do problem 8a with the modification that job D is IO bound. After each 500ms it is allowed to run, it blocks for an IO operation that takes 1s to complete. The IO processing itself doesn’t take any noticeable time. Assume that jobs moving from the blocked state to the ready state are placed at the end of the run queue. If a blocked job becomes runnable at the same time a running process’s quantum is up, the formerly blocked job is placed back on the queue ahead of the other one.
+
 
 
 \section*{Problem 10}
-
+A CPU-bound process running on CTSS needs 30 quanta to complete. How many times must it be swapped in, including the first time (before it has run at all)? Assume that there are always other runnable jobs and that the number of priority classes is unlimited. (T\&W, 2-29)
 
 \end{document}
