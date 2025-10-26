@@ -48,15 +48,20 @@ A race condition is when there is non-determinism in a system with resources tha
 \section*{Problem 5}
 Does the busy waiting solution using the turn variable (Fig. 2-10 in T\&W) work when the two processes are running on a shared-memory multiprocessor, that is, two CPUs, sharing a common memory? (T\&W, 2-13)
 
+The busy waiting solution presented in Fig. 2-10 is Strict alternation, and it works, however is very inefficient because it is constantly busy waiting. 
+
 
 \section*{Problem 6}
 Describe how an operating system that can disable interrupts could implement semaphores. That is, what steps would have to happen in which order to implement the semaphore operations safely. (T\&W, 2-10)
+
+The semaphore UP() and DOWN() operations have to be atomic. If the action of adding or decrementing semaphore values is interrupted, we have basically used a completely useless fancy integer variable. To make the semaphore useful, you would need to first disable interrupts, then increment/decrement the semaphore, and then finally re-enable the interrupts so that the original process can be interrupted as normal. This atomicity is necessary when implementing a mutex or a semaphore.
 
 
 \section*{Problem 7}
 Round robin schedulers normally maintain a list of all runnable processes, with each process occurring exactly once in the list. What would happen if a process occurred twice in the list? Can you think of any reason for allowing this? (T\&W, 2-25) (And what is the reason. “Yes” or “no” would not be considered a sufficient answer.)
 
-If you wanted to have a particular process be called by the scheduler twice as frequent as the other processes due to priority or some other reason, then no further modification would have to be done to the very simple scheduler. Processes could be "seen" or processed more often because they appear more often in the round robin list.
+If you wanted to have a particular process be called by the scheduler twice as frequent as any other processes due to priority or some other reason, then no further modification would have to be done to the very simple scheduler. Processes could be "seen" or processed more often because they appear more often in the round robin list.
+
 
 \section*{Problem 8}
 Five batch jobs, A through E, arrive at a computer center, in alphabetical order, at almost the same time. They have estimated running times of 10, 3, 4, 7, and 6 seconds respectively. Their (externally determined) priorities are 3, 5, 2, 1, and 4, respectively, with 5 being the highest priority. For each of the following scheduling algorithms, determine the time at which each job completes and the mean process turnaround time. Assume a 1 second quantum and ignore process switching overhead. (Modified from T\&W, 2 - 28)
