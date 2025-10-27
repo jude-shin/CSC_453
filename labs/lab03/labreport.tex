@@ -1,5 +1,7 @@
 \documentclass[11pt]{article}
 
+% TODO: ask what the difference between turnaround and response time is, and when to start counting
+
 % Use wide margins, but not quite so wide as fullpage.sty
 \marginparwidth 0.5in 
 \oddsidemargin 0.25in 
@@ -120,7 +122,48 @@ Average turnaround time: (30+12+17+27+25)/5 = 22.2 seconds
 
 \subsection*{(b) Priority scheduling}
 t00: All the jobs arrive in alphabetical order. 
+t01: job B
+t02: job B
+t03: job B [finished!]
 
+t04: job E
+t05: job E
+t06: job E
+t07: job E
+t08: job E
+t09: job E [finished!]
+
+t10: job A
+t11: job A
+t12: job A 
+t13: job A
+t14: job A
+t15: job A
+t16: job A
+t17: job A
+t18: job A
+t19: job A [finished!]
+
+t20: job C
+t21: job C
+t22: job C
+t23: job C [finished!]
+
+t24: job D
+t25: job D 
+t26: job D
+t27: job D
+t28: job D
+t29: job D
+t30: job D [finished!]
+
+job A finished at t19 (19 seconds elapsed)
+job B finished at t03 (3 seconds elapsed)
+job C finished at t23 (23 seconds elapsed)
+job D finished at t30 (30 seconds elapsed)
+job E finished at t09 (9 seconds elapsed)
+
+Average turnaround time: (19+3+23+30+9)/5 = 16.8 seconds
 
 
 \subsection*{(c) First-come, first-served (given that they arrive in alphabetical order)}
