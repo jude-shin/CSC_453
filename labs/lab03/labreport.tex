@@ -69,15 +69,151 @@ Five batch jobs, A through E, arrive at a computer center, in alphabetical order
 For (a), assume that the system is multiprogrammed, and that each job gets its fair share of the CPU. For (b)–(d) assume that only one job at a time runs, and each job runs until it finished. All jobs are completely CPU bound.
 
 \subsection*{(a) Round robin}
+t00: All the jobs arrive in alphabetical order. 
+t01: job A
+t02: job B
+t03: job C
+t04: job D
+t05: job E
 
+t06: job A
+t07: job B
+t08: job C
+t09: job D
+t10: job E
+
+t11: job A
+t12: job B [finished!]
+t13: job C
+t14: job D
+t15: job E
+
+t16: job A
+t17: job C [finished!]
+t18: job D
+t19: job E
+
+t20: job A
+t21: job D
+t22: job E
+
+t23: job A
+t24: job D
+t25: job E [finished!]
+
+t26: job A
+t27: job D [finished!]
+
+t28: job A
+
+t29: job A
+
+t30: job A [finished!]
+
+job A finished at t30 (30 seconds elapsed)
+job B finished at t12 (12 seconds elapsed)
+job C finished at t17 (17 seconds elapsed)
+job D finished at t27 (27 seconds elapsed)
+job E finished at t25 (25 seconds elapsed)
+
+Average turnaround time: (30+12+17+27+25)/5 = 22.2 seconds
 
 \subsection*{(b) Priority scheduling}
+t00: All the jobs arrive in alphabetical order. 
+
 
 
 \subsection*{(c) First-come, first-served (given that they arrive in alphabetical order)}
+t00: All the jobs arrive in alphabetical order. 
+t01: job A
+t02: job A
+t03: job A
+t04: job A
+t05: job A
+t06: job A
+t07: job A
+t08: job A
+t09: job A
+t10: job A [finished!]
+
+t11: job B
+t12: job B 
+t13: job B [finished!]
+
+t14: job C
+t15: job C
+t16: job C
+t17: job C [finished!]
+
+t18: job D
+t19: job D
+t20: job D
+t21: job D
+t22: job D
+t23: job D
+t24: job D [finished]
+
+t25: job E 
+t26: job E
+t27: job E
+t28: job E
+t29: job E
+t30: job E [finished]
+
+job A finished at t10 (10 seconds elapsed)
+job B finished at t13 (13 seconds elapsed)
+job C finished at t17 (17 seconds elapsed)
+job D finished at t24 (24 seconds elapsed)
+job E finished at t30 (30 seconds elapsed)
+
+Average turnaround time: (10+13+17+30)/5 = 14 seconds
 
 
 \subsection*{(d) Shortest job first.}
+Note: remaining time (rt: ...) is listed in alphabetical order
+t00: All the jobs arrive in alphabetical order. 
+t01: job B (rt: 10, 2, 4, 7, 6)
+t02: job B (rt: 10, 1, 4, 7, 6)
+t03: job B (rt: 10, -, 4, 7, 6) [finished!]
+
+t04: job C (rt: 10, -, 3, 7, 6)
+t05: job C (rt: 10, -, 2, 7, 6)
+t06: job C (rt: 10, -, 1, 7, 6)
+t07: job C (rt: 10, -, -, 7, 6) [finished!]
+
+t08: job E (rt: 10, -, -, 7, 5)
+t09: job E (rt: 10, -, -, 7, 4)
+t10: job E (rt: 10, -, -, 7, 3)
+t11: job E (rt: 10, -, -, 7, 2)
+t12: job E (rt: 10, -, -, 7, 1)
+t13: job E (rt: 10, -, -, 7, -) [finished!]
+
+t14: job D (rt: 10, -, -, 6, -)
+t15: job D (rt: 10, -, -, 5, -)
+t16: job D (rt: 10, -, -, 4, -)
+t17: job D (rt: 10, -, -, 3, -)
+t18: job D (rt: 10, -, -, 2, -)
+t19: job D (rt: 10, -, -, 1, -)
+t20: job D (rt: 10, -, -, -, -) [finished!]
+
+t21: job D (rt: 9, -, -, -, -)
+t22: job D (rt: 8, -, -, -, -)
+t23: job D (rt: 7, -, -, -, -)
+t24: job D (rt: 6, -, -, -, -)
+t25: job D (rt: 5, -, -, -, -)
+t26: job D (rt: 4, -, -, -, -)
+t27: job D (rt: 3, -, -, -, -)
+t28: job D (rt: 2, -, -, -, -)
+t29: job D (rt: 1, -, -, -, -)
+t30: job D (rt: -, -, -, -, -) [finished!]
+
+job A finished at t30 (30 seconds elapsed)
+job B finished at t03 (3 seconds elapsed)
+job C finished at t07 (7 seconds elapsed)
+job D finished at t20 (20 seconds elapsed)
+job E finished at t13 (13 seconds elapsed)
+
+Average turnaround time: (30+3+7+20+13)/5 = 14.6 seconds
 
 
 \section*{Problem 9}
