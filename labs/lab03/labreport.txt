@@ -180,7 +180,7 @@ job C finished at t17 (17 seconds elapsed)
 job D finished at t24 (24 seconds elapsed)
 job E finished at t30 (30 seconds elapsed)
 
-Average turnaround time: (10+13+17+30)/5 = 14 seconds
+Average turnaround time: (10+13+17+24+30)/5 = 18.8 seconds
 
 
 (d) Shortest job first:
@@ -234,11 +234,11 @@ Problem 9: Re-do problem 8a with the modification that job D is IO bound. After 
 
 job A finished at t27.5 (27.5 seconds elapsed)
 job B finished at t11   (11   seconds elapsed)
-job C finished at t15.5 (7    seconds elapsed)
+job C finished at t15.5 (15.5 seconds elapsed)
 job D finished at t34   (34   seconds elapsed)
 job E finished at t22   (22   seconds elapsed)
 
-Average turnaround time: (27.5+11+7+34+22)/5 = 20.3 seconds
+Average turnaround time: (27.5+11+15.5+34+22)/5 = 22.0 seconds
 
 
 Problem 10: A CPU-bound process running on CTSS needs 30 quanta to complete. How many times must it be swapped in, including the first time (before it has run at all)? Assume that there are always other runnable jobs and that the number of priority classes is unlimited. (T&W, 2-29)
