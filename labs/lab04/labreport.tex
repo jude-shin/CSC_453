@@ -1,0 +1,90 @@
+\documentclass[11pt]{article}
+
+% Use wide margins, but not quite so wide as fullpage.sty
+\marginparwidth 0.5in 
+\oddsidemargin 0.25in 
+\evensidemargin 0.25in 
+\marginparsep 0.25in
+\topmargin 0.25in 
+\textwidth 6in \textheight 8 in
+% That's about enough definitions
+
+
+\begin{document}
+\hfill\vbox{\hbox{Shin, Jude}
+		\hbox{CSC 453, Section 01}	
+		\hbox{Lab 04}	
+		\hbox{\today}}\par
+
+\bigskip
+\centerline{\Large\bf Lab 4: {\sc Minix} Scavenger Hunt, Part II}\par
+\bigskip
+
+This lab is meant to demonstrate an understanding of installing a {\sc Minix} system on a Virtual Machine. We also dive deeper into the kernel code by slightly modifying the IDLE process. I installed {\sc Minix 3.1.8} on Oracle's {\sc VirtualBox Manager}. The host machine (my laptop) is running vanilla {\sc Arch Linux}.
+
+\setcounter{section}{0}
+\section{Before I do (mess up) anything}
+I made a .tar of the entire {\sc Minix} folder that held the kernel so if I screwed something up, I could just delete the folder and {\tt untar} the backup.
+
+\section{Build a modified kernel}
+\subsection{Approach}
+I first looked in the textbook for {\sc Minix}s queues. When there is nothing to do, then the last {\tt IDLE} queue is what is run constantly. I am going to try and toss in that if statement somewhere in place of that {\tt IDLE} function to alter it's functionality. When I found the place that described the {\tt IDLE} queue, said that there was a reference to it in {\tt kernel/proc.c}. I used {\tt vi} to inspect that file, and found a well commented part of the code which defined a function {\tt PRIVATE void idle(void)}. 
+I just modified the function to look like the following code, just adding the given {\tt if-statement} to the beginning of the function.
+
+\begin{verbatim}
+PRIVATE void idle(void) {
+	/* ...my comments... */
+	if (TRUE) {
+		printf("@\b");
+	}
+
+	/* ...comments... */
+	context_stop(proc_addr(KERNEL));
+	halt_cpu();
+
+	/* ...comments... */
+}
+\end{verbatim}
+
+\subsection{Problems Encountered}
+The only thing that was hard to use was the tiny screen that was only black and white. I am used to my fancy terminal emulators on my {\sc linux} machine, so tools like {\tt grep} and {\tt vim} have a bunch of fancy colors. I also have a lot of keybinds in {\tt vim} for my machine and I kept forgetting that the keybinds are very different.
+
+\subsection{Solutions}
+Nothing special had to happen in order for me to use these tools. I just had to get used to them. For grep, I had to remember to explicitly search in the current directory ({\tt ./}), and for vi I had to use the actual {\tt esc} button instead of the remap of {\tt kj}. I also had to be sure that the file I wrote didn't have any extra characters from the terminal not updating. 
+
+\subsection{Lessons Learned}
+The main bulk of the code seems to be located in the {\tt /usr/src/kernel} directory. I liked all of the comments that were there to help with finding things with keywords. 
+
+\section{Test it}
+\subsection{Approach}
+Even before I logged in, the cursor was displayed over the
+
+\subsection{Problems Encountered}
+I didn't know what it meant by ``the kernel has nothing to do". I am assuming that I had to make the kernel do something long while printing to prove that the cursor didn't get displayed for a period of time. When I first booted up the machine, there were a few lines that did not show the ``@" symbol. I didn't know for sure if this meant that the kernel was busy doing something else. 
+
+\begin{verbatim}
+Root device name is /dev/c0d0p0s0
+Multiuser startup in prgress ...@
+Sat Nov  1 20:49:08 GMT 2025
+/dev/c0d0p0s2 is read-write mounted on /usr
+/dev/c0d0p0s1 is read-write mounted on /home
+Starting services: random inet printer ipc.
+Starting daemons: update corn syslogd.
+Starting netowrking: nonamed.
+Local packages (start): sshd Starting sshd.
+ done.
+@
+Minix Release 3 Version 1.8  (console)
+
+10.0.0.1 login: @
+\end{verbatim}
+
+Note the ``@" symbol on the line that states the {\tt Multiuser startup in progress ...@} and on the login line. The lines between seem to be kernel level tasks like starting the daemons. Those are kernel level tasks that probably has some priority in a different queue (not idle). However, when waiting for an input from an I/O bound process (like the keybaord for logging in), then the kernel waits idle, and prints the ``@'' as a result. 
+
+\subsection{Solutions}
+There were no solutions, as there were no problems encountered.
+
+\subsection{Lessons Learned}
+There were no lessons to be learned in this task.
+
+\end{document}
