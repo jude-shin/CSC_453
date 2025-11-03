@@ -31,6 +31,8 @@ I made a .tar of the entire {\sc Minix} folder that held the kernel so if I scre
 I first looked in the textbook for {\sc Minix}s queues. When there is nothing to do, then the last {\tt IDLE} queue is what is run constantly. I am going to try and toss in that if statement somewhere in place of that {\tt IDLE} function to alter it's functionality. When I found the place that described the {\tt IDLE} queue, said that there was a reference to it in {\tt kernel/proc.c}. I used {\tt vi} to inspect that file, and found a well commented part of the code which defined a function {\tt PRIVATE void idle(void)}. 
 I just modified the function to look like the following code, just adding the given {\tt if-statement} to the beginning of the function.
 
+Then {\tt make hdboot} would make a new image, at which point I copied the image to the {\tt /boot/image} directory with the command {\tt cp /usr/src/tools/image /boot/image}.
+
 \begin{verbatim}
 PRIVATE void idle(void) {
 	/* ...my comments... */
@@ -57,10 +59,8 @@ The main bulk of the code seems to be located in the {\tt /usr/src/kernel} direc
 
 \section{Test it}
 \subsection{Approach}
-Even before I logged in, the cursor was displayed over the
-
-\subsection{Problems Encountered}
-I didn't know what it meant by ``the kernel has nothing to do". I am assuming that I had to make the kernel do something long while printing to prove that the cursor didn't get displayed for a period of time. When I first booted up the machine, there were a few lines that did not show the ``@" symbol. I didn't know for sure if this meant that the kernel was busy doing something else. 
+\subsubsection{Login Test}
+When logging in, there were some bits of text that would have the ``@" symbol after it, and some that would not. I believe that the times when the kernel was setting up some important things (like the daemon or services), the ``@" wasn't printed. Then when the kernel was just waiting for the input (like keystrokes for logging me in), the ``@" symbol was printed, as the kernel had nothing else to do. Below is the output of a sample run. Note the ``@" symbol on the line that states the {\tt Multiuser startup in progress ...@} and on the login line. The lines between seem to be kernel level tasks like starting the daemons. Those are kernel level tasks that probably has some priority in a different queue (not idle). However, when waiting for an input from an I/O bound process (like the keybaord for logging in), then the kernel waits idle, and prints the ``@'' as a result. 
 
 \begin{verbatim}
 Root device name is /dev/c0d0p0s0
@@ -79,12 +79,107 @@ Minix Release 3 Version 1.8  (console)
 10.0.0.1 login: @
 \end{verbatim}
 
-Note the ``@" symbol on the line that states the {\tt Multiuser startup in progress ...@} and on the login line. The lines between seem to be kernel level tasks like starting the daemons. Those are kernel level tasks that probably has some priority in a different queue (not idle). However, when waiting for an input from an I/O bound process (like the keybaord for logging in), then the kernel waits idle, and prints the ``@'' as a result. 
+\subsubsection{Fork Bomb Test}
+Another test I did was write a little fork bomb which just created a bunch of children who printed a message. When the fork system call is performed, the privilege is given to the kernel through an interrupt. The kernel now has something to do. During the time it takes for the kernel to handle the interrupt, the ``@" symbol does not show at the end of the print statements. Below is the small c file that I compiled and ran. Something is running through this entire process, so there should be no ``@" symbols in the entire output.
+
+\begin{verbatim}
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+#define NUM_FORKS 100000
+
+int main(int argc, char *argv[]) {
+  int i, j;
+  pid_t pids[NUM_FORKS];
+  pid_t pid;
+  
+  /* Create a bunch of dumb children */
+  for (i=0; i<NUM_FORKS; i++) {
+    printf("Forking Child %d\n", i);
+    pid = fork();
+    if (pid < 0) {
+      perror("[main] error creating child");
+
+      /* clean up all of the forks that were previously created */
+      for (j=0; j < i; j++) {
+        waitpid(pids[j], NULL, 0);
+      }
+      exit(EXIT_FAILURE);
+    }
+    else if (pid == 0) {
+      /* Child Code */
+      printf("Child %d created!\n", i);
+      /* sleep(1); */
+      exit(EXIT_SUCCESS);
+    }
+    else {
+      /* Parent Code */
+      /* add the pid to the list of pids */
+      pids[i] = pid;
+    }
+  }
+
+  for (i=0; i<NUM_FORKS; i++) {
+    printf("Waiting for child %d...\n", i);
+    waitpid(pids[i], NULL, 0);
+  }
+
+  exit(EXIT_SUCCESS);
+}
+\end{verbatim}
+
+Here is some sample output of when this code is run. Note that there are no ``@" symbols present.
+
+\begin{verbatim}
+Forking Child 0
+Forking Child 1
+Child 0 created!
+Forking Child 2
+Child 1 created!
+Forking Child 3
+Child 2 created!
+Forking Child 4
+Child 3 created!
+Waiting for child 53580...
+Child 4 created!
+Waiting for child 53580...
+Waiting for child 53580...
+Waiting for child 53580...
+Waiting for child 53580...
+$ @
+\end{verbatim}
+
+\subsubsection{Simple While Loop}
+A more simple solution would be to write a program that just chases its tail. During this process, the ``@" symbol should not be printed.
+
+\begin{verbatim}
+int main(int argc, char *argv[]) {
+	printf("starting infinite loop\n");
+	while (1) {
+		/* foo */
+	}
+	exit(EXIT_SUCCESS);
+}
+\end{verbatim}
+
+Here is some sample output of when this code is run. Note that there are no ``@" symbols present. Only when the process is killed by the {\tt ctrl-C} interrupt does the ``@" symbol undo itself.
+
+\begin{verbatim}
+$ ./while@
+starting infinite loop
+^C
+$ @
+\end{verbatim}
+
+\subsection{Problems Encountered}
+I didn't know what it meant by ``the kernel has nothing to do". I am assuming that I had to make the kernel do something long while printing to prove that the cursor didn't get displayed for a period of time. 
 
 \subsection{Solutions}
-There were no solutions, as there were no problems encountered.
+For some reason I did not understand that if a process is running, then the system is running, therefore, the process is not idle (crazy, I know...). This includes both kernel level commands, as well as user level commands. 
 
 \subsection{Lessons Learned}
-There were no lessons to be learned in this task.
+The user level processes are also included in the umbrella term of "not idle". Kernel level tasks will trump those processes, but it is a process nonetheless. The idle while loop is a testament to this (as well as the fork\_bomb script). Something is running, so the system is not idle; therefore, the ``@" symbol is not printed. It is as simple as that. 
 
 \end{document}
