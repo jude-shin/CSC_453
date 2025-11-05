@@ -4,6 +4,7 @@
     ssh -p 2222 -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa jshin53@127.0.0.1
 
 # SCP a file into a running minix machine from a host computer
-    scp -P 2222 -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ./myfile.txt root@127.0.0.1:/root/
+    scp -P 2222 -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ./myfile.txt jshin53@127.0.0.1:/home/jshin53/
+
 
 
