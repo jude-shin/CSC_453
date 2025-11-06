@@ -29,7 +29,7 @@ PRIVATE struct driver secret_tab =
     secret_name,
     secret_open,
     secret_close,
-    nop_ioctl,
+    nop_ioctl, /** The real one you should replace*/
     secret_prepare,
     secret_transfer,
     nop_cleanup,
@@ -37,7 +37,7 @@ PRIVATE struct driver secret_tab =
     nop_alarm,
     nop_cancel,
     nop_select,
-    nop_ioctl,
+    nop_ioctl, /** maps to dr_other, but we don't care bc it also just says no*/
     do_nop,
 };
 
