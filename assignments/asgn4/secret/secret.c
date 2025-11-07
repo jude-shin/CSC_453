@@ -121,15 +121,17 @@ PRIVATE void secret_geometry(entry)
     entry->sectors   = 0;
 }
 
-PRIVATE int sef_cb_lu_state_save(int state) {
-/* Save the state. */
+PRIVATE int sef_cb_lu_state_save(int state) 
+{
+    /* Save the state. */
     ds_publish_u32("open_counter", open_counter, DSF_OVERWRITE);
 
     return OK;
 }
 
-PRIVATE int lu_state_restore() {
-/* Restore the state. */
+PRIVATE int lu_state_restore() 
+{
+    /* Restore the state. */
     u32_t value;
 
     ds_retrieve_u32("open_counter", &value);
