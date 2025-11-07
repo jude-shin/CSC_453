@@ -29,7 +29,7 @@ PRIVATE struct driver secret_tab =
     secret_name,
     secret_open,
     secret_close,
-    nop_ioctl, /** The real one you should replace*/
+    secret_ioctl, /** This has been replaced! (was nop_ioctl) */
     secret_prepare,
     secret_transfer,
     nop_cleanup,
@@ -69,6 +69,20 @@ PRIVATE int secret_close(d, m)
     return OK;
 }
 
+/** TODO: I dont know what this does */
+PRIVATE int secret_ioctl(d, m) 
+    struct driver *d;
+    message *m;
+    uid_t grantee; /** the uid of teh new owner of the secret. */
+{
+    printf("secret_ioctl()\n");
+    res = sys_safecopyfrom(m->IO_ENDPT, (vir_bytes)m->IOGRANT,
+                          0, (vir_bytes)&grantee, sizeof(grantee), D);
+
+    /** TODO: I think we need to do some more things... */
+    return OK;
+}
+
 PRIVATE struct device * secret_prepare(dev)
     int dev;
 {
@@ -90,6 +104,8 @@ PRIVATE int secret_transfer(proc_nr, opcode, position, iov, nr_req)
 
     printf("secret_transfer()\n");
 
+    /** TODO: */
+    /** TODO: Get the size of the input? Or it should just be the max buffer size?*/
     bytes = strlen(HELLO_MESSAGE) - position.lo < iov->iov_size ?
             strlen(HELLO_MESSAGE) - position.lo : iov->iov_size;
 
@@ -99,10 +115,21 @@ PRIVATE int secret_transfer(proc_nr, opcode, position, iov, nr_req)
     }
     switch (opcode)
     {
+        /** reading */
         case DEV_GATHER_S:
             ret = sys_safecopyto(proc_nr, iov->iov_addr, 0,
                                 (vir_bytes) (HELLO_MESSAGE + position.lo),
                                  bytes, D);
+            iov->iov_size -= bytes;
+            break;
+
+        /** TODO: I added this case for when something is written to it?*/
+        /** writing */
+        case DEV_SCATTER_S:
+            /** TODO: these are not the paremeters... look up safecopyfrom */
+            ret = sys_safecopyfrom(proc_nr, iov->iov_addr, 0,
+                                  (vir_bytes) (HELLO_MESSAGE + position.lo),
+                                  bytes, D);
             iov->iov_size -= bytes;
             break;
 
@@ -121,9 +148,20 @@ PRIVATE void secret_geometry(entry)
     entry->sectors   = 0;
 }
 
+/** TODO: nobody is going to use this anyhow? what does this mean?? */
+PRIVATE void secret_prepare(void)
+{
+     
+}
+
 PRIVATE int sef_cb_lu_state_save(int state) 
 {
     /* Save the state. */
+
+    /** TODO: we should save the following states:
+        1) the last person who wrote to the file?
+        2) whether the file is open for writing or not?
+        */ 
     ds_publish_u32("open_counter", open_counter, DSF_OVERWRITE);
 
     return OK;
