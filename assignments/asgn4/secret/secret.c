@@ -11,6 +11,7 @@
 FORWARD _PROTOTYPE( char * secret_name,   (void) );
 FORWARD _PROTOTYPE( int secret_open,      (struct driver *d, message *m) );
 FORWARD _PROTOTYPE( int secret_close,     (struct driver *d, message *m) );
+FORWARD _PROTOTYPE( int secret_ioctl,     (struct driver *d, message *m) );
 FORWARD _PROTOTYPE( struct device * secret_prepare, (int device) );
 FORWARD _PROTOTYPE( int secret_transfer,  (int procnr, int opcode,
                                           u64_t position, iovec_t *iov,
@@ -73,14 +74,22 @@ PRIVATE int secret_close(d, m)
 PRIVATE int secret_ioctl(d, m) 
     struct driver *d;
     message *m;
-    uid_t grantee; /** the uid of teh new owner of the secret. */
 {
+    int ret;
+    uid_t grantee; /** the uid of teh new owner of the secret. */
+
     printf("secret_ioctl()\n");
-    res = sys_safecopyfrom(m->IO_ENDPT, (vir_bytes)m->IOGRANT,
-                          0, (vir_bytes)&grantee, sizeof(grantee), D);
+    ret = sys_safecopyfrom(
+        m->IO_ENDPT,
+        (vir_bytes)m->IO_GRANT,
+        0,
+        (vir_bytes)&grantee,
+        sizeof(grantee),
+        D);
 
     /** TODO: I think we need to do some more things... */
-    return OK;
+    /** TODO: am I supposed to just return OK, or should I return ret? */
+    return ret;
 }
 
 PRIVATE struct device * secret_prepare(dev)
@@ -88,7 +97,8 @@ PRIVATE struct device * secret_prepare(dev)
 {
     secret_device.dv_base.lo = 0;
     secret_device.dv_base.hi = 0;
-    secret_device.dv_size.lo = strlen(HELLO_MESSAGE);
+    /** TODO: should this be the size of the buffer macro? */
+    secret_device.dv_size.lo = strlen(HELLO_OG);
     secret_device.dv_size.hi = 0;
     return &secret_device;
 }
@@ -106,8 +116,8 @@ PRIVATE int secret_transfer(proc_nr, opcode, position, iov, nr_req)
 
     /** TODO: */
     /** TODO: Get the size of the input? Or it should just be the max buffer size?*/
-    bytes = strlen(HELLO_MESSAGE) - position.lo < iov->iov_size ?
-            strlen(HELLO_MESSAGE) - position.lo : iov->iov_size;
+    bytes = strlen(HELLO_OG) - position.lo < iov->iov_size ?
+            strlen(HELLO_OG) - position.lo : iov->iov_size;
 
     if (bytes <= 0)
     {
@@ -117,25 +127,37 @@ PRIVATE int secret_transfer(proc_nr, opcode, position, iov, nr_req)
     {
         /** reading */
         case DEV_GATHER_S:
-            ret = sys_safecopyto(proc_nr, iov->iov_addr, 0,
-                                (vir_bytes) (HELLO_MESSAGE + position.lo),
-                                 bytes, D);
+            ret = sys_safecopyto(
+                proc_nr,                                /* src proc           */
+                iov->iov_addr,                          /* src buff           */
+                0,                                      /* offset dest buff   */
+                (vir_bytes) (HELLO_OG + position.lo),   /* virt add of dest   */
+                bytes,                                  /* bytes to copy      */
+                D);                                     /* mem segment (D)    */
+
             iov->iov_size -= bytes;
             break;
 
-        /** TODO: I added this case for when something is written to it?*/
+        /** TODO: I added this case for when something is transferring data
+            into the device*/
         /** writing */
         case DEV_SCATTER_S:
             /** TODO: these are not the paremeters... look up safecopyfrom */
-            ret = sys_safecopyfrom(proc_nr, iov->iov_addr, 0,
-                                  (vir_bytes) (HELLO_MESSAGE + position.lo),
-                                  bytes, D);
+            ret = sys_safecopyfrom(
+                proc_nr,                                /* dest proc          */
+                iov->iov_addr,                          /* dest buff          */
+                0,                                      /* offset src buff    */
+                (vir_bytes) (HELLO_OG + position.lo),   /* virt add of src    */
+                bytes,                                  /* bytes to copy      */
+                D);                                     /* mem segment (D)    */
+
             iov->iov_size -= bytes;
             break;
 
         default:
             return EINVAL;
     }
+
     return ret;
 }
 
@@ -146,12 +168,6 @@ PRIVATE void secret_geometry(entry)
     entry->cylinders = 0;
     entry->heads     = 0;
     entry->sectors   = 0;
-}
-
-/** TODO: nobody is going to use this anyhow? what does this mean?? */
-PRIVATE void secret_prepare(void)
-{
-     
 }
 
 PRIVATE int sef_cb_lu_state_save(int state) 
@@ -210,7 +226,7 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info)
     open_counter = 0;
     switch(type) {
         case SEF_INIT_FRESH:
-            printf("%s", HELLO_MESSAGE);
+            printf("%s", HELLO_OG);
         break;
 
         case SEF_INIT_LU:
@@ -218,11 +234,11 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info)
             lu_state_restore();
             do_announce_driver = FALSE;
 
-            printf("%sHey, I'm a new version!\n", HELLO_MESSAGE);
+            printf("%sHey, I'm a new version!\n", HELLO_OG);
         break;
 
         case SEF_INIT_RESTART:
-            printf("%sHey, I've just been restarted!\n", HELLO_MESSAGE);
+            printf("%sHey, I've just been restarted!\n", HELLO_OG);
         break;
     }
 
