@@ -27,7 +27,7 @@ PRIVATE struct driver secret_tab = {
   secret_name,
   secret_open,
   secret_close,
-  nop_ioctl, /* This has been replaced! (was nop_ioctl) */
+  secret_ioctl, /* This has been replaced! (was nop_ioctl) */
   secret_prepare,
   secret_transfer,
   nop_cleanup,
@@ -35,7 +35,7 @@ PRIVATE struct driver secret_tab = {
   nop_alarm,
   nop_cancel,
   nop_select,
-  nop_ioctl, /* maps to dr_other, but we don't care bc it also just says no*/
+  nop_ioctl,
   do_nop,
 };
 
@@ -44,6 +44,18 @@ PRIVATE struct device secret_device;
 
 /* State variable to count the number of times the device has been opened. */
 PRIVATE int open_counter;
+
+/* The location of where the driver last read from. */
+/* TODO: I don't know what datatype this should be... */
+PRIVATE int *last_read;
+
+/* The location of where the driver last wrote from. */
+/* TODO: I don't know what datatype this should be... */
+PRIVATE int *last_write;
+
+/* Whether the file is readable or not (you can only read a secret once! */
+PRIVATE int readable;
+
 
 PRIVATE char* secret_name(void) {
   #ifdef DEBUG
@@ -55,7 +67,6 @@ PRIVATE char* secret_name(void) {
 
 PRIVATE int secret_open(struct driver* d, message* m) {
   #ifdef DEBUG
-  /* This will print in the device */
   printf("secret_open(). Called %d time(s).\n", ++open_counter);
   #endif 
 
@@ -64,20 +75,19 @@ PRIVATE int secret_open(struct driver* d, message* m) {
 
 PRIVATE int secret_close(struct driver* d, message* m) {
   #ifdef DEBUG
-  /* This will print in the device */
   printf("secret_close()\n");
   #endif 
 
   return OK;
 }
 
-/* TODO: I dont know what this does */
+/* TODO: I dont know what this does. I think that this should handle the
+   permissions before anything is opened, closed, or read? */
 PRIVATE int secret_ioctl(struct driver* d, message* m) {
   int ret;
   uid_t grantee; /* the uid of teh new owner of the secret. */
 
   #ifdef DEBUG
-  /* This will print in the device */
   printf("secret_ioctl()\n");
   #endif 
 
@@ -101,8 +111,10 @@ PRIVATE struct device* secret_prepare(int dev) {
 
   secret_device.dv_base.lo = 0;
   secret_device.dv_base.hi = 0;
+
   /* TODO: should this be the size of the buffer macro? */
-  secret_device.dv_size.lo = strlen(HELLO_OG);
+  /* secret_device.dv_size.lo = strlen(HELLO_OG); */
+  secret_device.dv_size.lo = strlen(SECRET_SIZE);
   secret_device.dv_size.hi = 0;
   return &secret_device;
 }
@@ -117,7 +129,6 @@ PRIVATE int secret_transfer(
   int bytes, ret;
 
   #ifdef DEBUG
-  /* This will print in the device */
   printf("secret_transfer()\n");
   #endif 
 
@@ -184,22 +195,25 @@ PRIVATE void secret_geometry(struct partition* entry) {
 }
 
 PRIVATE int sef_cb_lu_state_save(int state) {
+  /* TODO: make sure these are updated with whatever global states you 
+     have before SUBMITTING */
+
   #ifdef DEBUG
   printf("sef_cb_lu_state_save()\n");
   #endif 
 
-  /* Save the state. */
-
-  /* TODO: we should save the following states:
-     1) the last person who wrote to the file?
-     2) whether the file is open for writing or not?
-     */ 
   ds_publish_u32("open_counter", open_counter, DSF_OVERWRITE);
+  ds_publish_u32("last_read", last_read, DSF_OVERWRITE);
+  ds_publish_u32("last_write", last_write, DSF_OVERWRITE);
+  ds_publish_u32("readable", readable, DSF_OVERWRITE);
 
   return OK;
 }
 
 PRIVATE int lu_state_restore(void) {
+  /* TODO: make sure these are updated with whatever global states you 
+     have before SUBMITTING */
+
   #ifdef DEBUG
   printf("lu_state_restore()\n");
   #endif 
@@ -210,6 +224,18 @@ PRIVATE int lu_state_restore(void) {
   ds_retrieve_u32("open_counter", &value);
   ds_delete_u32("open_counter");
   open_counter = (int) value;
+
+  ds_retrieve_u32("last_read", &value);
+  ds_delete_u32("last_read");
+  last_read = (int) value;
+
+  ds_retrieve_u32("last_write", &value);
+  ds_delete_u32("last_write");
+  last_write = (int) value;
+
+  ds_retrieve_u32("readable", &value);
+  ds_delete_u32("redable");
+  readable = (int) value;
 
   return OK;
 }
