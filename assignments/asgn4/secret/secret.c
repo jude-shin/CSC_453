@@ -46,18 +46,27 @@ PRIVATE struct device secret_device;
 PRIVATE int open_counter;
 
 PRIVATE char * secret_name(void) {
+  #ifdef DEBUG
   printf("secret_name()\n");
+  #endif 
+
   return "secret";
 }
 
 PRIVATE int secret_open(struct driver* d, message* m) {
+  #ifdef DEBUG
   printf("secret_open(). Called %d time(s).\n", ++open_counter);
+  #endif 
+
   return OK;
 }
 
 PRIVATE int secret_close(struct driver* d, message* m) {
-    printf("secret_close()\n");
-    return OK;
+  #ifdef DEBUG
+  printf("secret_close()\n");
+  #endif 
+
+  return OK;
 }
 
 /* TODO: I dont know what this does */
@@ -65,7 +74,10 @@ PRIVATE int secret_ioctl(struct driver* d, message* m) {
   int ret;
   uid_t grantee; /* the uid of teh new owner of the secret. */
 
+  #ifdef DEBUG
   printf("secret_ioctl()\n");
+  #endif 
+
   ret = sys_safecopyfrom(
       m->IO_ENDPT,
       (vir_bytes)m->IO_GRANT,
@@ -96,7 +108,9 @@ PRIVATE int secret_transfer(
     unsigned nr_req) {
 
   int bytes, ret;
+  #ifdef DEBUG
   printf("secret_transfer()\n");
+  #endif 
 
   if (bytes <= 0) {
     return OK;
@@ -148,7 +162,10 @@ PRIVATE int secret_transfer(
 }
 
 PRIVATE void secret_geometry(struct partition* entry) {
+  #ifdef DEBUG
   printf("secret_geometry()\n");
+  #endif 
+
   entry->cylinders = 0;
   entry->heads     = 0;
   entry->sectors   = 0;
@@ -202,7 +219,10 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   open_counter = 0;
   switch(type) {
     case SEF_INIT_FRESH:
+      #ifdef DEBUG
       printf("%s", HELLO_OG);
+      #endif 
+
       break;
 
     case SEF_INIT_LU:
@@ -210,11 +230,17 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
       lu_state_restore();
       do_announce_driver = FALSE;
 
+      #ifdef DEBUG
       printf("%sHey, I'm a new version!\n", HELLO_OG);
+      #endif 
+
       break;
 
     case SEF_INIT_RESTART:
+      #ifdef DEBUG
       printf("%sHey, I've just been restarted!\n", HELLO_OG);
+      #endif 
+
       break;
   }
 
