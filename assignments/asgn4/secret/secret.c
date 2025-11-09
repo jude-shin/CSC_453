@@ -27,7 +27,7 @@ PRIVATE struct driver secret_tab = {
   secret_name,
   secret_open,
   secret_close,
-  secret_ioctl, /* This has been replaced! (was nop_ioctl) */
+  nop_ioctl, /* This has been replaced! (was nop_ioctl) */
   secret_prepare,
   secret_transfer,
   nop_cleanup,
@@ -45,7 +45,7 @@ PRIVATE struct device secret_device;
 /* State variable to count the number of times the device has been opened. */
 PRIVATE int open_counter;
 
-PRIVATE char * secret_name(void) {
+PRIVATE char* secret_name(void) {
   #ifdef DEBUG
   printf("secret_name()\n");
   #endif 
@@ -55,6 +55,7 @@ PRIVATE char * secret_name(void) {
 
 PRIVATE int secret_open(struct driver* d, message* m) {
   #ifdef DEBUG
+  /* This will print in the device */
   printf("secret_open(). Called %d time(s).\n", ++open_counter);
   #endif 
 
@@ -63,6 +64,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
 
 PRIVATE int secret_close(struct driver* d, message* m) {
   #ifdef DEBUG
+  /* This will print in the device */
   printf("secret_close()\n");
   #endif 
 
@@ -75,6 +77,7 @@ PRIVATE int secret_ioctl(struct driver* d, message* m) {
   uid_t grantee; /* the uid of teh new owner of the secret. */
 
   #ifdef DEBUG
+  /* This will print in the device */
   printf("secret_ioctl()\n");
   #endif 
 
@@ -92,6 +95,10 @@ PRIVATE int secret_ioctl(struct driver* d, message* m) {
 }
 
 PRIVATE struct device* secret_prepare(int dev) {
+  #ifdef DEBUG
+  printf("secret_secret_prepare()\n");
+  #endif 
+
   secret_device.dv_base.lo = 0;
   secret_device.dv_base.hi = 0;
   /* TODO: should this be the size of the buffer macro? */
@@ -108,13 +115,12 @@ PRIVATE int secret_transfer(
     unsigned nr_req) {
 
   int bytes, ret;
+
   #ifdef DEBUG
+  /* This will print in the device */
   printf("secret_transfer()\n");
   #endif 
 
-  if (bytes <= 0) {
-    return OK;
-  }
   switch (opcode) {
     /* reading */
     case DEV_GATHER_S:
@@ -122,6 +128,9 @@ PRIVATE int secret_transfer(
          buffer size?*/
       bytes = strlen(HELLO_OG) - position.lo < iov->iov_size ?
         strlen(HELLO_OG) - position.lo : iov->iov_size;
+      if (bytes <= 0) {
+        return OK;
+      }
 
       ret = sys_safecopyto(
           proc_nr,                                /* src proc           */
@@ -141,6 +150,9 @@ PRIVATE int secret_transfer(
       /* TODO: Get the size of the input? Or it should just be the max buffer size?*/
       bytes = strlen(HELLO_IN) - position.lo < iov->iov_size ?
         strlen(HELLO_IN) - position.lo : iov->iov_size;
+      if (bytes <= 0) {
+        return OK;
+      }
 
       /* TODO: these are not the paremeters... look up safecopyfrom */
       ret = sys_safecopyfrom(
@@ -172,6 +184,10 @@ PRIVATE void secret_geometry(struct partition* entry) {
 }
 
 PRIVATE int sef_cb_lu_state_save(int state) {
+  #ifdef DEBUG
+  printf("sef_cb_lu_state_save()\n");
+  #endif 
+
   /* Save the state. */
 
   /* TODO: we should save the following states:
@@ -184,6 +200,10 @@ PRIVATE int sef_cb_lu_state_save(int state) {
 }
 
 PRIVATE int lu_state_restore(void) {
+  #ifdef DEBUG
+  printf("lu_state_restore()\n");
+  #endif 
+
   /* Restore the state. */
   u32_t value;
 
@@ -195,6 +215,10 @@ PRIVATE int lu_state_restore(void) {
 }
 
 PRIVATE void sef_local_startup() {
+  #ifdef DEBUG
+  printf("sef_local_startup()\n");
+  #endif 
+
   /* Register init callbacks. Use the same function for all event types */
   sef_setcb_init_fresh(sef_cb_init);
   sef_setcb_init_lu(sef_cb_init);
@@ -213,14 +237,19 @@ PRIVATE void sef_local_startup() {
 }
 
 PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
+  #ifdef DEBUG
+  printf("sef_cb_init()\n");
+  #endif 
+
   /* Initialize the secret driver. */
+  char* name = secret_name();
   int do_announce_driver = TRUE;
 
   open_counter = 0;
   switch(type) {
     case SEF_INIT_FRESH:
       #ifdef DEBUG
-      printf("%s", HELLO_OG);
+      printf("%s driver sef_cp_init() called with SEF_INIT_FRESH\n", name);
       #endif 
 
       break;
@@ -231,14 +260,14 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
       do_announce_driver = FALSE;
 
       #ifdef DEBUG
-      printf("%sHey, I'm a new version!\n", HELLO_OG);
+      printf("%s driver sef_cp_init() called with SEF_INIT_LU\n", name);
       #endif 
 
       break;
 
     case SEF_INIT_RESTART:
       #ifdef DEBUG
-      printf("%sHey, I've just been restarted!\n", HELLO_OG);
+      printf("%s driver sef_cp_init() called with SEF_INIT_RESTART\n", name);
       #endif 
 
       break;
@@ -261,4 +290,3 @@ PUBLIC int main(int argc, char *argv) {
     driver_task(&secret_tab, DRIVER_STD);
     return OK;
 }
-

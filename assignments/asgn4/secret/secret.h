@@ -10,9 +10,9 @@
 #define SECRET_SIZE 8192
 #endif /* SECRET_SIZE */
 
-/* For print statements */
-#ifndef DEBUG 
-#define DEBUG 0 
-#endif /* DEBUG  */
+/* For print statements
+   to remove them, just comment the macro definition out
+*/
+/* #define DEBUG 1 */
 
 #endif /* __SECRET_H */
