@@ -92,7 +92,7 @@ PRIVATE int secret_transfer(
     int proc_nr, 
     int opcode,
     u64_t position, 
-    iovec_t iov,
+    iovec_t* iov,
     unsigned nr_req) {
 
   int bytes, ret;
