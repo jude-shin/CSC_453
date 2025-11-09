@@ -53,8 +53,10 @@ PRIVATE int *last_read;
 /* TODO: I don't know what datatype this should be... */
 PRIVATE int *last_write;
 
-/* Whether the file is readable or not (you can only read a secret once! */
-PRIVATE int readable;
+/* Whether the file contains a secret or not (you can only read a secret once!
+   if 0, then the file has nothing in it, anything else means there is a
+   secret*/
+PRIVATE int empty;
 
 
 PRIVATE char* secret_name(void) {
@@ -113,7 +115,7 @@ PRIVATE struct device* secret_prepare(int dev) {
   secret_device.dv_base.hi = 0;
 
   /* TODO: should this be the size of the buffer macro? */
-  /* secret_device.dv_size.lo = strlen(HELLO_OG); */
+  /* secret_device.dv_size.lo = strlen(GATHER_MSG); */
   secret_device.dv_size.lo = SECRET_SIZE;
   secret_device.dv_size.hi = 0;
   return &secret_device;
@@ -125,56 +127,72 @@ PRIVATE int secret_transfer(
     u64_t position, 
     iovec_t* iov,
     unsigned nr_req) {
+  
+  /* Then number of overall bytes written or read */
+  size_t bytes;
 
-  int bytes, ret;
+  /* The buffer holding our read/write data */
+  char buffer[BUFFER_SIZE];
 
-  #ifdef DEBUG
+  /* The number of bytes read or written in one 'while' cycle */
+  ssize_t count;
+   
+  /* The return value */
+  int ret;
+
+  /* #ifdef DEBUG 
   printf("secret_transfer()\n");
-  #endif 
+  #endif */
 
+
+  /* NOTE: stdin is fd 0 (STDIN_FILENO), stdout is fd 1 (STDOUT_FILENO) */
+  /* 
+     CASE 1: someone **WRITES** to the /dev/Secret "device"
+        - determines if the request is good to go or not
+        - The driver READS that information from STDIN_FILENO
+        - The driver WRITES the information to the device 
+
+     CASE 2: someone **READS** to the /dev/Secret "device"
+        - determines if the request is good to go or not
+        - READS the information from the device 
+        - WRITES the information to STDOUT_FILENO
+
+    
+  */
   switch (opcode) {
-    /* reading */
+    /* When cat /dev/Secret is called */
     case DEV_GATHER_S:
-      /* TODO: Get the size of the input? Or it should just be the max
-         buffer size?*/
-      bytes = strlen(HELLO_OG) - position.lo < iov->iov_size ?
-        strlen(HELLO_OG) - position.lo : iov->iov_size;
+      printf("GATHER I DONT KNOW WHAT i AM DOING!!!!!!!!!\n");
+
+      bytes = strlen(GATHER_MSG) - position.lo < iov->iov_size ?
+        strlen(GATHER_MSG) - position.lo : iov->iov_size;
+
       if (bytes <= 0) {
         return OK;
       }
 
+      if (bytes <= 0) {
+        return OK;
+      }
+
+      /* this action is writing "hello" */ 
       ret = sys_safecopyto(
           proc_nr,                                /* src proc           */
           iov->iov_addr,                          /* src buff           */
           0,                                      /* offset dest buff   */
-          (vir_bytes) (HELLO_OG + position.lo),   /* virt add of dest   */
+          (vir_bytes) (GATHER_MSG + position.lo), /* virt add of src    */
           bytes,                                  /* bytes to copy      */
           D);                                     /* mem segment (D)    */
 
+
       iov->iov_size -= bytes;
+
       break;
 
-      /* TODO: I added this case for when something is transferring data
-        into the device*/
-      /* writing */
+    /* When echo "foo" > /dev/Secret is called */
     case DEV_SCATTER_S:
-      /* TODO: Get the size of the input? Or it should just be the max buffer size?*/
-      bytes = strlen(HELLO_IN) - position.lo < iov->iov_size ?
-        strlen(HELLO_IN) - position.lo : iov->iov_size;
-      if (bytes <= 0) {
-        return OK;
-      }
-
-      /* TODO: these are not the paremeters... look up safecopyfrom */
-      ret = sys_safecopyfrom(
-          proc_nr,                                /* dest proc          */
-          iov->iov_addr,                          /* dest buff          */
-          0,                                      /* offset src buff    */
-          (vir_bytes) (HELLO_IN + position.lo),   /* virt add of src    */
-          bytes,                                  /* bytes to copy      */
-          D);                                     /* mem segment (D)    */
-
-      iov->iov_size -= bytes;
+      printf("SCATTER I DONT KNOW WHAT i AM DOING!!!!!!!!!\n");
+      return OK;
       break;
 
     default:
@@ -206,7 +224,7 @@ PRIVATE int sef_cb_lu_state_save(int state) {
   ds_publish_mem("open_counter", &open_counter, sizeof(open_counter), DSF_OVERWRITE);
   ds_publish_mem("last_read", &last_read, sizeof(last_read), DSF_OVERWRITE);
   ds_publish_mem("last_write", &last_write, sizeof(last_write), DSF_OVERWRITE);
-  ds_publish_mem("readable", &readable, sizeof(readable), DSF_OVERWRITE);
+  ds_publish_mem("empty", &empty, sizeof(empty), DSF_OVERWRITE);
 
   return OK;
 }
@@ -221,8 +239,6 @@ PRIVATE int lu_state_restore(void) {
   printf("lu_state_restore()\n");
   #endif 
 
-  /* TODO: switch from **_u32 to **_mem? like the manual says */
-
   /* Restore the state. */
   s = sizeof(open_counter);
   ds_retrieve_mem("open_counter", (char*)&open_counter, &s);
@@ -236,8 +252,8 @@ PRIVATE int lu_state_restore(void) {
   ds_retrieve_mem("last_write", (char*)&last_write, &s);
   ds_delete_mem("last_write");
 
-  s = sizeof(readable);
-  ds_retrieve_mem("readable", (char*)&readable, &s);
+  s = sizeof(empty);
+  ds_retrieve_mem("empty", (char*)&empty, &s);
   ds_delete_mem("redable");
 
   return OK;

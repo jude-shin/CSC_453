@@ -2,16 +2,22 @@
 #define __SECRET_H
 
 /* The Hello, World! message. */
-#define HELLO_OG "Hello, World! (I'm the OG)\n"
-#define HELLO_IN "Hello writing into driver!\n"
+#define GATHER_MSG "-- gathering --\n"
+#define SCATTER_MSG "-- scattering --\n"
 
 /* Fixed size of the secret to be stored */
 #ifndef SECRET_SIZE
 #define SECRET_SIZE 8192
 #endif /* SECRET_SIZE */
 
+/* Fixed size of the secret to be stored */
+#ifndef BUFFER_SIZE 
+#define BUFFER_SIZE 512
+#endif /* SECRET_SIZE */
+
 /* For print statements
    to remove them, just comment the macro definition out */
-#define DEBUG 1
+/* #define DEBUG 1 */
+
 
 #endif /* __SECRET_H */
