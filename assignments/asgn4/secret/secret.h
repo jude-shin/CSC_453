@@ -11,8 +11,7 @@
 #endif /* SECRET_SIZE */
 
 /* For print statements
-   to remove them, just comment the macro definition out
-*/
-/* #define DEBUG 1 */
+   to remove them, just comment the macro definition out */
+#define DEBUG 1
 
 #endif /* __SECRET_H */

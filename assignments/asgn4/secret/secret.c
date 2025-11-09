@@ -114,7 +114,7 @@ PRIVATE struct device* secret_prepare(int dev) {
 
   /* TODO: should this be the size of the buffer macro? */
   /* secret_device.dv_size.lo = strlen(HELLO_OG); */
-  secret_device.dv_size.lo = strlen(SECRET_SIZE);
+  secret_device.dv_size.lo = SECRET_SIZE;
   secret_device.dv_size.hi = 0;
   return &secret_device;
 }
@@ -202,10 +202,11 @@ PRIVATE int sef_cb_lu_state_save(int state) {
   printf("sef_cb_lu_state_save()\n");
   #endif 
 
-  ds_publish_u32("open_counter", open_counter, DSF_OVERWRITE);
-  ds_publish_u32("last_read", last_read, DSF_OVERWRITE);
-  ds_publish_u32("last_write", last_write, DSF_OVERWRITE);
-  ds_publish_u32("readable", readable, DSF_OVERWRITE);
+  /* remove this publish for open_counter */ 
+  ds_publish_mem("open_counter", &open_counter, sizeof(open_counter), DSF_OVERWRITE);
+  ds_publish_mem("last_read", &last_read, sizeof(last_read), DSF_OVERWRITE);
+  ds_publish_mem("last_write", &last_write, sizeof(last_write), DSF_OVERWRITE);
+  ds_publish_mem("readable", &readable, sizeof(readable), DSF_OVERWRITE);
 
   return OK;
 }
@@ -214,28 +215,30 @@ PRIVATE int lu_state_restore(void) {
   /* TODO: make sure these are updated with whatever global states you 
      have before SUBMITTING */
 
+  size_t s;
+
   #ifdef DEBUG
   printf("lu_state_restore()\n");
   #endif 
 
+  /* TODO: switch from **_u32 to **_mem? like the manual says */
+
   /* Restore the state. */
-  u32_t value;
+  s = sizeof(open_counter);
+  ds_retrieve_mem("open_counter", (char*)&open_counter, &s);
+  ds_delete_mem("open_counter");
+  
+  s = sizeof(last_read);
+  ds_retrieve_mem("last_read", (char*)&last_read, &s);
+  ds_delete_mem("last_read");
 
-  ds_retrieve_u32("open_counter", &value);
-  ds_delete_u32("open_counter");
-  open_counter = (int) value;
+  s = sizeof(last_write);
+  ds_retrieve_mem("last_write", (char*)&last_write, &s);
+  ds_delete_mem("last_write");
 
-  ds_retrieve_u32("last_read", &value);
-  ds_delete_u32("last_read");
-  last_read = (int) value;
-
-  ds_retrieve_u32("last_write", &value);
-  ds_delete_u32("last_write");
-  last_write = (int) value;
-
-  ds_retrieve_u32("readable", &value);
-  ds_delete_u32("redable");
-  readable = (int) value;
+  s = sizeof(readable);
+  ds_retrieve_mem("readable", (char*)&readable, &s);
+  ds_delete_mem("redable");
 
   return OK;
 }
@@ -263,13 +266,14 @@ PRIVATE void sef_local_startup() {
 }
 
 PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
+  /* Initialize the secret driver. */
+  char* name = secret_name();
+  int do_announce_driver = TRUE;
+
   #ifdef DEBUG
   printf("sef_cb_init()\n");
   #endif 
 
-  /* Initialize the secret driver. */
-  char* name = secret_name();
-  int do_announce_driver = TRUE;
 
   open_counter = 0;
   switch(type) {
