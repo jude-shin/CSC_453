@@ -5,6 +5,15 @@
 #include <minix/ds.h>
 #include "secret.h"
 
+/* TODO: ask
+   1) Why do we need to make sure there is a buffer external to the sys_safe...
+   2) Is are there more manpages on iov things?
+   3) If transfer() is called with a message larger than the max_size, or called
+    with negative or zero size, is there a pareticular error to raise? The hello
+    driver went along without doing anything, just returning OK
+   4) 
+*/
+
 /* Function prototypes for the secret driver. */
 FORWARD _PROTOTYPE( char * secret_name,   (void) );
 FORWARD _PROTOTYPE( int secret_open,      (struct driver *d, message *m) );
@@ -132,42 +141,34 @@ PRIVATE int secret_transfer(
   size_t bytes;
 
   /* The buffer holding our read/write data */
-  char buffer[BUFFER_SIZE];
+  char buffer[SECRET_SIZE];
 
-  /* The number of bytes read or written in one 'while' cycle */
+  /* The number of bytes read or written so far */
   size_t count;
    
   /* The return value */
   int ret;
 
   #ifdef DEBUG 
-  printf("[debug] secret_transfer()\n");
+  printf("[debug] secret_transfer() ");
   #endif
 
-
-  /* NOTE: stdin is fd 0 (STDIN_FILENO), stdout is fd 1 (STDOUT_FILENO) */
-  /* 
-     CASE 1: someone **WRITES** to the /dev/Secret "device"
-        - determines if the request is good to go or not
-        - The driver READS that information from STDIN_FILENO
-        - The driver WRITES the information to the device 
-
-     CASE 2: someone **READS** to the /dev/Secret "device"
-        - determines if the request is good to go or not
-        - READS the information from the device 
-        - WRITES the information to STDOUT_FILENO
-
-    
-  */
   switch (opcode) {
-    /* When cat /dev/Secret is called */
+    /* When cat /dev/Secret is called: READ from the device */
     case DEV_GATHER_S:
+      #ifdef DEBUG 
+      printf("called with DEV_GATHER_S\n");
+      #endif
+
       bytes = count - position.lo;
       if (bytes > iov->iov_size) {
         bytes = iov->iov_size;
       }
 
       if (bytes <= 0) {
+        /* TODO: hello just went along without doing anything...
+           might be based to raise an error. */
+        /* Should never be calling with bytes as a negative number or 0. */
         return OK;
       }
 
@@ -176,9 +177,8 @@ PRIVATE int secret_transfer(
           iov->iov_addr,                          /* dest buff          */
           0,                                      /* offset dest buff   */
           (vir_bytes) (buffer + position.lo),     /* virt add of src    */
-          bytes,                                  /* bytes to copy      */
+          bytes,                                  /* no. bytes to copy  */
           D);                                     /* mem segment (D)    */
-    
 
       if (ret == OK) {
         iov->iov_size -= bytes;
@@ -189,24 +189,32 @@ PRIVATE int secret_transfer(
 
       break;
 
-    /* When echo "foo" > /dev/Secret is called */
+    /* When echo "foo" > /dev/Secret is called: WRITE to the device */
     case DEV_SCATTER_S:
+      #ifdef DEBUG 
+      printf("called with DEV_SCATTER_S\n");
+      #endif
+
       bytes = iov->iov_size;
-      if (position.lo + bytes > BUFFER_SIZE) {
-        bytes = BUFFER_SIZE - position.lo;
+
+      if (position.lo + bytes > SECRET_SIZE) {
+        /* TODO: Raise an error... you are trying to overflow a buffer! */
       }
 
       if (bytes <= 0) {
+        /* TODO: hello just went along without doing anything...
+           might be based to raise an error. */
+        /* Should never be calling with bytes as a negative number or 0. */
         return OK;
       }
+      
 
-      /* this action is writing "hello" */ 
       ret = sys_safecopyfrom(
           proc_nr,                                /* src proc           */
           iov->iov_addr,                          /* src buff           */
           0,                                      /* offset src buff    */
           (vir_bytes) (buffer + position.lo),     /* virt add of src    */
-          bytes,                                  /* bytes to copy      */
+          bytes,                                  /* no. bytes to copy  */
           D);                                     /* mem segment (D)    */
 
 

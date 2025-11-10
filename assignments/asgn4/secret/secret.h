@@ -7,17 +7,13 @@
 
 /* Fixed size of the secret to be stored */
 #ifndef SECRET_SIZE
-#define SECRET_SIZE 8192
-#endif /* SECRET_SIZE */
-
-/* Fixed size of the secret to be stored */
-#ifndef BUFFER_SIZE 
-#define BUFFER_SIZE 512
+/* #define SECRET_SIZE 8192 */
+#define SECRET_SIZE 2 
 #endif /* SECRET_SIZE */
 
 /* For print statements
    to remove them, just comment the macro definition out */
-/* #define DEBUG 1 */
+#define DEBUG 1
 
 
 #endif /* __SECRET_H */
