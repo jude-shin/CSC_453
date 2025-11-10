@@ -61,7 +61,7 @@ PRIVATE int empty;
 
 PRIVATE char* secret_name(void) {
   #ifdef DEBUG
-  printf("secret_name()\n");
+  printf("[debug] secret_name()\n");
   #endif 
 
   return "secret";
@@ -69,7 +69,7 @@ PRIVATE char* secret_name(void) {
 
 PRIVATE int secret_open(struct driver* d, message* m) {
   #ifdef DEBUG
-  printf("secret_open(). Called %d time(s).\n", ++open_counter);
+  printf("[debug] secret_open(). Called %d time(s).\n", ++open_counter);
   #endif 
 
   return OK;
@@ -77,7 +77,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
 
 PRIVATE int secret_close(struct driver* d, message* m) {
   #ifdef DEBUG
-  printf("secret_close()\n");
+  printf("[debug] secret_close()\n");
   #endif 
 
   return OK;
@@ -90,7 +90,7 @@ PRIVATE int secret_ioctl(struct driver* d, message* m) {
   uid_t grantee; /* the uid of teh new owner of the secret. */
 
   #ifdef DEBUG
-  printf("secret_ioctl()\n");
+  printf("[debug] secret_ioctl()\n");
   #endif 
 
   ret = sys_safecopyfrom(
@@ -108,7 +108,7 @@ PRIVATE int secret_ioctl(struct driver* d, message* m) {
 
 PRIVATE struct device* secret_prepare(int dev) {
   #ifdef DEBUG
-  printf("secret_secret_prepare()\n");
+  printf("[debug] secret_secret_prepare()\n");
   #endif 
 
   secret_device.dv_base.lo = 0;
@@ -135,14 +135,14 @@ PRIVATE int secret_transfer(
   char buffer[BUFFER_SIZE];
 
   /* The number of bytes read or written in one 'while' cycle */
-  ssize_t count;
+  size_t count;
    
   /* The return value */
   int ret;
 
-  /* #ifdef DEBUG 
-  printf("secret_transfer()\n");
-  #endif */
+  #ifdef DEBUG 
+  printf("[debug] secret_transfer()\n");
+  #endif
 
 
   /* NOTE: stdin is fd 0 (STDIN_FILENO), stdout is fd 1 (STDOUT_FILENO) */
@@ -162,13 +162,38 @@ PRIVATE int secret_transfer(
   switch (opcode) {
     /* When cat /dev/Secret is called */
     case DEV_GATHER_S:
-      printf("GATHER I DONT KNOW WHAT i AM DOING!!!!!!!!!\n");
-
-      bytes = strlen(GATHER_MSG) - position.lo < iov->iov_size ?
-        strlen(GATHER_MSG) - position.lo : iov->iov_size;
+      bytes = count - position.lo;
+      if (bytes > iov->iov_size) {
+        bytes = iov->iov_size;
+      }
 
       if (bytes <= 0) {
         return OK;
+      }
+
+      ret = sys_safecopyto(
+          proc_nr,                                /* dest proc          */
+          iov->iov_addr,                          /* dest buff          */
+          0,                                      /* offset dest buff   */
+          (vir_bytes) (buffer + position.lo),     /* virt add of src    */
+          bytes,                                  /* bytes to copy      */
+          D);                                     /* mem segment (D)    */
+    
+
+      if (ret == OK) {
+        iov->iov_size -= bytes;
+      }
+      else {
+        /* Something went wrong? how can I handle this? */
+      }
+
+      break;
+
+    /* When echo "foo" > /dev/Secret is called */
+    case DEV_SCATTER_S:
+      bytes = iov->iov_size;
+      if (position.lo + bytes > BUFFER_SIZE) {
+        bytes = BUFFER_SIZE - position.lo;
       }
 
       if (bytes <= 0) {
@@ -176,23 +201,26 @@ PRIVATE int secret_transfer(
       }
 
       /* this action is writing "hello" */ 
-      ret = sys_safecopyto(
+      ret = sys_safecopyfrom(
           proc_nr,                                /* src proc           */
           iov->iov_addr,                          /* src buff           */
-          0,                                      /* offset dest buff   */
-          (vir_bytes) (GATHER_MSG + position.lo), /* virt add of src    */
+          0,                                      /* offset src buff    */
+          (vir_bytes) (buffer + position.lo),     /* virt add of src    */
           bytes,                                  /* bytes to copy      */
           D);                                     /* mem segment (D)    */
 
 
-      iov->iov_size -= bytes;
 
-      break;
+      if (ret == OK) {
+        iov->iov_size -= bytes;
+        if (position.lo + bytes > count) {
+          count = position.lo + bytes;
+        }
+      }
+      else {
+        /* Something went wrong? how can I handle this? */
+      }
 
-    /* When echo "foo" > /dev/Secret is called */
-    case DEV_SCATTER_S:
-      printf("SCATTER I DONT KNOW WHAT i AM DOING!!!!!!!!!\n");
-      return OK;
       break;
 
     default:
@@ -204,7 +232,7 @@ PRIVATE int secret_transfer(
 
 PRIVATE void secret_geometry(struct partition* entry) {
   #ifdef DEBUG
-  printf("secret_geometry()\n");
+  printf("[debug] secret_geometry()\n");
   #endif 
 
   entry->cylinders = 0;
@@ -217,7 +245,7 @@ PRIVATE int sef_cb_lu_state_save(int state) {
      have before SUBMITTING */
 
   #ifdef DEBUG
-  printf("sef_cb_lu_state_save()\n");
+  printf("[debug] sef_cb_lu_state_save()\n");
   #endif 
 
   /* remove this publish for open_counter */ 
@@ -236,7 +264,7 @@ PRIVATE int lu_state_restore(void) {
   size_t s;
 
   #ifdef DEBUG
-  printf("lu_state_restore()\n");
+  printf("[debug] lu_state_restore()\n");
   #endif 
 
   /* Restore the state. */
@@ -261,7 +289,7 @@ PRIVATE int lu_state_restore(void) {
 
 PRIVATE void sef_local_startup() {
   #ifdef DEBUG
-  printf("sef_local_startup()\n");
+  printf("[debug] sef_local_startup()\n");
   #endif 
 
   /* Register init callbacks. Use the same function for all event types */
@@ -287,7 +315,7 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   int do_announce_driver = TRUE;
 
   #ifdef DEBUG
-  printf("sef_cb_init()\n");
+  printf("[debug] sef_cb_init()\n");
   #endif 
 
 
@@ -295,7 +323,7 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   switch(type) {
     case SEF_INIT_FRESH:
       #ifdef DEBUG
-      printf("%s driver sef_cp_init() called with SEF_INIT_FRESH\n", name);
+      printf("[debug] %s driver sef_cp_init() called with SEF_INIT_FRESH\n", name);
       #endif 
 
       break;
@@ -306,14 +334,14 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
       do_announce_driver = FALSE;
 
       #ifdef DEBUG
-      printf("%s driver sef_cp_init() called with SEF_INIT_LU\n", name);
+      printf("[debug] %s driver sef_cp_init() called with SEF_INIT_LU\n", name);
       #endif 
 
       break;
 
     case SEF_INIT_RESTART:
       #ifdef DEBUG
-      printf("%s driver sef_cp_init() called with SEF_INIT_RESTART\n", name);
+      printf("[debug] %s driver sef_cp_init() called with SEF_INIT_RESTART\n", name);
       #endif 
 
       break;
