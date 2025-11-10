@@ -43,30 +43,49 @@ PRIVATE struct driver secret_tab = {
   do_nop,
 };
 
+/* ============= */
+/* GLOBAL STATES */
+/* ============= */
+
 /* Represents the /dev/secret device. */
 PRIVATE struct device secret_device;
 
+/* TODO: remove this */
 /* State variable to count the number of times the device has been opened. */
 PRIVATE int open_counter;
 
-/* Whether the file contains a secret or not (you can only read a secret once!
-   if 0, then the file has nothing in it, anything else means there is a
-   secret*/
+/* Whether the file contains a secret or not (you can only read a secret once!*/
 PRIVATE int empty;
 
+/* The number of opens the secret file has. */
+PRIVATE int open_fds;
+
+/* The count for the last read. */
+PRIVATE size_t read_bytes;
+
+/* The count for the last write. */
+PRIVATE size_t write_bytes;
+
+/* The buffer holding our read/write data */
+char buffer[SECRET_SIZE];
 
 PRIVATE char* secret_name(void) {
   #ifdef DEBUG
   printf("[debug] secret_name()\n");
   #endif 
 
-  return "secret";
+  return "secretkeeper";
 }
 
 PRIVATE int secret_open(struct driver* d, message* m) {
   #ifdef DEBUG
   printf("[debug] secret_open(). Called %d time(s).\n", ++open_counter);
   #endif 
+
+  /* Check the permissions */
+
+  /* Increment the open_fds count. */
+  open_fds++;
 
   return OK;
 }
@@ -75,6 +94,9 @@ PRIVATE int secret_close(struct driver* d, message* m) {
   #ifdef DEBUG
   printf("[debug] secret_close()\n");
   #endif 
+
+  /* Decrement the open_fds count. */
+  open_fds --;
 
   return OK;
 }
@@ -122,20 +144,10 @@ PRIVATE int secret_transfer(
     iovec_t* iov,
     unsigned nr_req) {
   
-  /* Then number of overall bytes written or read */
-  size_t bytes;
-
-  /* The buffer holding our read/write data */
-  char buffer[SECRET_SIZE];
-
-  /* The number of bytes read or written so far */
-  size_t count;
-   
   /* The return value */
   int ret;
 
   #ifdef DEBUG 
-  printf("[debug] empty status before action: %d\n", empty);
   printf("[debug] secret_transfer() ");
   #endif
 
@@ -160,13 +172,13 @@ PRIVATE int secret_transfer(
         /* foo */
       }
 
-      bytes = count - position.lo;
-      if (bytes > iov->iov_size) {
-        bytes = iov->iov_size;
+      read_bytes = write_bytes - position.lo;
+      if (read_bytes > iov->iov_size) {
+        read_bytes = iov->iov_size;
       }
 
       /* Should never be calling with bytes as a negative number or 0. */
-      if (bytes <= 0) {
+      if (read_bytes <= 0) {
         empty = TRUE;
         return OK;
       }
@@ -176,12 +188,12 @@ PRIVATE int secret_transfer(
           iov->iov_addr,                          /* dest buff          */
           0,                                      /* offset dest buff   */
           (vir_bytes) (buffer + position.lo),     /* virt add of src    */
-          bytes,                                  /* no. bytes to copy  */
+          read_bytes,                             /* no. bytes to copy  */
           D);                                     /* mem segment (D)    */
 
       if (ret == OK) {
         /* Update the input/output vector's size. */
-        iov->iov_size -= bytes;
+        iov->iov_size -= read_bytes;
 
         /* Change the status of the device to "full". */
         empty = TRUE;
@@ -207,21 +219,21 @@ PRIVATE int secret_transfer(
         return ENOSPC;
       }
 
-      bytes = iov->iov_size;
+      write_bytes = iov->iov_size;
 
       /* The position is larger than the max buffer. */
-      if (position.lo + bytes > SECRET_SIZE) {
+      if (position.lo + write_bytes > SECRET_SIZE) {
         return ENOSPC;
       }
 
       /* Nothing is to be done. */
-      if (bytes == 0) {
+      if (write_bytes == 0) {
         empty = FALSE;
         return OK;
       }
 
       /* Should never be calling with bytes as a negative number. */
-      if (bytes <= 0) {
+      if (write_bytes <= 0) {
         empty = FALSE;
         return EFAULT;
       }
@@ -231,15 +243,15 @@ PRIVATE int secret_transfer(
           iov->iov_addr,                          /* src buff           */
           0,                                      /* offset src buff    */
           (vir_bytes) (buffer + position.lo),     /* virt add of src    */
-          bytes,                                  /* no. bytes to copy  */
+          write_bytes,                            /* no. bytes to copy  */
           D);                                     /* mem segment (D)    */
 
       if (ret == OK) {
         /* Update the input/output vector's size. */
-        iov->iov_size -= bytes;
+        iov->iov_size -= write_bytes;
         
-        if (position.lo + bytes > count) {
-          count = position.lo + bytes;
+        if (position.lo + write_bytes > write_bytes) {
+          write_bytes = position.lo + write_bytes;
         }
 
         /* Change the status of the device to "full". */
@@ -338,9 +350,14 @@ PRIVATE void sef_local_startup() {
 }
 
 PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
+  char* name;
+  int do_announce_driver, i;
+
   /* Initialize the secret driver. */
-  char* name = secret_name();
-  int do_announce_driver = TRUE;
+  name = secret_name();
+
+  /* If you want to announce the driver. */
+  do_announce_driver = TRUE;
 
   #ifdef DEBUG
   printf("[debug] sef_cb_init()\n");
@@ -348,7 +365,22 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
 
   /* Initialize all of the global states. */
   open_counter = 0;
-  empty = TRUE;
+
+  /* Start out with no secret written. */
+  empty = TRUE; 
+  
+  /* Start with nobody accessing the device. */
+  open_fds = 0;
+  
+  /* Set these read/write bytes to 0 for sanity. */
+  read_bytes = 0;
+  write_bytes = 0;
+
+  /* Initialize all the buffer to NULL. */
+  buffer[SECRET_SIZE];
+  for (i=0; i < SECRET_SIZE; i++) {
+    buffer[i] = '\0';
+  }
 
   switch(type) {
     case SEF_INIT_FRESH:
