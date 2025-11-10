@@ -7,12 +7,6 @@
 
 /* TODO: ask
    1) Why do we need to make sure there is a buffer external to the sys_safe...
-   2) Is are there more manpages on iov things?
-   3) If transfer() is called with a message larger than the max_size, or called
-    with negative or zero size, is there a pareticular error to raise? The hello
-    driver went along without doing anything, just returning OK
-   4) Should writing to a file that already has a secret raise an error, or just return OK?
-      (example gives "cannot create /dev/Secret: no space left on device")
 */
 
 /* Function prototypes for the secret driver. */
@@ -116,8 +110,6 @@ PRIVATE struct device* secret_prepare(int dev) {
   secret_device.dv_base.lo = 0;
   secret_device.dv_base.hi = 0;
 
-  /* TODO: should this be the size of the buffer macro? */
-  /* secret_device.dv_size.lo = strlen(GATHER_MSG); */
   secret_device.dv_size.lo = SECRET_SIZE;
   secret_device.dv_size.hi = 0;
   return &secret_device;
@@ -143,6 +135,7 @@ PRIVATE int secret_transfer(
   int ret;
 
   #ifdef DEBUG 
+  printf("[debug] empty status before action: %d\n", empty);
   printf("[debug] secret_transfer() ");
   #endif
 
@@ -154,11 +147,10 @@ PRIVATE int secret_transfer(
       #endif
 
       /* If there is nothing to be read, then nothing is to be done. */
-      if (!empty) {
+      if (empty) {
         #ifdef DEBUG 
         printf("[debug] WARNING: trying to read from an empty secret!\n");
         #endif
-
         return OK;
       }
 
@@ -173,10 +165,9 @@ PRIVATE int secret_transfer(
         bytes = iov->iov_size;
       }
 
+      /* Should never be calling with bytes as a negative number or 0. */
       if (bytes <= 0) {
-        /* TODO: hello just went along without doing anything...
-           might be based to raise an error. */
-        /* Should never be calling with bytes as a negative number or 0. */
+        empty = TRUE;
         return OK;
       }
 
@@ -218,15 +209,21 @@ PRIVATE int secret_transfer(
 
       bytes = iov->iov_size;
 
+      /* The position is larger than the max buffer. */
       if (position.lo + bytes > SECRET_SIZE) {
-        /* TODO: Raise an error... you are trying to overflow a buffer! */
+        return ENOSPC;
       }
 
-      if (bytes <= 0) {
-        /* TODO: hello just went along without doing anything...
-           might be based to raise an error. */
-        /* Should never be calling with bytes as a negative number or 0. */
+      /* Nothing is to be done. */
+      if (bytes == 0) {
+        empty = FALSE;
         return OK;
+      }
+
+      /* Should never be calling with bytes as a negative number. */
+      if (bytes <= 0) {
+        empty = FALSE;
+        return EFAULT;
       }
 
       ret = sys_safecopyfrom(
@@ -349,8 +346,10 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   printf("[debug] sef_cb_init()\n");
   #endif 
 
-
+  /* Initialize all of the global states. */
   open_counter = 0;
+  empty = TRUE;
+
   switch(type) {
     case SEF_INIT_FRESH:
       #ifdef DEBUG
@@ -393,5 +392,6 @@ PUBLIC int main(int argc, char *argv) {
 
     /* Run the main loop. */
     driver_task(&secret_tab, DRIVER_STD);
+
     return OK;
 }
