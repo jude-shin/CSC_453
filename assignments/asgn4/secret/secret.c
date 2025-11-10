@@ -11,7 +11,8 @@
    3) If transfer() is called with a message larger than the max_size, or called
     with negative or zero size, is there a pareticular error to raise? The hello
     driver went along without doing anything, just returning OK
-   4) 
+   4) Should writing to a file that already has a secret raise an error, or just return OK?
+      (example gives "cannot create /dev/Secret: no space left on device")
 */
 
 /* Function prototypes for the secret driver. */
@@ -53,14 +54,6 @@ PRIVATE struct device secret_device;
 
 /* State variable to count the number of times the device has been opened. */
 PRIVATE int open_counter;
-
-/* The location of where the driver last read from. */
-/* TODO: I don't know what datatype this should be... */
-PRIVATE int *last_read;
-
-/* The location of where the driver last wrote from. */
-/* TODO: I don't know what datatype this should be... */
-PRIVATE int *last_write;
 
 /* Whether the file contains a secret or not (you can only read a secret once!
    if 0, then the file has nothing in it, anything else means there is a
@@ -160,6 +153,21 @@ PRIVATE int secret_transfer(
       printf("called with DEV_GATHER_S\n");
       #endif
 
+      /* If there is nothing to be read, then nothing is to be done. */
+      if (!empty) {
+        #ifdef DEBUG 
+        printf("[debug] WARNING: trying to read from an empty secret!\n");
+        #endif
+
+        return OK;
+      }
+
+      /* TODO: check the permissions to see if you were the one who wrote to =
+         the full device. */ 
+      if (0) {
+        /* foo */
+      }
+
       bytes = count - position.lo;
       if (bytes > iov->iov_size) {
         bytes = iov->iov_size;
@@ -181,7 +189,11 @@ PRIVATE int secret_transfer(
           D);                                     /* mem segment (D)    */
 
       if (ret == OK) {
+        /* Update the input/output vector's size. */
         iov->iov_size -= bytes;
+
+        /* Change the status of the device to "full". */
+        empty = TRUE;
       }
       else {
         /* Something went wrong? how can I handle this? */
@@ -195,6 +207,15 @@ PRIVATE int secret_transfer(
       printf("called with DEV_SCATTER_S\n");
       #endif
 
+      /* Return an error if you are trying to write a full secret. */
+      if (!empty) {
+        #ifdef DEBUG 
+        printf("[debug] ERROR: cannot write to a full secret. \n");
+        #endif
+
+        return ENOSPC;
+      }
+
       bytes = iov->iov_size;
 
       if (position.lo + bytes > SECRET_SIZE) {
@@ -207,7 +228,6 @@ PRIVATE int secret_transfer(
         /* Should never be calling with bytes as a negative number or 0. */
         return OK;
       }
-      
 
       ret = sys_safecopyfrom(
           proc_nr,                                /* src proc           */
@@ -217,13 +237,16 @@ PRIVATE int secret_transfer(
           bytes,                                  /* no. bytes to copy  */
           D);                                     /* mem segment (D)    */
 
-
-
       if (ret == OK) {
+        /* Update the input/output vector's size. */
         iov->iov_size -= bytes;
+        
         if (position.lo + bytes > count) {
           count = position.lo + bytes;
         }
+
+        /* Change the status of the device to "full". */
+        empty = FALSE;
       }
       else {
         /* Something went wrong? how can I handle this? */
@@ -258,8 +281,8 @@ PRIVATE int sef_cb_lu_state_save(int state) {
 
   /* remove this publish for open_counter */ 
   ds_publish_mem("open_counter", &open_counter, sizeof(open_counter), DSF_OVERWRITE);
-  ds_publish_mem("last_read", &last_read, sizeof(last_read), DSF_OVERWRITE);
-  ds_publish_mem("last_write", &last_write, sizeof(last_write), DSF_OVERWRITE);
+  /* ds_publish_mem("last_read", &last_read, sizeof(last_read), DSF_OVERWRITE);
+  ds_publish_mem("last_write", &last_write, sizeof(last_write), DSF_OVERWRITE); */
   ds_publish_mem("empty", &empty, sizeof(empty), DSF_OVERWRITE);
 
   return OK;
@@ -280,17 +303,17 @@ PRIVATE int lu_state_restore(void) {
   ds_retrieve_mem("open_counter", (char*)&open_counter, &s);
   ds_delete_mem("open_counter");
   
-  s = sizeof(last_read);
+  /* s = sizeof(last_read);
   ds_retrieve_mem("last_read", (char*)&last_read, &s);
   ds_delete_mem("last_read");
 
   s = sizeof(last_write);
   ds_retrieve_mem("last_write", (char*)&last_write, &s);
-  ds_delete_mem("last_write");
+  ds_delete_mem("last_write"); */
 
   s = sizeof(empty);
   ds_retrieve_mem("empty", (char*)&empty, &s);
-  ds_delete_mem("redable");
+  ds_delete_mem("empty");
 
   return OK;
 }
