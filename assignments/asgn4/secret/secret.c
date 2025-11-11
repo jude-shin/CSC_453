@@ -5,10 +5,6 @@
 #include <minix/ds.h>
 #include "secret.h"
 
-/* TODO: ask
-   1) Why do we need to make sure there is a buffer external to the sys_safe...
-*/
-
 /* Function prototypes for the secret driver. */
 FORWARD _PROTOTYPE( char * secret_name,   (void) );
 FORWARD _PROTOTYPE( int secret_open,      (struct driver *d, message *m) );
@@ -50,10 +46,6 @@ PRIVATE struct driver secret_tab = {
 /* Represents the /dev/secret device. */
 PRIVATE struct device secret_device;
 
-/* TODO: remove this */
-/* State variable to count the number of times the device has been opened. */
-PRIVATE int open_counter;
-
 /* Whether the file contains a secret or not (you can only read a secret once!*/
 PRIVATE int empty;
 
@@ -79,7 +71,6 @@ PRIVATE char* secret_name(void) {
 
 PRIVATE int secret_open(struct driver* d, message* m) {
   #ifdef DEBUG
-  printf("[debug] secret_open(). Called %d time(s).\n", ++open_counter);
   #endif 
 
   /* Check the permissions */
@@ -163,6 +154,7 @@ PRIVATE int secret_transfer(
         #ifdef DEBUG 
         printf("[debug] WARNING: trying to read from an empty secret!\n");
         #endif
+
         return OK;
       }
 
@@ -288,11 +280,13 @@ PRIVATE int sef_cb_lu_state_save(int state) {
   printf("[debug] sef_cb_lu_state_save()\n");
   #endif 
 
-  /* remove this publish for open_counter */ 
-  ds_publish_mem("open_counter", &open_counter, sizeof(open_counter), DSF_OVERWRITE);
-  /* ds_publish_mem("last_read", &last_read, sizeof(last_read), DSF_OVERWRITE);
-  ds_publish_mem("last_write", &last_write, sizeof(last_write), DSF_OVERWRITE); */
   ds_publish_mem("empty", &empty, sizeof(empty), DSF_OVERWRITE);
+  ds_publish_mem("open_fds", &open_fds, sizeof(open_fds), DSF_OVERWRITE);
+  ds_publish_mem("read_bytes", &read_bytes, sizeof(read_bytes), DSF_OVERWRITE);
+  ds_publish_mem("write_bytes", &write_bytes, sizeof(write_bytes), DSF_OVERWRITE);
+
+  /* TODO: Should this be multiplied by the secret_size?*/
+  ds_publish_mem("buffer", &buffer, sizeof(buffer)*SECRET_SIZE, DSF_OVERWRITE);
 
   return OK;
 }
@@ -307,22 +301,26 @@ PRIVATE int lu_state_restore(void) {
   printf("[debug] lu_state_restore()\n");
   #endif 
 
-  /* Restore the state. */
-  s = sizeof(open_counter);
-  ds_retrieve_mem("open_counter", (char*)&open_counter, &s);
-  ds_delete_mem("open_counter");
-  
-  /* s = sizeof(last_read);
-  ds_retrieve_mem("last_read", (char*)&last_read, &s);
-  ds_delete_mem("last_read");
-
-  s = sizeof(last_write);
-  ds_retrieve_mem("last_write", (char*)&last_write, &s);
-  ds_delete_mem("last_write"); */
-
   s = sizeof(empty);
   ds_retrieve_mem("empty", (char*)&empty, &s);
   ds_delete_mem("empty");
+
+  s = sizeof(open_fds);
+  ds_retrieve_mem("open_fds", (char*)&open_fds, &s);
+  ds_delete_mem("open_fds");
+
+  s = sizeof(read_bytes);
+  ds_retrieve_mem("read_bytes", (char*)&read_bytes, &s);
+  ds_delete_mem("read_bytes");
+
+  s = sizeof(write_bytes);
+  ds_retrieve_mem("write_bytes", (char*)&write_bytes, &s);
+  ds_delete_mem("write_bytes");
+
+  /* TODO: Should this be multiplied by the secret_size?*/
+  s = sizeof(buffer)*SECRET_SIZE;
+  ds_retrieve_mem("buffer", (char*)&buffer, &s);
+  ds_delete_mem("buffer");
 
   return OK;
 }
@@ -362,9 +360,6 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   #ifdef DEBUG
   printf("[debug] sef_cb_init()\n");
   #endif 
-
-  /* Initialize all of the global states. */
-  open_counter = 0;
 
   /* Start out with no secret written. */
   empty = TRUE; 
