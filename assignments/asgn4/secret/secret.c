@@ -145,6 +145,8 @@ PRIVATE int writing(
 
   /* Nothing is to be done. */
   if (write_bytes == 0) {
+    /* TODO: remove this? */
+    empty = FALSE;
     return OK;
   }
 
