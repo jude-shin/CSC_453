@@ -8,7 +8,6 @@
 /* Fixed size of the secret to be stored */
 #ifndef SECRET_SIZE
 #define SECRET_SIZE 8192
-/* #define SECRET_SIZE 2 */ 
 #endif /* SECRET_SIZE */
 
 
