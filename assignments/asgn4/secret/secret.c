@@ -266,6 +266,7 @@ PRIVATE int secret_close(struct driver* d, message* m) {
 }
 
 PRIVATE int secret_ioctl(struct driver* d, message* m) {
+  /* TODO: test this functionality? */
   int ret;
   uid_t grantee; /* the uid of teh new owner of the secret. */
 
@@ -348,9 +349,6 @@ PRIVATE void secret_geometry(struct partition* entry) {
 }
 
 PRIVATE int sef_cb_lu_state_save(int state) {
-  /* TODO: make sure these are updated with whatever global states you 
-     have before SUBMITTING */
-
   #ifdef DEBUG
   printf("[debug] sef_cb_lu_state_save()\n");
   #endif 
@@ -360,14 +358,12 @@ PRIVATE int sef_cb_lu_state_save(int state) {
   ds_publish_mem("read_bytes", &read_bytes, sizeof(read_bytes), DSF_OVERWRITE);
   ds_publish_mem("write_bytes", &write_bytes, sizeof(write_bytes), DSF_OVERWRITE);
   ds_publish_mem("buffer", &buffer, sizeof(buffer), DSF_OVERWRITE);
+  ds_publish_mem("owner", &owner, sizeof(owner), DSF_OVERWRITE);
 
   return OK;
 }
 
 PRIVATE int lu_state_restore(void) {
-  /* TODO: make sure these are updated with whatever global states you 
-     have before SUBMITTING */
-
   size_t s;
 
   #ifdef DEBUG
@@ -393,6 +389,10 @@ PRIVATE int lu_state_restore(void) {
   s = sizeof(buffer);
   ds_retrieve_mem("buffer", (char*)&buffer, &s);
   ds_delete_mem("buffer");
+
+  s = sizeof(owner);
+  ds_retrieve_mem("owner", (char*)&owner, &s);
+  ds_delete_mem("owner");
 
   return OK;
 }
@@ -448,6 +448,10 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   for (i=0; i < SECRET_SIZE; i++) {
     buffer[i] = '\0';
   }
+  
+  /* Initialize the owner to be -1... Nobody has written yet, so there is
+     no reason to set this to a particular value. */
+  owner = -1;
 
   switch(type) {
     case SEF_INIT_FRESH:
