@@ -119,7 +119,7 @@ PRIVATE int reading(
   if (ret == OK) {
     /* Update the input/output vector's size. */
     iov->iov_size -= r_bytes;
-    /*been_read = TRUE*/
+    /* been_read = TRUE */
   }
   
   return ret;
@@ -273,6 +273,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
       been_read = TRUE;
     }
     /* If we reached this point then we are trying to access using a bad
+
        combination of read, write, or access permissions */
     else {
       return EACCES;
@@ -294,7 +295,7 @@ PRIVATE int secret_close(struct driver* d, message* m) {
   /* Decrement the open_fds count. */
   open_fds--;
 
-  if (open_fds == 0 && !empty) {
+  if (open_fds == 0 && been_read) {
     empty = TRUE;
   }
   
