@@ -218,10 +218,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
   /* Device can only have one secret at a time.*/
   /* If empty */
   if (empty) {
-    /* If open(2) is called with:
-       - write permissions
-       - NOT read permissions
-       - there is no owner to the secret (already covered) */
+    /* If open(2) is called to exclusively write */
     if (w && !r) {
       /* Set the owner of the process to the one who just wrote it. */
       if (getnucred(m->IO_ENDPT, &u) == -1) {
@@ -233,6 +230,10 @@ PRIVATE int secret_open(struct driver* d, message* m) {
 
       owner = u.uid;
     }
+    /* If open(2) is called to exclusively read */
+    else if (r && !w) {
+      return OK;
+    }
     else {
       /* If we reached this point then we are trying to access using a bad
          combination of read, write, or access permissions */
@@ -243,9 +244,11 @@ PRIVATE int secret_open(struct driver* d, message* m) {
   else {
     /* you may not open for writing once it is holding a secret (full,
        aka, not empty, aka !empty) */
+    /* If open(2) is called to exclusively write */
     if (w && !r) {
       return ENOSPC;
     }
+    /* If open(2) is called to exclusively read */
     else if (r && !w) {
       /* Then check to make sure that the secret's owner is the reader */
       /* Get the 's uid */
