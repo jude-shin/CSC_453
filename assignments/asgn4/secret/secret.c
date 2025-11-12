@@ -6,23 +6,12 @@
 #include "secret.h"
 
 /* TODO ask
-   - ask about the append flag. ?
-
-   - ask about if I need to comment every damn protype callback function
-
-   - secret_ioctl ssgrant stuff?
    - 3 test cases are failing
         10) Attempt to re-read a secret                   ... FAILURE.
 
         12) Reopen for writing                            ... FAILURE.
 
         15) Write a big secret, then more                 ... FAILURE.
-
-   - do I need to check the syscall safe_copyto and from if I am going to return
-    the value (if it is an error or not)
-    - same thing with my helper functions reading and writing
-    - same thing with the secret_ioctl
-
 */
 
 
@@ -388,21 +377,25 @@ PRIVATE int secret_transfer(
   int ret;
 
   switch (opcode) {
-    /* When cat /dev/Secret is called: READ from the device */
+    /* READ from the device: ex) When cat /dev/Secret is called. */
     case DEV_GATHER_S:
       #ifdef DEBUG 
       printf("[debug] secret_transfer() called with DEV_GATHER_S\n");
       #endif
-
+  
+      /* Try to read the data from the device. 
+         Any errors in this function will be bubbled up to the caller. */
       ret = reading(proc_nr, opcode, position, iov, nr_req);
       break;
 
-    /* When echo "foo" > /dev/Secret is called: WRITE to the device */
+    /* WRITE to the device: ex) When echo "foo" > /dev/Secret is called. */
     case DEV_SCATTER_S:
       #ifdef DEBUG 
       printf("[debug] secret_transfer() called with DEV_SCATTER_S\n");
       #endif
-
+      
+      /* Try to write the data to the device. 
+         Any errors in this function will be bubbled up to the caller. */
       ret = writing(proc_nr, opcode, position, iov, nr_req);
       break;
 
