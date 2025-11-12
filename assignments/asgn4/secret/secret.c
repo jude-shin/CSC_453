@@ -269,6 +269,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
         #endif
         return EACCES;
       }
+    }
     else {
       /* If we reached this point then we are trying to access using a bad
          combination of read, write, or access permissions */
