@@ -5,14 +5,6 @@
 #include <minix/ds.h>
 #include "secret.h"
 
-/* TODO ask
-   - 3 test cases are failing
-        10) Attempt to re-read a secret                   ... FAILURE.
-        12) Reopen for writing                            ... FAILURE.
-        15) Write a big secret, then more                 ... FAILURE.
-*/
-
-
 /* Function prototypes for the secret driver. */
 FORWARD _PROTOTYPE( char * secret_name,   (void) );
 FORWARD _PROTOTYPE( int secret_open,      (struct driver *d, message *m) );
@@ -242,12 +234,6 @@ PRIVATE int secret_open(struct driver* d, message* m) {
     /* If open(2) is called to exclusively read */
     else if (r && !w) {
       open_fds++;
-
-      /* TODO: check this*/
-      if (been_read) {
-        return EACCES;
-      }
-
       been_read = TRUE;
       return OK;
     }
@@ -286,12 +272,6 @@ PRIVATE int secret_open(struct driver* d, message* m) {
       /* Indicate that we have opened the file... Whether we actually read
          any of the contents is up to the programmer, but the secret has been
          exposed. */
-
-      /* TODO: check this*/
-      if (been_read) {
-        return EACCES;
-      }
-
       been_read = TRUE;
     }
     /* If we reached this point then we are trying to access using a bad
