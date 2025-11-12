@@ -93,15 +93,6 @@ PRIVATE int reading(
   /* The return value */
   int ret;
 
-
-  
-  /* If you are trying to read, but someone else already is trying to read
-     the secret, then womp womp, they beat you to it. */
-  if (been_read) {
-    return OK;
-  }
-
-  
   /* TODO: Test this */
   if (position.lo >= w_bytes) {
     return OK;
@@ -303,7 +294,7 @@ PRIVATE int secret_close(struct driver* d, message* m) {
   /* Decrement the open_fds count. */
   open_fds--;
 
-  if (open_fds == 0 && been_read) {
+  if (open_fds == 0 && !empty) {
     empty = TRUE;
   }
   
