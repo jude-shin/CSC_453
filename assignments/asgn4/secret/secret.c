@@ -244,7 +244,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
     /* If open(2) is called to exclusively read */
     else if (r && !w) {
       /* We have read 0 bytes of our secret so far. */
-      r_bytes = 0;
+      /*r_bytes = 0;*/
       /* Mark this as being read. */
       been_read = TRUE;
       open_fds++;
@@ -286,7 +286,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
          any of the contents is up to the programmer, but the secret has been
          exposed. */
       been_read = TRUE;
-      r_bytes = 0;
+      /*r_bytes = 0;*/
     }
     /* If we reached this point then we are trying to access using a bad
 
