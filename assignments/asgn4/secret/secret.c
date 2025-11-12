@@ -297,7 +297,7 @@ PRIVATE int secret_close(struct driver* d, message* m) {
   /* if (open_fds == 0 && been_read) { */
   if (open_fds == 0 && !empty && been_read) {
     empty = TRUE;
-    empty = FALSE;
+    been_read = FALSE;
   }
   
   return OK;
