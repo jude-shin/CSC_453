@@ -48,13 +48,12 @@ PRIVATE struct driver secret_tab = {
   do_nop,
 };
 
-/* ============= */
-/* GLOBAL STATES */
-/* ============= */
-
 /* Represents the /dev/secret device. */
 PRIVATE struct device secret_device;
 
+/* ============= */
+/* GLOBAL STATES */
+/* ============= */
 /* Whether the file contains a secret or not (you can only read a secret once!*/
 PRIVATE int empty;
 
@@ -77,6 +76,11 @@ PRIVATE uid_t owner;
 /* ================ */
 /* HELPER FUNCTIONS */
 /* ================ */
+
+/* TODO: comments*/
+/* Reads the information from a transtion.
+   @param void.
+   @return char* the name of the driver. */
 PRIVATE int reading(
     int proc_nr, 
     int opcode,
@@ -120,6 +124,10 @@ PRIVATE int reading(
   return ret;
 }
 
+/* TODO: comments*/
+/* Gets the name of the driver
+   @param void.
+   @return char* the name of the driver. */
 PRIVATE int writing(
     int proc_nr, 
     int opcode,
@@ -174,14 +182,18 @@ PRIVATE int writing(
   return ret;
 }
 
+/* Gets the name of the driver
+   @param void.
+   @return char* the name of the driver. */
 PRIVATE char* secret_name(void) {
   #ifdef DEBUG
   printf("[debug] secret_name()\n");
   #endif 
 
-  return "secretkeeper";
+  return DRIVER_NAME; 
 }
 
+/* TODO: comments*/
 PRIVATE int secret_open(struct driver* d, message* m) {
   int ret;
   struct ucred u;
@@ -251,6 +263,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
   return OK;
 }
 
+/* TODO: comments*/
 PRIVATE int secret_close(struct driver* d, message* m) {
   #ifdef DEBUG
   printf("[debug] secret_close()\n");
@@ -259,12 +272,14 @@ PRIVATE int secret_close(struct driver* d, message* m) {
   /* Decrement the open_fds count. */
   open_fds--;
 
+  /* TODO: comments*/
   /* Change the status of the device to "empty" only if there is nobody 
      else writing to it. */
 
   return OK;
 }
 
+/* TODO: comments*/
 PRIVATE int secret_ioctl(struct driver* d, message* m) {
   /* TODO: test this functionality? */
   int ret;
@@ -289,6 +304,7 @@ PRIVATE int secret_ioctl(struct driver* d, message* m) {
   return ret;
 }
 
+/* TODO: comments*/
 PRIVATE struct device* secret_prepare(int dev) {
   #ifdef DEBUG
   printf("[debug] secret_prepare()\n");
@@ -302,6 +318,7 @@ PRIVATE struct device* secret_prepare(int dev) {
   return &secret_device;
 }
 
+/* TODO: comments*/
 PRIVATE int secret_transfer(
     int proc_nr, 
     int opcode,
@@ -338,6 +355,7 @@ PRIVATE int secret_transfer(
   return ret;
 }
 
+/* TODO: comments*/
 PRIVATE void secret_geometry(struct partition* entry) {
   #ifdef DEBUG
   printf("[debug] secret_geometry()\n");
@@ -348,6 +366,9 @@ PRIVATE void secret_geometry(struct partition* entry) {
   entry->sectors   = 0;
 }
 
+/* Saves the global states in this driver. 
+   @param int the state.
+   @return int status of the function call. */
 PRIVATE int sef_cb_lu_state_save(int state) {
   #ifdef DEBUG
   printf("[debug] sef_cb_lu_state_save()\n");
@@ -363,6 +384,9 @@ PRIVATE int sef_cb_lu_state_save(int state) {
   return OK;
 }
 
+/* Restores the global states in this driver. 
+   @param void.
+   @return int status of the function call. */
 PRIVATE int lu_state_restore(void) {
   size_t s;
 
@@ -397,6 +421,7 @@ PRIVATE int lu_state_restore(void) {
   return OK;
 }
 
+/* TODO: comments*/
 PRIVATE void sef_local_startup() {
   #ifdef DEBUG
   printf("[debug] sef_local_startup()\n");
@@ -419,6 +444,7 @@ PRIVATE void sef_local_startup() {
   sef_startup();
 }
 
+/* TODO: comments*/
 PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   char* name;
   int do_announce_driver, i;
@@ -489,6 +515,7 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   return OK;
 }
 
+/* TODO: comments*/
 PUBLIC int main(int argc, char *argv) {
     /* Perform initialization.  */
     sef_local_startup();
