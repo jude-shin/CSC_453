@@ -130,7 +130,7 @@ PRIVATE int reading(
   return ret;
 }
 
-/* Reads the secret from the device.
+/* Writes the secret to the device.
    @param proc_nr Process Number.
    @param opcode Operation Code.
    @param position Current write position.
@@ -237,7 +237,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
         #ifdef DEBUG 
         printf("[debug] ERROR: trying to getnucred of process.\n");
         #endif
-        return ENOSPC;
+        return EFAULT;
       }
       owner = u.uid;
     }
@@ -272,7 +272,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
         #ifdef DEBUG 
         printf("[debug] ERROR: trying to getnucred of process.\n");
         #endif
-        return ENOSPC;
+        return EFAULT;
       }
 
       if (u.uid != owner) {
@@ -286,6 +286,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
          any of the contents is up to the programmer, but the secret has been
          exposed. */
       been_read = TRUE;
+      r_bytes = 0;
     }
     /* If we reached this point then we are trying to access using a bad
 
