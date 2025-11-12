@@ -92,6 +92,15 @@ PRIVATE int reading(
 
   /* The return value */
   int ret;
+
+
+  
+  /* If you are trying to read, but someone else already is trying to read
+     the secret, then womp womp, they beat you to it. */
+  if (been_read) {
+    return OK;
+  }
+
   
   /* TODO: Test this */
   if (position.lo >= w_bytes) {
@@ -271,13 +280,6 @@ PRIVATE int secret_open(struct driver* d, message* m) {
          any of the contents is up to the programmer, but the secret has been
          exposed. */
       been_read = TRUE;
-  
-      /* If you are trying to read, but someone else already is trying to read
-         the secret, then womp womp, they beat you to it. */
-      if (been_read) {
-        /*open_fds++;*/
-        return OK;
-      }
     }
     /* If we reached this point then we are trying to access using a bad
        combination of read, write, or access permissions */
