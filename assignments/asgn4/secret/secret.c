@@ -12,6 +12,9 @@
         12) Reopen for writing                            ... FAILURE.
 
         15) Write a big secret, then more                 ... FAILURE.
+
+    - should the variables that check if something is read or not be set when
+    you finish reading or writing, or in the very beginning when it is opened?
 */
 
 
@@ -127,7 +130,7 @@ PRIVATE int reading(
   if (ret == OK) {
     /* Update the input/output vector's size. */
     iov->iov_size -= r_bytes;
-    /* been_read = TRUE */
+    /* //  been_read = TRUE */
   }
   
   return ret;
@@ -189,10 +192,10 @@ PRIVATE int writing(
     }
     
     /* Mark this to be ready to read. */
-    been_read = FALSE;
+    /* been_read = FALSE; */
     
     /* Mark this as having a full secret. */
-    empty = FALSE;
+    /* empty = FALSE; */
   }
 
   return ret;
@@ -240,6 +243,15 @@ PRIVATE int secret_open(struct driver* d, message* m) {
         #endif
         return ENOSPC;
       }
+      
+
+
+      /* TODO: updated the things when they are opened. */
+      /* Mark this to be ready to read. */
+      been_read = FALSE;
+      
+      /* Mark this as having a full secret. */
+      empty = FALSE;
 
       owner = u.uid;
     }
