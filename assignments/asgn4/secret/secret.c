@@ -202,7 +202,7 @@ PRIVATE char* secret_name(void) {
 
 /* TODO: comments*/
 PRIVATE int secret_open(struct driver* d, message* m) {
-  int ret, w, r;
+  int w, r;
   struct ucred u;
   int permission_flags;
 
@@ -464,17 +464,13 @@ PRIVATE void sef_local_startup() {
 
 /* TODO: comments*/
 PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
-  char* name;
   int do_announce_driver, i;
-
-  /* Initialize the secret driver. */
-  name = secret_name();
 
   /* If you want to announce the driver. */
   do_announce_driver = TRUE;
 
   #ifdef DEBUG
-  printf("[debug] sef_cb_init()\n");
+  printf("[debug] sef_cb_init() ");
   #endif 
 
   /* Start out with no secret written. */
@@ -489,7 +485,6 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   w_bytes = 0;
 
   /* Initialize all the buffer to NULL. */
-  buffer[SECRET_SIZE];
   for (i=0; i < SECRET_SIZE; i++) {
     buffer[i] = '\0';
   }
@@ -501,9 +496,7 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   switch(type) {
     case SEF_INIT_FRESH:
       #ifdef DEBUG
-      printf(
-          "[debug] %s driver sef_cp_init() called with SEF_INIT_FRESH\n", 
-          name);
+      printf("called with SEF_INIT_FRESH\n");
       #endif 
 
       break;
@@ -514,18 +507,14 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
       do_announce_driver = FALSE;
 
       #ifdef DEBUG
-      printf(
-          "[debug] %s driver sef_cp_init() called with SEF_INIT_LU\n"
-          , name);
+      printf("called with SEF_INIT_LU\n");
       #endif 
 
       break;
 
     case SEF_INIT_RESTART:
       #ifdef DEBUG
-      printf(
-          "[debug] %s driver sef_cp_init() called with SEF_INIT_RESTART\n"
-          , name);
+      printf("called with SEF_INIT_RESTART\n");
       #endif 
 
       break;
