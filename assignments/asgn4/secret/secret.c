@@ -202,7 +202,7 @@ PRIVATE char* secret_name(void) {
 
 /* TODO: comments*/
 PRIVATE int secret_open(struct driver* d, message* m) {
-  int ret, w, r;
+  int w, r;
   struct ucred u;
   int permission_flags;
 
@@ -247,13 +247,6 @@ PRIVATE int secret_open(struct driver* d, message* m) {
       return ENOSPC;
     }
     else if (r && !w) {
-      if (been_read) {
-        #ifdef DEBUG 
-        printf("[debug] WARNING: trying to read a read secret!\n");
-        #endif
-        return ENOSPC;
-      }
-
       /* Then check to make sure that the secret's owner is the reader */
       /* Get the 's uid */
       if (getnucred(m->IO_ENDPT, &u) == -1) {
@@ -292,7 +285,7 @@ PRIVATE int secret_close(struct driver* d, message* m) {
   /* Decrement the open_fds count. */
   open_fds--;
 
-  if (open_fds == 0) {
+  if (open_fds == 0 && been_read) {
     empty = TRUE;
   }
   
