@@ -5,6 +5,19 @@
 #include <minix/ds.h>
 #include "secret.h"
 
+/* TODO ask
+   - ask about the append flag.
+   - ask about if I need to comment every damn protype callback function
+   - secret_ioctl ssgrant stuff?
+   - 3 test cases are failing
+        10) Attempt to re-read a secret                   ... FAILURE.
+
+        12) Reopen for writing                            ... FAILURE.
+
+        15) Write a big secret, then more                 ... FAILURE.
+*/
+
+
 /* Function prototypes for the secret driver. */
 FORWARD _PROTOTYPE( char * secret_name,   (void) );
 FORWARD _PROTOTYPE( int secret_open,      (struct driver *d, message *m) );
@@ -78,11 +91,9 @@ PRIVATE uid_t owner;
 /* ================ */
 /* HELPER FUNCTIONS */
 /* ================ */
-
-/* TODO: comments*/
-/* Reads the information from a transtion.
+/* Reads the secret from the device.
    @param void.
-   @return char* the name of the driver. */
+   @return status of this function call */
 PRIVATE int reading(
     int proc_nr, 
     int opcode,
@@ -125,10 +136,10 @@ PRIVATE int reading(
   return ret;
 }
 
-/* TODO: comments*/
-/* Gets the name of the driver
+/* Writes the secret to the device.
    @param void.
-   @return char* the name of the driver. */
+TODO: params
+   @return status of this function call. */
 PRIVATE int writing(
     int proc_nr, 
     int opcode,
@@ -138,7 +149,8 @@ PRIVATE int writing(
 
   /* The return value */
   int ret;
-
+  
+  /* TODO: comment this? Change to local?*/
   w_bytes = iov->iov_size;
   
   /* TODO: Test this */
@@ -167,7 +179,7 @@ PRIVATE int writing(
       iov->iov_addr,                          /* src buff           */
       0,                                      /* offset src buff    */
       (vir_bytes) (buffer + position.lo),     /* virt add of src    */
-      w_bytes,                            /* no. bytes to copy  */
+      w_bytes,                                /* no. bytes to copy  */
       D);                                     /* mem segment (D)    */
 
   /* check the return value for this function  (I don't think this is just ok)*/
@@ -200,7 +212,11 @@ PRIVATE char* secret_name(void) {
   return DRIVER_NAME; 
 }
 
-/* TODO: comments*/
+/* Callback for when the device is opened. Checks a bunch of conditions for if
+   the device can be read or not.
+   @param d The driver that this callback if for.
+   @param m Some information that comes with the callback.
+   @return status of this funciton call. */
 PRIVATE int secret_open(struct driver* d, message* m) {
   int w, r;
   struct ucred u;
@@ -286,7 +302,10 @@ PRIVATE int secret_open(struct driver* d, message* m) {
   return OK;
 }
 
-/* TODO: comments*/
+/* Callback for when the device is closed. Notes if the device is full or not.
+   @param d The driver that this callback if for.
+   @param m Some information that comes with the callback.
+   @return status of this funciton call. */
 PRIVATE int secret_close(struct driver* d, message* m) {
   #ifdef DEBUG
   printf("[debug] secret_close()\n");
@@ -303,7 +322,10 @@ PRIVATE int secret_close(struct driver* d, message* m) {
   return OK;
 }
 
-/* TODO: comments*/
+/* Callback for when permission is transferred to someone else.
+   @param d The driver that this callback if for.
+   @param  m Some information that comes with the callback.
+   @return the status of this funciton call. */
 PRIVATE int secret_ioctl(struct driver* d, message* m) {
   /* TODO: test this functionality? */
   int ret;
@@ -381,7 +403,9 @@ PRIVATE int secret_transfer(
   return ret;
 }
 
-/* TODO: comments*/
+/* Reports the geometry of the devicd back to the filesystem. 
+   @param entry the struct that will hold all of the information.
+   @return void. */
 PRIVATE void secret_geometry(struct partition* entry) {
   #ifdef DEBUG
   printf("[debug] secret_geometry()\n");
@@ -393,8 +417,8 @@ PRIVATE void secret_geometry(struct partition* entry) {
 }
 
 /* Saves the global states in this driver. 
-   @param int the state.
-   @return int status of the function call. */
+   @param state the state of the driver.
+   @return  status of the function call. */
 PRIVATE int sef_cb_lu_state_save(int state) {
   #ifdef DEBUG
   printf("[debug] sef_cb_lu_state_save()\n");
@@ -413,7 +437,7 @@ PRIVATE int sef_cb_lu_state_save(int state) {
 
 /* Restores the global states in this driver. 
    @param void.
-   @return int status of the function call. */
+   @return status of the function call. */
 PRIVATE int lu_state_restore(void) {
   size_t s;
 
@@ -452,7 +476,9 @@ PRIVATE int lu_state_restore(void) {
   return OK;
 }
 
-/* TODO: comments*/
+/* Restores the global states in this driver. 
+   @param void.
+   @return status of the function call. */
 PRIVATE void sef_local_startup() {
   #ifdef DEBUG
   printf("[debug] sef_local_startup()\n");
@@ -475,7 +501,9 @@ PRIVATE void sef_local_startup() {
   sef_startup();
 }
 
-/* TODO: comments*/
+/* Restores the global states in this driver. 
+   @param void.
+   @return status of the function call. */
 PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   int do_announce_driver, i;
 
