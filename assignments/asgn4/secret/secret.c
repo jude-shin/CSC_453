@@ -95,15 +95,14 @@ PRIVATE int reading(
   /* The return value */
   int ret;
   size_t bytes_to_read;
-
-  /* If we are trying to read past what has been written OVERALL, don't fail, 
-     just don't return an OK status. */
-  if (position.lo >= w_bytes) {
+  
+  /* We have already read everything! */
+  if (r_bytes >= w_bytes) {
     return OK;
   }
 
   /* Don't read more than the caller requested. */
-  bytes_to_read = w_bytes - position.lo;
+  bytes_to_read = w_bytes - r_bytes;
   if (bytes_to_read > iov->iov_size) {
     bytes_to_read = iov->iov_size;
   }
@@ -124,6 +123,8 @@ PRIVATE int reading(
   if (ret == OK) {
     /* Update the input/output vector's size. */
     iov->iov_size -= bytes_to_read;
+    /* Update how much we have read. */
+    r_bytes += bytes_to_read;
   }
   
   return ret;
@@ -242,8 +243,11 @@ PRIVATE int secret_open(struct driver* d, message* m) {
     }
     /* If open(2) is called to exclusively read */
     else if (r && !w) {
-      open_fds++;
+      /* We have read 0 bytes of our secret so far. */
+      r_bytes = 0;
+      /* Mark this as being read. */
       been_read = TRUE;
+      open_fds++;
       return OK;
     }
     /* If we reached this point then we are trying to access using a bad
