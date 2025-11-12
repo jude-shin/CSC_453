@@ -55,7 +55,7 @@ PRIVATE struct device secret_device;
 /* GLOBAL STATES */
 /* ============= */
 /* Whether the file contains a secret or not (you can only read a secret once!*/
-PRIVATE int has_been_read;
+PRIVATE int been_read;
 
 /* The number of opens the secret file has. */
 PRIVATE int open_fds;
@@ -64,10 +64,10 @@ PRIVATE int open_fds;
 PRIVATE int empty;
 
 /* The count for the last read. */
-PRIVATE size_t read_bytes;
+PRIVATE size_t r_bytes;
 
 /* The count for the last write. */
-PRIVATE size_t write_bytes;
+PRIVATE size_t w_bytes;
 
 /* The buffer holding our read/write data */
 PRIVATE char buffer[SECRET_SIZE];
@@ -93,18 +93,18 @@ PRIVATE int reading(
   /* The return value */
   int ret;
   
-  read_bytes = write_bytes - position.lo;
-  if (read_bytes > iov->iov_size) {
-    read_bytes = iov->iov_size;
+  r_bytes = w_bytes - position.lo;
+  if (r_bytes > iov->iov_size) {
+    r_bytes = iov->iov_size;
   }
 
   /* Should never be calling with bytes as a negative number or 0. */
-  if (read_bytes < 0) {
+  if (r_bytes < 0) {
     return EFAULT;
   }
 
   /* Nothing is to be done. */
-  if (read_bytes == 0) {
+  if (r_bytes == 0) {
     return OK;
   }
 
@@ -113,13 +113,13 @@ PRIVATE int reading(
       iov->iov_addr,                          /* dest buff          */
       0,                                      /* offset dest buff   */
       (vir_bytes) (buffer + position.lo),     /* virt add of src    */
-      read_bytes,                             /* no. bytes to copy  */
+      r_bytes,                             /* no. bytes to copy  */
       D);                                     /* mem segment (D)    */
 
   if (ret == OK) {
     /* Update the input/output vector's size. */
-    iov->iov_size -= read_bytes;
-    has_been_read = TRUE;
+    iov->iov_size -= r_bytes;
+    been_read = TRUE;
   }
   
   return ret;
@@ -139,20 +139,20 @@ PRIVATE int writing(
   /* The return value */
   int ret;
 
-  write_bytes = iov->iov_size;
+  w_bytes = iov->iov_size;
 
   /* The position is larger than the max buffer. */
-  if (position.lo + write_bytes > SECRET_SIZE) {
+  if (position.lo + w_bytes > SECRET_SIZE) {
     return ENOSPC;
   }
 
   /* Should never be calling with bytes as a negative number. */
-  if (write_bytes < 0) {
+  if (w_bytes < 0) {
     return EFAULT;
   }
 
   /* Nothing is to be done. */
-  if (write_bytes == 0) {
+  if (w_bytes == 0) {
     return OK;
   }
 
@@ -161,20 +161,20 @@ PRIVATE int writing(
       iov->iov_addr,                          /* src buff           */
       0,                                      /* offset src buff    */
       (vir_bytes) (buffer + position.lo),     /* virt add of src    */
-      write_bytes,                            /* no. bytes to copy  */
+      w_bytes,                            /* no. bytes to copy  */
       D);                                     /* mem segment (D)    */
 
   /* check the return value for this function  (I don't think this is just ok)*/
   if (ret == OK) {
     /* Update the input/output vector's size. */
-    iov->iov_size -= write_bytes;
+    iov->iov_size -= w_bytes;
 
-    if (position.lo + write_bytes > write_bytes) {
-      write_bytes = position.lo + write_bytes;
+    if (position.lo + w_bytes > w_bytes) {
+      w_bytes = position.lo + w_bytes;
     }
     
     /* Mark this to be ready to read. */
-    has_been_read = FALSE;
+    been_read = FALSE;
     
     /* Mark this as having a full secret. */
     empty = FALSE;
@@ -207,7 +207,8 @@ PRIVATE int secret_open(struct driver* d, message* m) {
   /* bitfield that encoudes all the flags passed into open. */
   permission_flags = m->COUNT;
 
-  /* TODO: check to see if it was opened with read and write access at the saame time*/
+  /* TODO: check to see if it was opened with read and write access at the
+     saame time*/
 
   /* If open(2) is called with WRITE permissions... */
   if (permission_flags & W_BIT) {
@@ -281,7 +282,7 @@ PRIVATE int secret_close(struct driver* d, message* m) {
   open_fds--;
 
   /* There is nothing else writing or reading (the last close operation) */
-  if (open_fds == 0 && has_been_read) {
+  if (open_fds == 0 && been_read) {
     empty = TRUE;
   }
   
@@ -383,11 +384,11 @@ PRIVATE int sef_cb_lu_state_save(int state) {
   printf("[debug] sef_cb_lu_state_save()\n");
   #endif 
 
-  ds_publish_mem("has_been_read", &has_been_read, sizeof(has_been_read), DSF_OVERWRITE);
+  ds_publish_mem("been_read", &been_read, sizeof(been_read), DSF_OVERWRITE);
   ds_publish_mem("empty", &empty, sizeof(empty), DSF_OVERWRITE);
   ds_publish_mem("open_fds", &open_fds, sizeof(open_fds), DSF_OVERWRITE);
-  ds_publish_mem("read_bytes", &read_bytes, sizeof(read_bytes), DSF_OVERWRITE);
-  ds_publish_mem("write_bytes", &write_bytes, sizeof(write_bytes), DSF_OVERWRITE);
+  ds_publish_mem("r_bytes", &r_bytes, sizeof(r_bytes), DSF_OVERWRITE);
+  ds_publish_mem("w_bytes", &w_bytes, sizeof(w_bytes), DSF_OVERWRITE);
   ds_publish_mem("buffer", &buffer, sizeof(buffer), DSF_OVERWRITE);
   ds_publish_mem("owner", &owner, sizeof(owner), DSF_OVERWRITE);
 
@@ -404,9 +405,9 @@ PRIVATE int lu_state_restore(void) {
   printf("[debug] lu_state_restore()\n");
   #endif 
 
-  s = sizeof(has_been_read);
-  ds_retrieve_mem("has_been_read", (char*)&has_been_read, &s);
-  ds_delete_mem("has_been_read");
+  s = sizeof(been_read);
+  ds_retrieve_mem("been_read", (char*)&been_read, &s);
+  ds_delete_mem("been_read");
 
   s = sizeof(empty);
   ds_retrieve_mem("empty", (char*)&empty, &s);
@@ -416,13 +417,13 @@ PRIVATE int lu_state_restore(void) {
   ds_retrieve_mem("open_fds", (char*)&open_fds, &s);
   ds_delete_mem("open_fds");
 
-  s = sizeof(read_bytes);
-  ds_retrieve_mem("read_bytes", (char*)&read_bytes, &s);
-  ds_delete_mem("read_bytes");
+  s = sizeof(r_bytes);
+  ds_retrieve_mem("r_bytes", (char*)&r_bytes, &s);
+  ds_delete_mem("r_bytes");
 
-  s = sizeof(write_bytes);
-  ds_retrieve_mem("write_bytes", (char*)&write_bytes, &s);
-  ds_delete_mem("write_bytes");
+  s = sizeof(w_bytes);
+  ds_retrieve_mem("w_bytes", (char*)&w_bytes, &s);
+  ds_delete_mem("w_bytes");
 
   s = sizeof(buffer);
   ds_retrieve_mem("buffer", (char*)&buffer, &s);
@@ -474,15 +475,15 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   #endif 
 
   /* Start out with no secret written. */
-  has_been_read = FALSE; 
+  been_read = FALSE; 
   empty = TRUE; 
   
   /* Start with nobody accessing the device. */
   open_fds = 0;
   
   /* Set these read/write bytes to 0 for sanity. */
-  read_bytes = 0;
-  write_bytes = 0;
+  r_bytes = 0;
+  w_bytes = 0;
 
   /* Initialize all the buffer to NULL. */
   buffer[SECRET_SIZE];
@@ -497,7 +498,9 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   switch(type) {
     case SEF_INIT_FRESH:
       #ifdef DEBUG
-      printf("[debug] %s driver sef_cp_init() called with SEF_INIT_FRESH\n", name);
+      printf(
+          "[debug] %s driver sef_cp_init() called with SEF_INIT_FRESH\n", 
+          name);
       #endif 
 
       break;
@@ -508,14 +511,18 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
       do_announce_driver = FALSE;
 
       #ifdef DEBUG
-      printf("[debug] %s driver sef_cp_init() called with SEF_INIT_LU\n", name);
+      printf(
+          "[debug] %s driver sef_cp_init() called with SEF_INIT_LU\n"
+          , name);
       #endif 
 
       break;
 
     case SEF_INIT_RESTART:
       #ifdef DEBUG
-      printf("[debug] %s driver sef_cp_init() called with SEF_INIT_RESTART\n", name);
+      printf(
+          "[debug] %s driver sef_cp_init() called with SEF_INIT_RESTART\n"
+          , name);
       #endif 
 
       break;
