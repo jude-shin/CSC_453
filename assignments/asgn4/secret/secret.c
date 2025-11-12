@@ -317,8 +317,9 @@ PRIVATE int secret_close(struct driver* d, message* m) {
     /* The secret is now consumed. */
     empty = TRUE;
 
-    /* Reset our bytes counter. */
+    /* Reset our bytes counters. */
     w_bytes = 0;
+    r_bytes = 0;
   }
   
   return OK;
