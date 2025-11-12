@@ -109,7 +109,7 @@ PRIVATE int reading(
   }
 
   /* Should never be calling with bytes as a negative number or 0. */
-  if (r_bytes <= 0) {
+  if (bytes_to_read <= 0) {
     return OK;
   }
 
@@ -123,7 +123,7 @@ PRIVATE int reading(
 
   if (ret == OK) {
     /* Update the input/output vector's size. */
-    iov->iov_size -= r_bytes;
+    iov->iov_size -= bytes_to_read;
   }
   
   return ret;
@@ -155,7 +155,6 @@ PRIVATE int writing(
   bytes_to_write = iov->iov_size;
 
   /* The position is larger than the max buffer. */
-  /* TODO: Test this */
   if (position.lo + bytes_to_write > SECRET_SIZE) {
       bytes_to_write = SECRET_SIZE - position.lo;
   }
