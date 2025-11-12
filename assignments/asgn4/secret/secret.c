@@ -232,11 +232,12 @@ PRIVATE int secret_open(struct driver* d, message* m) {
     }
     /* If open(2) is called to exclusively read */
     else if (r && !w) {
+      /*open_fds++;*/
       return OK;
     }
+    /* If we reached this point then we are trying to access using a bad
+       combination of read, write, or access permissions */
     else {
-      /* If we reached this point then we are trying to access using a bad
-         combination of read, write, or access permissions */
       return EACCES;
     }
   }
@@ -265,15 +266,22 @@ PRIVATE int secret_open(struct driver* d, message* m) {
         #endif
         return EACCES;
       }
-      
+
       /* Indicate that we have opened the file... Whether we actually read
          any of the contents is up to the programmer, but the secret has been
          exposed. */
       been_read = TRUE;
+  
+      /* If you are trying to read, but someone else already is trying to read
+         the secret, then womp womp, they beat you to it. */
+      if (been_read) {
+        /*open_fds++;*/
+        return OK;
+      }
     }
+    /* If we reached this point then we are trying to access using a bad
+       combination of read, write, or access permissions */
     else {
-      /* If we reached this point then we are trying to access using a bad
-         combination of read, write, or access permissions */
       return EACCES;
     }
   }
