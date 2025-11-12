@@ -6,8 +6,10 @@
 #include "secret.h"
 
 /* TODO ask
-   - ask about the append flag.
+   - ask about the append flag. ?
+
    - ask about if I need to comment every damn protype callback function
+
    - secret_ioctl ssgrant stuff?
    - 3 test cases are failing
         10) Attempt to re-read a secret                   ... FAILURE.
@@ -15,6 +17,12 @@
         12) Reopen for writing                            ... FAILURE.
 
         15) Write a big secret, then more                 ... FAILURE.
+
+   - do I need to check the syscall safe_copyto and from if I am going to return
+    the value (if it is an error or not)
+    - same thing with my helper functions reading and writing
+    - same thing with the secret_ioctl
+
 */
 
 
@@ -327,15 +335,17 @@ PRIVATE int secret_close(struct driver* d, message* m) {
    @param  m Some information that comes with the callback.
    @return the status of this funciton call. */
 PRIVATE int secret_ioctl(struct driver* d, message* m) {
-  /* TODO: test this functionality? */
   int ret;
   uid_t grantee; /* the uid of teh new owner of the secret. */
 
   #ifdef DEBUG
   printf("[debug] secret_ioctl()\n");
   #endif 
-
-  /* TODO: how to check if you have only an ssgrant from enotty */
+  
+  /* The onlu request that should be allowed is SSGRANT. */
+  if (m->REQUEST != SSGRANT) {
+    return ENOTTY;
+  }
 
   ret = sys_safecopyfrom(
       m->IO_ENDPT,
