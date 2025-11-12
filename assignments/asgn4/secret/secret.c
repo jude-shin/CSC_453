@@ -243,8 +243,10 @@ PRIVATE int secret_open(struct driver* d, message* m) {
       }
       owner = u.uid;
     }
-    /* If open(2) is called to exclusively read */
-    else if (r && !w) {
+    /* If open(2) is called to exclusively read
+       The extra condition is for if the secret has already been read. It
+       prevents double reading. */
+    else if (r && !w && !been_read) {
       open_fds++;
       been_read = TRUE;
       return OK;
@@ -263,8 +265,10 @@ PRIVATE int secret_open(struct driver* d, message* m) {
     if (w && !r) {
       return ENOSPC;
     }
-    /* If open(2) is called to exclusively read */
-    else if (r && !w) {
+    /* If open(2) is called to exclusively read
+       The extra condition is for if the secret has already been read. It
+       prevents double reading. */
+    else if (r && !w && !been_read) {
       /* Then check to make sure that the secret's owner is the reader */
       /* Get the 's uid */
       if (getnucred(m->IO_ENDPT, &u) == -1) {
