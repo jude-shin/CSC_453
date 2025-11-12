@@ -225,7 +225,12 @@ PRIVATE int secret_open(struct driver* d, message* m) {
     /* If open(2) is called to exclusively write */
     if (w && !r) {
       /* Mark this to be ready to read. */
+      /* TODO: check this*/
+      if (been_read) {
+        return EACCES;
+      }
       been_read = FALSE;
+
       /* Mark this as having a full secret. */
       empty = FALSE;
       
@@ -309,9 +314,6 @@ PRIVATE int secret_close(struct driver* d, message* m) {
 
   if (open_fds == 0 && been_read) {
     empty = TRUE;
-    /* I don't think that I actually need this check. It is handled in the 
-       write */
-    /* been_read = FALSE; */
   }
   
   return OK;
