@@ -79,7 +79,11 @@ PRIVATE uid_t owner;
 /* HELPER FUNCTIONS */
 /* ================ */
 /* Reads the secret from the device.
-   @param void.
+   @param proc_nr Process Number.
+   @param opcode Operation Code.
+   @param position Current read position.
+   @param iov Input Output Vector.
+   @param nr_req Number of requests.
    @return status of this function call */
 PRIVATE int reading(
     int proc_nr, 
@@ -90,15 +94,18 @@ PRIVATE int reading(
 
   /* The return value */
   int ret;
+  size_t bytes_to_read;
 
-  /* TODO: Test this */
+  /* If we are trying to read past what has been written OVERALL, don't fail, 
+     just don't return an OK status. */
   if (position.lo >= w_bytes) {
     return OK;
   }
 
-  r_bytes = w_bytes - position.lo;
-  if (r_bytes > iov->iov_size) {
-    r_bytes = iov->iov_size;
+  /* Don't read more than the caller requested. */
+  bytes_to_read = w_bytes - position.lo;
+  if (bytes_to_read > iov->iov_size) {
+    bytes_to_read = iov->iov_size;
   }
 
   /* Should never be calling with bytes as a negative number or 0. */
@@ -111,7 +118,7 @@ PRIVATE int reading(
       iov->iov_addr,                          /* dest buff          */
       0,                                      /* offset dest buff   */
       (vir_bytes) (buffer + position.lo),     /* virt add of src    */
-      r_bytes,                                /* no. bytes to copy  */
+      bytes_to_read,                          /* no. bytes to copy  */
       D);                                     /* mem segment (D)    */
 
   if (ret == OK) {
@@ -122,10 +129,13 @@ PRIVATE int reading(
   return ret;
 }
 
-/* Writes the secret to the device.
-   @param void.
-TODO: params
-   @return status of this function call. */
+/* Reads the secret from the device.
+   @param proc_nr Process Number.
+   @param opcode Operation Code.
+   @param position Current write position.
+   @param iov Input Output Vector.
+   @param nr_req Number of requests.
+   @return status of this function call */
 PRIVATE int writing(
     int proc_nr, 
     int opcode,
@@ -135,28 +145,28 @@ PRIVATE int writing(
 
   /* The return value */
   int ret;
+  size_t bytes_to_write;
   
-  /* TODO: comment this? Change to local?*/
-  w_bytes = iov->iov_size;
-  
-  /* TODO: Test this */
+  /* Make sure you are not writing past the buffer. */
   if (position.lo >= SECRET_SIZE) {
     return ENOSPC;
   }
 
+  bytes_to_write = iov->iov_size;
+
   /* The position is larger than the max buffer. */
   /* TODO: Test this */
-  if (position.lo + w_bytes > SECRET_SIZE) {
-      w_bytes = SECRET_SIZE - position.lo;
+  if (position.lo + bytes_to_write > SECRET_SIZE) {
+      bytes_to_write = SECRET_SIZE - position.lo;
   }
 
   /* Should never be calling with bytes as a negative number. */
-  if (w_bytes < 0) {
+  if (bytes_to_write < 0) {
     return EFAULT;
   }
 
   /* Nothing is to be done. */
-  if (w_bytes == 0) {
+  if (bytes_to_write == 0) {
     return OK;
   }
 
@@ -165,16 +175,16 @@ PRIVATE int writing(
       iov->iov_addr,                          /* src buff           */
       0,                                      /* offset src buff    */
       (vir_bytes) (buffer + position.lo),     /* virt add of src    */
-      w_bytes,                                /* no. bytes to copy  */
+      bytes_to_write,                         /* no. bytes to copy  */
       D);                                     /* mem segment (D)    */
 
   /* check the return value for this function  (I don't think this is just ok)*/
   if (ret == OK) {
     /* Update the input/output vector's size. */
-    iov->iov_size -= w_bytes;
+    iov->iov_size -= bytes_to_write;
 
-    if (position.lo + w_bytes > w_bytes) {
-      w_bytes = position.lo + w_bytes;
+    if (position.lo + bytes_to_write > w_bytes) {
+      w_bytes = position.lo + bytes_to_write;
     }
   }
 
