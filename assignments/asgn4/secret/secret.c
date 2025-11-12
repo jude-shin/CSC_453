@@ -100,7 +100,7 @@ PRIVATE int reading(
 
   /* Should never be calling with bytes as a negative number or 0. */
   if (r_bytes < 0) {
-    return EFAULT;
+    return ENOSPC;
   }
 
   /* Nothing is to be done. */
@@ -148,7 +148,7 @@ PRIVATE int writing(
 
   /* Should never be calling with bytes as a negative number. */
   if (w_bytes < 0) {
-    return EFAULT;
+    return ENOSPC;
   }
 
   /* Nothing is to be done. */
@@ -211,7 +211,6 @@ PRIVATE int secret_open(struct driver* d, message* m) {
   if ((permission_flags & W_BIT) && (permission_flags & R_BIT)) {
     return EACCES;
   }
-
   /* If open(2) is called with WRITE permissions... */
   else if (permission_flags & W_BIT) {
     /* Ensure the device is empty. */
@@ -228,7 +227,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
       #ifdef DEBUG 
       printf("[debug] ERROR: trying to getnucred of process.\n");
       #endif
-      return EFAULT;
+      return ENOSPC;
     }
 
     owner = u.uid;
@@ -242,7 +241,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
       printf("[debug] WARNING: trying to read from an empty secret!\n");
       #endif
       
-      return EFAULT;
+      return ENOSPC;
     }
 
     /* Then check to make sure that the secret's owner is the reader */
@@ -251,7 +250,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
       #ifdef DEBUG 
       printf("[debug] ERROR: trying to getnucred of process.\n");
       #endif
-      return EFAULT;
+      return ENOSPC;
     }
 
     if (u.uid != owner) {
@@ -300,6 +299,8 @@ PRIVATE int secret_ioctl(struct driver* d, message* m) {
   #ifdef DEBUG
   printf("[debug] secret_ioctl()\n");
   #endif 
+
+  /* TODO: how to check if you have only an ssgrant from enotty */
 
   ret = sys_safecopyfrom(
       m->IO_ENDPT,
