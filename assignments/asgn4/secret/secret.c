@@ -309,7 +309,9 @@ PRIVATE int secret_close(struct driver* d, message* m) {
 
   if (open_fds == 0 && been_read) {
     empty = TRUE;
-    been_read = FALSE;
+    /* I don't think that I actually need this check. It is handled in the 
+       write */
+    /* been_read = FALSE; */
   }
   
   return OK;
