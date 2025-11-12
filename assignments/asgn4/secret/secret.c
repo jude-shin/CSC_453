@@ -119,7 +119,7 @@ PRIVATE int reading(
   if (ret == OK) {
     /* Update the input/output vector's size. */
     iov->iov_size -= r_bytes;
-    been_read = TRUE;
+    /*been_read = TRUE*/
   }
   
   return ret;
@@ -265,6 +265,11 @@ PRIVATE int secret_open(struct driver* d, message* m) {
         #endif
         return EACCES;
       }
+      
+      /* Indicate that we have opened the file... Whether we actually read
+         any of the contents is up to the programmer, but the secret has been
+         exposed. */
+      been_read = TRUE;
     }
     else {
       /* If we reached this point then we are trying to access using a bad
