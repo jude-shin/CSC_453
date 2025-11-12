@@ -245,7 +245,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
     }
     /* If open(2) is called to exclusively read */
     else if (r && !w) {
-      /*open_fds++;*/
+      open_fds++;
       return OK;
     }
     /* If we reached this point then we are trying to access using a bad
@@ -325,7 +325,7 @@ PRIVATE int secret_close(struct driver* d, message* m) {
    @return the status of this funciton call. */
 PRIVATE int secret_ioctl(struct driver* d, message* m) {
   int ret;
-  uid_t grantee; /* the uid of teh new owner of the secret. */
+  uid_t grantee; /* the uid of the new owner of the secret. */
 
   #ifdef DEBUG
   printf("[debug] secret_ioctl()\n");
