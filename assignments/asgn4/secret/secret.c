@@ -207,11 +207,13 @@ PRIVATE int secret_open(struct driver* d, message* m) {
   /* bitfield that encoudes all the flags passed into open. */
   permission_flags = m->COUNT;
 
-  /* TODO: check to see if it was opened with read and write access at the
-     saame time*/
+  /* Make sure the device is not opened for read-write/append */
+  if ((permission_flags & W_BIT) && (permission_flags & R_BIT)) {
+    return EACCES;
+  }
 
   /* If open(2) is called with WRITE permissions... */
-  if (permission_flags & W_BIT) {
+  else if (permission_flags & W_BIT) {
     /* Ensure the device is empty. */
     if (!empty) {
       #ifdef DEBUG 

@@ -1,16 +1,8 @@
 #ifndef __SECRET_H
 #define __SECRET_H
 
-/*#ifndef FALSE 
-#define FALSE 1
-#endif 
-
-#ifndef TRUE 
-#define TRUE 0
-#endif*/
-
 /* For debugging. To disable debugging, comment the macro definition out */
-#define DEBUG 1
+/* #define DEBUG 1 */
 
 /* ===== */
 /* MAGIC */
