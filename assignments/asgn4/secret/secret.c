@@ -238,14 +238,15 @@ PRIVATE int secret_open(struct driver* d, message* m) {
   }
   /* If open(2) is called with READ permissions... */
   else if (r && !w) {
-    /* Ensure that the device has not already been read from 
+    /* Ensure that the device has not already been read from */
     if (empty) {
       #ifdef DEBUG 
       printf("[debug] WARNING: trying to read from an empty secret!\n");
       #endif
       
-      return ENOSPC;
-    }*/
+      /*return ENOSPC;*/
+      return OK;
+    }
 
     /* Then check to make sure that the secret's owner is the reader */
     /* Get the 's uid */
