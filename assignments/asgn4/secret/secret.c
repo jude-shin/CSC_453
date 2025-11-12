@@ -294,8 +294,10 @@ PRIVATE int secret_close(struct driver* d, message* m) {
   open_fds--;
 
   /* There is nothing else writing or reading (the last close operation) */
-  if (open_fds == 0 && been_read) {
+  /* if (open_fds == 0 && been_read) { */
+  if (open_fds == 0 && !empty && been_read) {
     empty = TRUE;
+    empty = FALSE;
   }
   
   return OK;
