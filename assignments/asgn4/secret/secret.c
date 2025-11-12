@@ -130,7 +130,6 @@ PRIVATE int reading(
   if (ret == OK) {
     /* Update the input/output vector's size. */
     iov->iov_size -= r_bytes;
-    /* //  been_read = TRUE */
   }
   
   return ret;
@@ -190,12 +189,6 @@ PRIVATE int writing(
     if (position.lo + w_bytes > w_bytes) {
       w_bytes = position.lo + w_bytes;
     }
-    
-    /* Mark this to be ready to read. */
-    /* been_read = FALSE; */
-    
-    /* Mark this as having a full secret. */
-    /* empty = FALSE; */
   }
 
   return ret;
@@ -236,6 +229,11 @@ PRIVATE int secret_open(struct driver* d, message* m) {
   if (empty) {
     /* If open(2) is called to exclusively write */
     if (w && !r) {
+      /* Mark this to be ready to read. */
+      been_read = FALSE;
+      /* Mark this as having a full secret. */
+      empty = FALSE;
+      
       /* Set the owner of the process to the one who just wrote it. */
       if (getnucred(m->IO_ENDPT, &u) == -1) {
         #ifdef DEBUG 
@@ -243,21 +241,12 @@ PRIVATE int secret_open(struct driver* d, message* m) {
         #endif
         return ENOSPC;
       }
-      
-
-
-      /* TODO: updated the things when they are opened. */
-      /* Mark this to be ready to read. */
-      been_read = FALSE;
-      
-      /* Mark this as having a full secret. */
-      empty = FALSE;
-
       owner = u.uid;
     }
     /* If open(2) is called to exclusively read */
     else if (r && !w) {
       open_fds++;
+      been_read = TRUE;
       return OK;
     }
     /* If we reached this point then we are trying to access using a bad
