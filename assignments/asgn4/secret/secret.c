@@ -93,18 +93,18 @@ PRIVATE int reading(
   /* The return value */
   int ret;
   
+  /* TODO: Test this */
+  if (position.lo >= w_bytes) {
+    return OK;
+  }
+
   r_bytes = w_bytes - position.lo;
   if (r_bytes > iov->iov_size) {
     r_bytes = iov->iov_size;
   }
 
   /* Should never be calling with bytes as a negative number or 0. */
-  if (r_bytes < 0) {
-    return ENOSPC;
-  }
-
-  /* Nothing is to be done. */
-  if (r_bytes == 0) {
+  if (r_bytes <= 0) {
     return OK;
   }
 
@@ -113,7 +113,7 @@ PRIVATE int reading(
       iov->iov_addr,                          /* dest buff          */
       0,                                      /* offset dest buff   */
       (vir_bytes) (buffer + position.lo),     /* virt add of src    */
-      r_bytes,                             /* no. bytes to copy  */
+      r_bytes,                                /* no. bytes to copy  */
       D);                                     /* mem segment (D)    */
 
   if (ret == OK) {
@@ -140,15 +140,21 @@ PRIVATE int writing(
   int ret;
 
   w_bytes = iov->iov_size;
+  
+  /* TODO: Test this */
+  if (position.lo >= SECRET_SIZE) {
+    return ENOSPC;
+  }
 
   /* The position is larger than the max buffer. */
+  /* TODO: Test this */
   if (position.lo + w_bytes > SECRET_SIZE) {
-    return ENOSPC;
+      w_bytes = SECRET_SIZE - position.lo;
   }
 
   /* Should never be calling with bytes as a negative number. */
   if (w_bytes < 0) {
-    return ENOSPC;
+    return EFAULT;
   }
 
   /* Nothing is to be done. */
@@ -207,12 +213,14 @@ PRIVATE int secret_open(struct driver* d, message* m) {
   /* bitfield that encoudes all the flags passed into open. */
   permission_flags = m->COUNT;
 
-  /* Make sure the device is not opened for read-write/append */
-  if ((permission_flags & W_BIT) && (permission_flags & R_BIT)) {
+  /* We only want to allow strictly read or strictly write */
+  /* if (permission_flags != W_BIT && permission_flags != R_BIT) { */
+  if (!(permission_flags & W_BIT) && !(permission_flags & R_BIT)) {
     return EACCES;
   }
+
   /* If open(2) is called with WRITE permissions... */
-  else if (permission_flags & W_BIT) {
+  if (permission_flags & W_BIT) {
     /* Ensure the device is empty. */
     if (!empty) {
       #ifdef DEBUG 
@@ -269,15 +277,9 @@ PRIVATE int secret_open(struct driver* d, message* m) {
 
 /* TODO: comments*/
 PRIVATE int secret_close(struct driver* d, message* m) {
-  struct ucred u;
-  int permission_flags;
-
   #ifdef DEBUG
   printf("[debug] secret_close()\n");
   #endif 
-
-  /* bitfield that encoudes all the flags passed into open. */
-  permission_flags = m->COUNT;
 
   /* Decrement the open_fds count. */
   open_fds--;
