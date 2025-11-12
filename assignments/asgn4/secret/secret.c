@@ -55,11 +55,13 @@ PRIVATE struct device secret_device;
 /* GLOBAL STATES */
 /* ============= */
 /* Whether the file contains a secret or not (you can only read a secret once!*/
-PRIVATE int empty;
+PRIVATE int has_been_read;
 
 /* The number of opens the secret file has. */
-/* TODO: I don't know what this is really supposed to do at the moment. */
 PRIVATE int open_fds;
+
+/* Whether there is a secret being held or not. */
+PRIVATE int empty;
 
 /* The count for the last read. */
 PRIVATE size_t read_bytes;
@@ -98,13 +100,11 @@ PRIVATE int reading(
 
   /* Should never be calling with bytes as a negative number or 0. */
   if (read_bytes < 0) {
-    empty = TRUE;
     return EFAULT;
   }
 
   /* Nothing is to be done. */
   if (read_bytes == 0) {
-    empty = TRUE;
     return OK;
   }
 
@@ -119,6 +119,7 @@ PRIVATE int reading(
   if (ret == OK) {
     /* Update the input/output vector's size. */
     iov->iov_size -= read_bytes;
+    has_been_read = TRUE;
   }
   
   return ret;
@@ -147,14 +148,11 @@ PRIVATE int writing(
 
   /* Should never be calling with bytes as a negative number. */
   if (write_bytes < 0) {
-    empty = FALSE;
     return EFAULT;
   }
 
   /* Nothing is to be done. */
   if (write_bytes == 0) {
-    /* TODO: remove this? */
-    empty = FALSE;
     return OK;
   }
 
@@ -174,8 +172,11 @@ PRIVATE int writing(
     if (position.lo + write_bytes > write_bytes) {
       write_bytes = position.lo + write_bytes;
     }
-
-    /* Change the status of the device to "full". */
+    
+    /* Mark this to be ready to read. */
+    has_been_read = FALSE;
+    
+    /* Mark this as having a full secret. */
     empty = FALSE;
   }
 
@@ -203,14 +204,14 @@ PRIVATE int secret_open(struct driver* d, message* m) {
   printf("[debug] secret_open()\n");
   #endif 
 
-  printf("owner: %d\n", owner);
-  
   /* bitfield that encoudes all the flags passed into open. */
   permission_flags = m->COUNT;
 
+  /* TODO: check to see if it was opened with read and write access at the saame time*/
+
   /* If open(2) is called with WRITE permissions... */
   if (permission_flags & W_BIT) {
-    /* Ensure the device is empty */
+    /* Ensure the device is empty. */
     if (!empty) {
       #ifdef DEBUG 
       printf("[debug] ERROR: cannot write to a full secret. \n");
@@ -226,12 +227,13 @@ PRIVATE int secret_open(struct driver* d, message* m) {
       #endif
       return EFAULT;
     }
+
     owner = u.uid;
   }
 
   /* If open(2) is called with READ permissions... */
   if (permission_flags & R_BIT) {
-    /* Ensure that the device is full*/
+    /* Ensure that the device has not already been read from */
     if (empty) {
       #ifdef DEBUG 
       printf("[debug] WARNING: trying to read from an empty secret!\n");
@@ -240,7 +242,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
       return EFAULT;
     }
 
-    /* Then check to make sure that the owner is the one trying to read from it*/
+    /* Then check to make sure that the secret's owner is the reader */
     /* Get the 's uid */
     if (getnucred(m->IO_ENDPT, &u) == -1) {
       #ifdef DEBUG 
@@ -265,17 +267,24 @@ PRIVATE int secret_open(struct driver* d, message* m) {
 
 /* TODO: comments*/
 PRIVATE int secret_close(struct driver* d, message* m) {
+  struct ucred u;
+  int permission_flags;
+
   #ifdef DEBUG
   printf("[debug] secret_close()\n");
   #endif 
-  
+
+  /* bitfield that encoudes all the flags passed into open. */
+  permission_flags = m->COUNT;
+
   /* Decrement the open_fds count. */
   open_fds--;
 
-  /* TODO: comments*/
-  /* Change the status of the device to "empty" only if there is nobody 
-     else writing to it. */
-
+  /* There is nothing else writing or reading (the last close operation) */
+  if (open_fds == 0 && has_been_read) {
+    empty = TRUE;
+  }
+  
   return OK;
 }
 
@@ -374,6 +383,7 @@ PRIVATE int sef_cb_lu_state_save(int state) {
   printf("[debug] sef_cb_lu_state_save()\n");
   #endif 
 
+  ds_publish_mem("has_been_read", &has_been_read, sizeof(has_been_read), DSF_OVERWRITE);
   ds_publish_mem("empty", &empty, sizeof(empty), DSF_OVERWRITE);
   ds_publish_mem("open_fds", &open_fds, sizeof(open_fds), DSF_OVERWRITE);
   ds_publish_mem("read_bytes", &read_bytes, sizeof(read_bytes), DSF_OVERWRITE);
@@ -393,6 +403,10 @@ PRIVATE int lu_state_restore(void) {
   #ifdef DEBUG
   printf("[debug] lu_state_restore()\n");
   #endif 
+
+  s = sizeof(has_been_read);
+  ds_retrieve_mem("has_been_read", (char*)&has_been_read, &s);
+  ds_delete_mem("has_been_read");
 
   s = sizeof(empty);
   ds_retrieve_mem("empty", (char*)&empty, &s);
@@ -460,6 +474,7 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   #endif 
 
   /* Start out with no secret written. */
+  has_been_read = FALSE; 
   empty = TRUE; 
   
   /* Start with nobody accessing the device. */

@@ -10,7 +10,7 @@
 #endif*/
 
 /* For debugging. To disable debugging, comment the macro definition out */
-/* #define DEBUG 1 */
+#define DEBUG 1
 
 /* ===== */
 /* MAGIC */
