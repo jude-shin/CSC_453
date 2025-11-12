@@ -8,13 +8,8 @@
 /* TODO ask
    - 3 test cases are failing
         10) Attempt to re-read a secret                   ... FAILURE.
-
         12) Reopen for writing                            ... FAILURE.
-
         15) Write a big secret, then more                 ... FAILURE.
-
-    - should the variables that check if something is read or not be set when
-    you finish reading or writing, or in the very beginning when it is opened?
 */
 
 
@@ -243,10 +238,8 @@ PRIVATE int secret_open(struct driver* d, message* m) {
       }
       owner = u.uid;
     }
-    /* If open(2) is called to exclusively read
-       The extra condition is for if the secret has already been read. It
-       prevents double reading. */
-    else if (r && !w && !been_read) {
+    /* If open(2) is called to exclusively read */
+    else if (r && !w) {
       open_fds++;
       been_read = TRUE;
       return OK;
@@ -265,10 +258,8 @@ PRIVATE int secret_open(struct driver* d, message* m) {
     if (w && !r) {
       return ENOSPC;
     }
-    /* If open(2) is called to exclusively read
-       The extra condition is for if the secret has already been read. It
-       prevents double reading. */
-    else if (r && !w && !been_read) {
+    /* If open(2) is called to exclusively read */
+    else if (r && !w) {
       /* Then check to make sure that the secret's owner is the reader */
       /* Get the 's uid */
       if (getnucred(m->IO_ENDPT, &u) == -1) {
