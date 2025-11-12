@@ -202,7 +202,7 @@ PRIVATE char* secret_name(void) {
 
 /* TODO: comments*/
 PRIVATE int secret_open(struct driver* d, message* m) {
-  int ret;
+  int ret, w, r;
   struct ucred u;
   int permission_flags;
 
@@ -212,15 +212,11 @@ PRIVATE int secret_open(struct driver* d, message* m) {
 
   /* bitfield that encoudes all the flags passed into open. */
   permission_flags = m->COUNT;
-
-  /* We only want to allow strictly read or strictly write */
-  /* if (permission_flags != W_BIT && permission_flags != R_BIT) { */
-  if (!(permission_flags & W_BIT) && !(permission_flags & R_BIT)) {
-    return EACCES;
-  }
+  w = (permission_flags & W_BIT);
+  r = (permission_flags & R_BIT);
 
   /* If open(2) is called with WRITE permissions... */
-  if (permission_flags & W_BIT) {
+  if (w && !r) {
     /* Ensure the device is empty. */
     if (!empty) {
       #ifdef DEBUG 
@@ -240,9 +236,8 @@ PRIVATE int secret_open(struct driver* d, message* m) {
 
     owner = u.uid;
   }
-
   /* If open(2) is called with READ permissions... */
-  if (permission_flags & R_BIT) {
+  else if (r && !w) {
     /* Ensure that the device has not already been read from */
     if (empty) {
       #ifdef DEBUG 
@@ -267,6 +262,9 @@ PRIVATE int secret_open(struct driver* d, message* m) {
       #endif
       return EACCES;
     }
+  }
+  else {
+    return EACCES;
   }
 
   /* Increment the open_fds count. */
