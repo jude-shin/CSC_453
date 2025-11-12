@@ -202,7 +202,7 @@ PRIVATE char* secret_name(void) {
 
 /* TODO: comments*/
 PRIVATE int secret_open(struct driver* d, message* m) {
-  int w, r;
+  int ret, w, r;
   struct ucred u;
   int permission_flags;
 
@@ -215,71 +215,65 @@ PRIVATE int secret_open(struct driver* d, message* m) {
   w = (permission_flags & W_BIT);
   r = (permission_flags & R_BIT);
 
-  /* If open(2) is called with WRITE permissions... */
-  if (w && !r) {
-    /* Ensure the device is empty. */
-    if (!empty) {
-      #ifdef DEBUG 
-      printf("[debug] ERROR: cannot write to a full secret. \n");
-      #endif
+  /* Device can only have one secret at a time.*/
+  /* If empty */
+  if (empty) {
+    /* If open(2) is called with:
+       - write permissions
+       - NOT read permissions
+       - there is no owner to the secret (already covered) */
+    if (w && !r) {
+      /* Set the owner of the process to the one who just wrote it. */
+      if (getnucred(m->IO_ENDPT, &u) == -1) {
+        #ifdef DEBUG 
+        printf("[debug] ERROR: trying to getnucred of process.\n");
+        #endif
+        return ENOSPC;
+      }
 
-      return ENOSPC;
+      owner = u.uid;
     }
-
-    /* Set the owner of the process to the one who just wrote it. */
-    if (getnucred(m->IO_ENDPT, &u) == -1) {
-      #ifdef DEBUG 
-      printf("[debug] ERROR: trying to getnucred of process.\n");
-      #endif
-      return ENOSPC;
-    }
-
-    owner = u.uid;
-  }
-  /* If open(2) is called with READ permissions... */
-  else if (r && !w) {
-    /* Ensure that the device has a secret to read. 
-       For some reason the test harness wants this to just return nothing. */
-    if (empty) {
-      #ifdef DEBUG 
-      printf("[debug] WARNING: trying to read from an empty secret!\n");
-      #endif
-      
-      /*return ENOSPC;*/
-      return OK;
-    }
-    
-    /* Ensure that someone else is not already trying to read the secret...
-       (if they are, then they beat you to the first read and you don't get to
-       see it). 
-       For some reason the test harness wants this to return just nothing. */
-    if (been_read) {
-      #ifdef DEBUG 
-      printf("[debug] WARNING: trying to read a read secret!\n");
-      #endif
-
-      /*return ENOSPC;*/
-      return OK;
-    }
-
-    /* Then check to make sure that the secret's owner is the reader */
-    /* Get the 's uid */
-    if (getnucred(m->IO_ENDPT, &u) == -1) {
-      #ifdef DEBUG 
-      printf("[debug] ERROR: trying to getnucred of process.\n");
-      #endif
-      return ENOSPC;
-    }
-
-    if (u.uid != owner) {
-      #ifdef DEBUG 
-      printf("[debug] ERROR: YOU DON'T HAVE PERMISSIONS!!!\n");
-      #endif
+    else {
+      /* If we reached this point then we are trying to access using a bad
+         combination of read, write, or access permissions */
       return EACCES;
     }
   }
+  /* If full */
   else {
-    return EACCES;
+    /* you may not open for writing once it is holding a secret (full,
+       aka, not empty, aka !empty) */
+    if (w && !r) {
+      return ENOSPC;
+    }
+    else if (r && !w) {
+      if (been_read) {
+        #ifdef DEBUG 
+        printf("[debug] WARNING: trying to read a read secret!\n");
+        #endif
+        return ENOSPC;
+      }
+
+      /* Then check to make sure that the secret's owner is the reader */
+      /* Get the 's uid */
+      if (getnucred(m->IO_ENDPT, &u) == -1) {
+        #ifdef DEBUG 
+        printf("[debug] ERROR: trying to getnucred of process.\n");
+        #endif
+        return ENOSPC;
+      }
+
+      if (u.uid != owner) {
+        #ifdef DEBUG 
+        printf("[debug] ERROR: YOU DON'T HAVE PERMISSIONS!!!\n");
+        #endif
+        return EACCES;
+      }
+    else {
+      /* If we reached this point then we are trying to access using a bad
+         combination of read, write, or access permissions */
+      return EACCES;
+    }
   }
 
   /* Increment the open_fds count. */
@@ -297,11 +291,8 @@ PRIVATE int secret_close(struct driver* d, message* m) {
   /* Decrement the open_fds count. */
   open_fds--;
 
-  /* There is nothing else writing or reading (the last close operation) */
-  /* if (open_fds == 0 && been_read) { */
-  if (open_fds == 0 && !empty && been_read) {
+  if (open_fds == 0) {
     empty = TRUE;
-    been_read = FALSE;
   }
   
   return OK;
