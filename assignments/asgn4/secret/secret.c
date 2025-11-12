@@ -116,7 +116,7 @@ PRIVATE int reading(
       proc_nr,                                /* dest proc          */
       iov->iov_addr,                          /* dest buff          */
       0,                                      /* offset dest buff   */
-      (vir_bytes) (buffer + position.lo),     /* virt add of src    */
+      (vir_bytes) (buffer + r_bytes),         /* virt add of src    */
       bytes_to_read,                          /* no. bytes to copy  */
       D);                                     /* mem segment (D)    */
 
