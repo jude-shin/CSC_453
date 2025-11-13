@@ -3,7 +3,7 @@ $ su
 # chmod 666 /dev/Secret
 # ls -l /dev/Secret
 crw-rw-rw- 1 root  operator  20,   0 Nov  6 01:14 /dev/Secret
-# service up /usr/sbin/secretkeeper -dev /dev/Secret
+# service up `pwd`/secretkeeper -dev /dev/Secret
 # cat /dev/Secret
 # echo "Yayyyyy" > /dev/Secret
 # echo "Try again?" > /dev/Secret

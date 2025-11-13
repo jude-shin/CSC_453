@@ -5,22 +5,22 @@ harness passed.
 
 Minix Changes (To install my driver):
 - I followed (exactly) what the manual said to do when installing the driver 
-	(what the To Do List said to do)
+	(what the 'To Do List' said to do)
 3) I added 'secretkeeper' to 'etc/system.conf' by basically copying the hello
 	service block, and changing the name to 'secretkeeper'.
 4) I created the device file '/dev/Secret' with the command 'mknod /dev/Secret 
 	c 20 0' using the major and minor numbers as 20 and 0 respectively.
-5a) I created the directory '/usr/src/drivers/secrets' and put in the following
+5) I created the directory '/usr/src/drivers/secrets' and put in the following
 	files: 'Makefile', 'secret.c', 'secret.h'
-5b) Whenever I made changes to the driver I performed the 'make' and 'make
+	NOTE: Whenever I made changes to the driver I performed the 'make' and 'make
 	install' to make sure it was up to date.
 6) I added SSGRANT to '/usr/src/include/sys/ioctl.h' to allow for ownership
 	transfer by creating the respective header file, and adding the '#include' 
 	statement provided in the manual. I then created another file at
 	'/usr/src/include/sys/ioc_secret.h' and added the '#include' and '#define' 
 	statements provided in the manual (the so called "magic lines"). Both files
-	were copied to the directory '/usr/include/sys/' under the same name.
-
+	were copied to the directory '/usr/include/sys/' under the same name so I
+	could reference the macro. 
 
 Additional Notes:
 - I performed a deep copy of the hello driver (as did everyone), so a large
