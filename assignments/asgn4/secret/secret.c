@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <minix/ds.h>
+#include <sys/ioc_secret.h> /* for SSGRANT */
 #include "secret.h"
 
 /* Function prototypes for the secret driver. */
