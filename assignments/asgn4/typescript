@@ -1,0 +1,44 @@
+$ su
+# mknod /dev/Secret c 20 0
+# chmod 666 /dev/Secret
+# ls -l /dev/Secret
+crw-rw-rw- 1 root  operator  20,   0 Nov  6 01:14 /dev/Secret
+# service up /usr/sbin/secretkeeper -dev /dev/Secret
+# cat /dev/Secret
+# echo "Yayyyyy" > /dev/Secret
+# echo "Try again?" > /dev/Secret
+cannot create /dev/Secret: No space left on device
+# cat /dev/Secret
+Yayyyyy
+# cat /dev/Secret
+# echo "only root should see this" > /dev/Secret
+# exit
+$ cat /dev/Secret
+cat: /dev/Secret: Permission denied
+$ cat > /dev/Secret
+cannot create /dev/Secret: No space left on device
+$ su
+# cat /dev/Secret
+only root should see this
+# exit
+$ echo "The reg user should see meeee" > /dev/Secret
+$ su
+# cat /dev/Secret
+cat: /dev/Secret: Permission denied
+# exit
+$ cat /dev/Secret
+The reg user should see meeee
+$ su
+# ls
+.ashrc   .bash_history   .ellepro.b1   .ellepro.e   .exrc   .lesshst   .profile   asgn4   huge_file
+# cat .ashrc > /dev/Secret
+# cat /dev/Secret > a
+# diff a .ashrc
+# ls -l huge_file
+-rw-r--r-- 1 root  operator  37034 Nov 13 04:36 huge_file
+# cat huge_file > /dev/Secret
+cat: standard output: No space left on device
+# cat /dev/Secret > out
+# ls -l out
+-rw-r--r-- 1 root  operator  8192 Nov 13 04:37 out
+# service down secretkeeper
