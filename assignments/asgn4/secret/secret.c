@@ -92,9 +92,8 @@ PRIVATE int reading(
     iovec_t* iov,
     unsigned nr_req) {
 
-  /* The return value */
-  int ret;
-  size_t bytes_to_read;
+  int ret; /* The return value */
+  size_t bytes_to_read; /* The number of bytes to read. */
   
   /* We have already read everything! */
   if (r_bytes >= w_bytes) {
@@ -112,6 +111,8 @@ PRIVATE int reading(
     return OK;
   }
 
+  /* Perform the safe data transfer. If there are any errors (any value not OK)
+     then ret is set to that value and returned. It becomes the callers prob. */
   ret = sys_safecopyto(
       proc_nr,                                /* dest proc          */
       iov->iov_addr,                          /* dest buff          */
@@ -143,10 +144,9 @@ PRIVATE int writing(
     u64_t position, 
     iovec_t* iov,
     unsigned nr_req) {
-
-  /* The return value */
-  int ret;
-  size_t bytes_to_write;
+  
+  int ret; /* The return value */
+  size_t bytes_to_write; /* The number of bytes to write. */
   
   /* Make sure you are not writing past the buffer. */
   if (position.lo >= SECRET_SIZE) {
@@ -169,7 +169,9 @@ PRIVATE int writing(
   if (bytes_to_write == 0) {
     return OK;
   }
-
+  
+  /* Perform the safe data transfer. If there are any errors (any value not OK)
+     then ret is set to that value and returned. It becomes the callers prob. */
   ret = sys_safecopyfrom(
       proc_nr,                                /* src proc           */
       iov->iov_addr,                          /* src buff           */
@@ -178,11 +180,11 @@ PRIVATE int writing(
       bytes_to_write,                         /* no. bytes to copy  */
       D);                                     /* mem segment (D)    */
 
-  /* check the return value for this function  (I don't think this is just ok)*/
   if (ret == OK) {
     /* Update the input/output vector's size. */
     iov->iov_size -= bytes_to_write;
-
+  
+    /* Update the overall bytes written. */
     if (position.lo + bytes_to_write > w_bytes) {
       w_bytes = position.lo + bytes_to_write;
     }
@@ -191,6 +193,9 @@ PRIVATE int writing(
   return ret;
 }
 
+/* ========= */
+/* CALLBACKS */
+/* ========= */
 /* Gets the name of the driver
    @param void.
    @return char* the name of the driver. */
@@ -208,18 +213,16 @@ PRIVATE char* secret_name(void) {
    @param m Some information that comes with the callback.
    @return status of this funciton call. */
 PRIVATE int secret_open(struct driver* d, message* m) {
-  int w, r;
-  struct ucred u;
-  int permission_flags;
+  int w, r; /* Read and Write permission bitfields */
+  struct ucred u; /* Struct for the function to fill to get the caller. */
 
   #ifdef DEBUG
   printf("[debug] secret_open()\n");
   #endif 
 
-  /* bitfield that encoudes all the flags passed into open. */
-  permission_flags = m->COUNT;
-  w = (permission_flags & W_BIT);
-  r = (permission_flags & R_BIT);
+  /* Bitfield that encoudes all the flags passed into open. */
+  w = (m->COUNT & W_BIT);
+  r = (m->COUNT & R_BIT);
 
   /* Device can only have one secret at a time.*/
   /* If empty */
@@ -233,6 +236,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
       empty = FALSE;
       
       /* Set the owner of the process to the one who just wrote it. */
+      /* Get the caller's uid */
       if (getnucred(m->IO_ENDPT, &u) == -1) {
         #ifdef DEBUG 
         printf("[debug] ERROR: trying to getnucred of process.\n");
@@ -247,6 +251,9 @@ PRIVATE int secret_open(struct driver* d, message* m) {
       /*r_bytes = 0;*/
       /* Mark this as being read. */
       been_read = TRUE;
+
+      /* TODO: can I take these next two lines out? */
+      /* Update the overall count of how many open file desciptors there are. */
       open_fds++;
       return OK;
     }
@@ -258,7 +265,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
   }
   /* If full */
   else {
-    /* you may not open for writing once it is holding a secret (full,
+    /* You may not open for writing once it is holding a secret (full,
        aka, not empty, aka !empty) */
     /* If open(2) is called to exclusively write */
     if (w && !r) {
@@ -267,7 +274,7 @@ PRIVATE int secret_open(struct driver* d, message* m) {
     /* If open(2) is called to exclusively read */
     else if (r && !w) {
       /* Then check to make sure that the secret's owner is the reader */
-      /* Get the 's uid */
+      /* Get the caller's uid */
       if (getnucred(m->IO_ENDPT, &u) == -1) {
         #ifdef DEBUG 
         printf("[debug] ERROR: trying to getnucred of process.\n");
@@ -275,10 +282,8 @@ PRIVATE int secret_open(struct driver* d, message* m) {
         return EFAULT;
       }
 
+      /* The owner must be the same as the one who wrote it. */
       if (u.uid != owner) {
-        #ifdef DEBUG 
-        printf("[debug] ERROR: YOU DON'T HAVE PERMISSIONS!!!\n");
-        #endif
         return EACCES;
       }
 
@@ -289,21 +294,19 @@ PRIVATE int secret_open(struct driver* d, message* m) {
       /*r_bytes = 0;*/
     }
     /* If we reached this point then we are trying to access using a bad
-
        combination of read, write, or access permissions */
     else {
       return EACCES;
     }
   }
 
-  /* Increment the open_fds count. */
+  /* Update the overall count of how many open file desciptors there are. */
   open_fds++;
-
   return OK;
 }
 
 /* Callback for when the device is closed. Notes if the device is full or not.
-   @param d The driver that this callback if for.
+   @param d The driver that this callback is for.
    @param m Some information that comes with the callback.
    @return status of this funciton call. */
 PRIVATE int secret_close(struct driver* d, message* m) {
@@ -311,11 +314,11 @@ PRIVATE int secret_close(struct driver* d, message* m) {
   printf("[debug] secret_close()\n");
   #endif 
 
-  /* Decrement the open_fds count. */
+  /* Update the overall count of how many open file desciptors there are. */
   open_fds--;
 
   if (open_fds == 0 && been_read) {
-    /* The secret is now consumed. */
+    /* Make a note that the secret has been consumed. */
     empty = TRUE;
 
     /* Reset our bytes counters. */
@@ -328,7 +331,7 @@ PRIVATE int secret_close(struct driver* d, message* m) {
 
 /* Callback for when permission is transferred to someone else.
    @param d The driver that this callback if for.
-   @param  m Some information that comes with the callback.
+   @param m Some information that comes with the callback.
    @return the status of this funciton call. */
 PRIVATE int secret_ioctl(struct driver* d, message* m) {
   int ret;
@@ -343,6 +346,8 @@ PRIVATE int secret_ioctl(struct driver* d, message* m) {
     return ENOTTY;
   }
 
+  /* Perform the safe data transfer. If there are any errors (any value not OK)
+     then ret is set to that value and returned. It becomes the callers prob. */
   ret = sys_safecopyfrom(
       m->IO_ENDPT,
       (vir_bytes)m->IO_GRANT,
@@ -350,7 +355,8 @@ PRIVATE int secret_ioctl(struct driver* d, message* m) {
       (vir_bytes)&grantee,
       sizeof(grantee),
       D);
-
+  
+  /* Upon success, update the owner of this secret to the new grantee. */
   if (ret == OK) {
     owner = grantee;
   }
@@ -358,7 +364,11 @@ PRIVATE int secret_ioctl(struct driver* d, message* m) {
   return ret;
 }
 
-/* TODO: comments*/
+/* Prepares the device for reading or writing by setting and zeroing out common
+   values. 
+   @param unknown? (doesn't really matter for this asgn)
+   return a pointer to the device (global state).
+   */
 PRIVATE struct device* secret_prepare(int dev) {
   #ifdef DEBUG
   printf("[debug] secret_prepare()\n");
@@ -372,7 +382,13 @@ PRIVATE struct device* secret_prepare(int dev) {
   return &secret_device;
 }
 
-/* TODO: comments*/
+/* Reads the secret from the device.
+   @param proc_nr Process Number.
+   @param opcode Operation Code.
+   @param position Current read/write position.
+   @param iov Input Output Vector.
+   @param nr_req Number of requests.
+   @return status of this function call */
 PRIVATE int secret_transfer(
     int proc_nr, 
     int opcode,
@@ -380,8 +396,7 @@ PRIVATE int secret_transfer(
     iovec_t* iov,
     unsigned nr_req) {
   
-  /* The return value */
-  int ret;
+  int ret; /* The return value */
 
   switch (opcode) {
     /* READ from the device: ex) When cat /dev/Secret is called. */
@@ -486,9 +501,10 @@ PRIVATE int lu_state_restore(void) {
   return OK;
 }
 
-/* Restores the global states in this driver. 
+/* First thing that is called when the driver is started up. (Not written by me)
+   It calls a bunch of initialization functions.
    @param void.
-   @return status of the function call. */
+   @return void. */
 PRIVATE void sef_local_startup() {
   #ifdef DEBUG
   printf("[debug] sef_local_startup()\n");
@@ -511,18 +527,20 @@ PRIVATE void sef_local_startup() {
   sef_startup();
 }
 
-/* Restores the global states in this driver. 
-   @param void.
+/* Resets values when the driver starts. It will initialize the global states.
+   @param type what kind of init we should perform. 
+   @param sef_init_info_t unknown? I guess it is a struct with initialization
+    information. Not needed for this asgn.
    @return status of the function call. */
 PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   int do_announce_driver, i;
 
-  /* If you want to announce the driver. */
-  do_announce_driver = TRUE;
-
   #ifdef DEBUG
   printf("[debug] sef_cb_init() ");
   #endif 
+
+  /* If you want to announce the driver. */
+  do_announce_driver = TRUE;
 
   /* Start out with no secret written. */
   been_read = FALSE; 
@@ -531,7 +549,7 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   /* Start with nobody accessing the device. */
   open_fds = 0;
   
-  /* Set these read/write bytes to 0 for sanity. */
+  /* Set these read/write bytes to 0. */
   r_bytes = 0;
   w_bytes = 0;
 
@@ -580,7 +598,6 @@ PRIVATE int sef_cb_init(int type, sef_init_info_t *info) {
   return OK;
 }
 
-/* TODO: comments*/
 PUBLIC int main(int argc, char *argv) {
     /* Perform initialization.  */
     sef_local_startup();
