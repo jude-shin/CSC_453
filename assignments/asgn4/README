@@ -27,4 +27,8 @@ Additional Notes:
 	portion of the code was not written by me. I mainly modified the contents
 	of secret_transfer, secret_open, secret_close, and the functions to handle
 	saving the global states. The main and init functions were mostly untouched. 
-
+- The makefile provided was also copied from the hello driver. Just the names 
+	of the files were changed.
+- The file 'typescript' is the output and input of me performing some of the 
+	same commands as shown in the end of the manual. I ssh'ed into my minix system
+	and then copied the input and output from there. 
