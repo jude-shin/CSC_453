@@ -1,4 +1,4 @@
-#ifndef MINLS
-#define MINLS 
+#ifndef MINGET
+#define MINGET
 
 #endif

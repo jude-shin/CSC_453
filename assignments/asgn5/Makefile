@@ -20,7 +20,10 @@ clean:
 
 # =====================================================================
 
-dine: $(OBJS)
+minls: minls.o fs.o
+	$(LD) $(LDFLAGS) -o $@ $^
+
+minget: minget.o fs.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 %.o: %.c
