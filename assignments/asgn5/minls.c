@@ -58,13 +58,16 @@ long parse_int(char* s) {
 }
 
   int main (int argc, char *argv[]) {
-    /* Verbosity [0-2]. The higher the number, the more this program talks. */
+  /* Verbosity [0-2].
+     The higher the number, the more this program talks. */
   int verbosity = 0;
   
-  /* What partition number to use. (-1 means unpartitioned. )*/
+  /* What partition number to use [0-3].
+     (-1 means unpartitioned. )*/
   long partition = -1;
 
-  /* What subpartition number to use. (-1 means unpartitioned. ) */
+  /* What subpartition number to use [0-3].
+     (-1 means unpartitioned. ) */
   long subpartition = -1;
 
 
@@ -78,10 +81,11 @@ long parse_int(char* s) {
         verbosity++;
         break;
 
-      /* Partition flag (main) */
+      /* Partition flag (primary) */
       case 'p':
         partition = parse_int(optarg);
-        printf("we got a (main) partition: %ld\n", partition);
+        printf("we got a (primary) partition: %ld\n", partition);
+        /* TODO: check that the there are only 4 partiitons (>=3) */
         if (partition < 0) {
           fprintf(stderr, "The partition must be non-negative.\n");
           print_usage();
@@ -93,6 +97,7 @@ long parse_int(char* s) {
       case 's':
         subpartition = parse_int(optarg);
         printf("we got a (sub) partition: %ld\n", subpartition);
+        /* TODO: check that the there are only 4 partiitons (>=3) */
         if (subpartition < 0) {
           fprintf(stderr, "The subpartition must be non-negative.\n");
           print_usage();
@@ -107,9 +112,9 @@ long parse_int(char* s) {
     }
   }
   
-  /* If the subpartition is set, the partition must also be set. */
+  /* If the subpartition is set, the primary partition must also be set. */
   if (subpartition != -1 && partition == -1) {
-    fprintf(stderr, "A partition must also be selected.\n");
+    fprintf(stderr, "A primary partition must also be selected.\n");
     print_usage();
     exit(EXIT_FAILURE);
   }
