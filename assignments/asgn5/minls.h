@@ -9,4 +9,8 @@
 #define FALSE 1
 #endif
 
+/* Prints an error that shows the flags that can be used. */
+void print_usage(char* command);
+
+
 #endif
