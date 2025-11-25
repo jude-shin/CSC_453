@@ -102,6 +102,12 @@ long parse_int(char* s) {
         }
         break;
 
+      /* Help message */
+      case 'h':
+        print_usage();
+        exit(EXIT_SUCCESS);
+        break;
+
       /* If there is an unknown flag. */
       default:
         print_usage();
