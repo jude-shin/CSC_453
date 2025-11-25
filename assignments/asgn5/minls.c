@@ -4,60 +4,11 @@
 #include <sys/time.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include <errno.h>
 
 #include "minls.h"
+#include "messages.h"
 
-/* Prints an error that shows the flags that can be used with minls.
- * @param void. 
- * @return void.
- */
-void print_usage(void) {
-  fprintf(
-      stderr,
-      "usage: minls [-v] [-p num [-s num]] imagefile [path]\n"
-      "Options:\n"
-      "-p part    --- select partition for filesystem (default: none)\n"
-      "-s sub     --- select subpartition for filesystem (default: none)\n"
-      "-v verbose --- increase verbosity level\n"
-      );
-}
-
-/* Safely parses an argument that is supposed to be an integer.
- * @param s the string to be converted. 
- * @return the long that was converted.
- */
-long parse_int(char* s) {
-  long value;
-  char* end;
-  int errno; /* what kind of error occured. */
-
-  errno = 0;
-
-  value = strtol(s, &end, 10);
-
-  if (end == s) {
-    /* If the conversion could not be performed. */
-    fprintf(stderr, "No digits were found at the beginning of the argument.\n");
-    print_usage();
-    exit(EXIT_FAILURE);
-  } else if (*end != '\0') {
-    /* There were some non-numberic characters if the end pointer still points
-       to null. */
-    fprintf(stderr, "Invalid characters found after the number: '%s'\n", end);
-    print_usage();
-    exit(EXIT_FAILURE);
-  } else if (errno == ERANGE) {
-    /* Checks for overflow (and underflow) of the converted value. */
-    fprintf(stderr, "Value out of range for long.\n");
-    print_usage();
-    exit(EXIT_FAILURE);
-  } 
-
-  return value;
-}
-
-  int main (int argc, char *argv[]) {
+int main (int argc, char *argv[]) {
   /* Verbosity [0-2].
      The higher the number, the more this program talks. */
   int verbosity = 0;
@@ -88,7 +39,7 @@ long parse_int(char* s) {
         /* TODO: check that the there are only 4 partiitons (>=3) */
         if (partition < 0) {
           fprintf(stderr, "The partition must be non-negative.\n");
-          print_usage();
+          minls_usage();
           exit(EXIT_FAILURE);
         }
         break;
@@ -100,14 +51,14 @@ long parse_int(char* s) {
         /* TODO: check that the there are only 4 partiitons (>=3) */
         if (subpartition < 0) {
           fprintf(stderr, "The subpartition must be non-negative.\n");
-          print_usage();
+          minls_usage();
           exit(EXIT_FAILURE);
         }
         break;
 
       /* If there is an unknown flag. */
       default:
-        print_usage();
+        minls_usage();
         exit(EXIT_FAILURE);
     }
   }
@@ -115,7 +66,7 @@ long parse_int(char* s) {
   /* If the subpartition is set, the primary partition must also be set. */
   if (subpartition != -1 && partition == -1) {
     fprintf(stderr, "A primary partition must also be selected.\n");
-    print_usage();
+    minls_usage();
     exit(EXIT_FAILURE);
   }
 
@@ -125,7 +76,7 @@ long parse_int(char* s) {
   /* There aren't enough arguments. */
   if (remainder == 0) {
     fprintf(stderr, "Too few arguments.\n");
-    print_usage();
+    minls_usage();
     exit(EXIT_FAILURE);
   }
   
@@ -144,7 +95,7 @@ long parse_int(char* s) {
   /* There are too many arguments. */
   if (remainder >= 3) {
     fprintf(stderr, "Too many arguments.\n");
-    print_usage();
+    minls_usage();
     exit(EXIT_FAILURE);
   }
 
