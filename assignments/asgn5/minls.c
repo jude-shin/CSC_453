@@ -13,14 +13,12 @@
  * @return void.
  */
 void print_usage(void) {
-  /* TODO: write more usage*/
   fprintf(
       stderr,
       "usage: minls [-v] [-p num [-s num]] imagefile [path]\n"
       "Options:\n"
-      "-p part --- select partition for filesystem (default: none)\n"
-      "-s sub --- select subpartition for filesystem (default: none)\n"
-      "-h help --- print usage information and exit\n"
+      "-p part    --- select partition for filesystem (default: none)\n"
+      "-s sub     --- select subpartition for filesystem (default: none)\n"
       "-v verbose --- increase verbosity level\n"
       );
 }
@@ -100,12 +98,6 @@ long parse_int(char* s) {
           print_usage();
           exit(EXIT_FAILURE);
         }
-        break;
-
-      /* Help message */
-      case 'h':
-        print_usage();
-        exit(EXIT_SUCCESS);
         break;
 
       /* If there is an unknown flag. */
