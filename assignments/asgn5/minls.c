@@ -14,7 +14,15 @@
  */
 void print_usage(void) {
   /* TODO: write more usage*/
-  fprintf(stderr, "Usage: minls [-v] [-p num [-s num]] imagefile [path]\n");
+  fprintf(
+      stderr,
+      "usage: minls [-v] [-p num [-s num]] imagefile [path]\n"
+      "Options:\n"
+      "-p part --- select partition for filesystem (default: none)\n"
+      "-s sub --- select subpartition for filesystem (default: none)\n"
+      "-h help --- print usage information and exit\n"
+      "-v verbose --- increase verbosity level\n"
+      );
 }
 
 /* Safely parses an argument that is supposed to be an integer.
