@@ -4,7 +4,7 @@ LD = /bin/gcc
 LDFLAGS = -Wall -g -pedantic -lrt -lpthread
 
 ALL_PROGS = minls minget
-OBJS = minls.o minget.o fs.o
+OBJS = minls.o minget.o disk.o
 
 .PHONY: all allclean clean 
 
@@ -20,10 +20,10 @@ clean:
 
 # =====================================================================
 
-minls: minls.o fs.o
+minls: minls.o disk.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
-minget: minget.o fs.o
+minget: minget.o disk.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 %.o: %.c
