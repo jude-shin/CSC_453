@@ -36,9 +36,8 @@ int main (int argc, char *argv[]) {
       case 'p':
         partition = parse_int(optarg);
         printf("we got a (primary) partition: %ld\n", partition);
-        /* TODO: check that the there are only 4 partiitons (>=3) */
-        if (partition < 0) {
-          fprintf(stderr, "The partition must be non-negative.\n");
+        if (partition < 0 || partition >= 4) {
+          fprintf(stderr, "The primary partitions are within [0-3].\n");
           minls_usage();
           exit(EXIT_FAILURE);
         }
@@ -48,7 +47,6 @@ int main (int argc, char *argv[]) {
       case 's':
         subpartition = parse_int(optarg);
         printf("we got a (sub) partition: %ld\n", subpartition);
-        /* TODO: check that the there are only 4 partiitons (>=3) */
         if (subpartition < 0) {
           fprintf(stderr, "The subpartition must be non-negative.\n");
           minls_usage();
