@@ -8,7 +8,6 @@
 #include "utils.h"
 
 #define MAX_PRIM_PART 4
-#define MAX_VERBOSE_LEVEL 2
 
 /* Parses the flags given. If an error occurs, this function returns -1 and is 
  * handled in the caller.
@@ -39,7 +38,7 @@ int parse_flags(
         /* Partition flag (primary) */
       case 'p':
         *prim_part = parse_positive_int(optarg);
-        if (prim_part < 0) {
+        if (*prim_part < 0) {
           fprintf(stderr, "An error occured parsing the primary partition\n");
           return -1;
         }
@@ -143,7 +142,7 @@ int parse_minls_input(
   size_t path_size = sizeof(char)*strlen("/")+1;
   *path = malloc(path_size);
   if (*path == NULL) {
-    perror("error malloc(3)'ing path");
+    fprintf(stderr, "error malloc()'ing path\n");
     return -1;
   }
   memcpy(*path, "/", path_size);
@@ -160,25 +159,23 @@ int parse_minls_input(
     size_t imagefile_size = sizeof(char)*(strlen(argv[i])+1);
     *imagefile = malloc(imagefile_size);
     if (*path == NULL) {
-      perror("error malloc(3)'ing imagefile");
+      fprintf(stderr, "error malloc()'ing imagefile\n");
       return -1;
     }
     memcpy(*imagefile, argv[i], imagefile_size);
     i++;
-    printf("imagefile: %s\n", *imagefile);
   }
 
   /* There is also a path. */
-  if (remainder == 2) {
+  if (remainder >= 2) {
     free(*path);
     path_size = sizeof(char)*strlen(argv[i])+1;
     *path = malloc(path_size);
     if (*path == NULL) {
-      perror("error malloc(3)'ing path");
+      fprintf(stderr, "error malloc()'ing path\n");
       return -1;
     }
     memcpy(*path, argv[i], path_size);
-    printf("path: %s\n", *path);
   }
 
   /* There are too many arguments. */
@@ -227,18 +224,46 @@ int parse_minget_input(
 
   /* There is an imagefile and srcpath. */
   if (remainder >= 2) {
-    *imagefile = argv[i++];
-    *srcpath = argv[i++];
+    size_t imagefile_size = sizeof(char)*strlen(argv[i])+1;
+    *imagefile = malloc(imagefile_size);
+    if (*imagefile == NULL) {
+      fprintf(stderr, "error malloc()'ing imagefile\n");
+      return -1;
+    }
+    memcpy(*imagefile, argv[i], imagefile_size);
+    i++;
+
+    size_t srcpath_size = sizeof(char)*strlen(argv[i])+1;
+    *srcpath = malloc(srcpath_size);
+    if (*srcpath == NULL) {
+      fprintf(stderr, "error malloc()'ing srcpath\n");
+      free(*imagefile);
+      return -1;
+    }
+    memcpy(*dstpath, argv[i], srcpath_size);
+    i++;
   }
 
   /* There is also a dstpath. */
-  if (remainder == 3) {
-    *dstpath = argv[i++];
+  if (remainder >= 3) {
+    size_t dstpath_size = sizeof(char)*strlen(argv[i])+1;
+    *dstpath = malloc(dstpath_size);
+    if (*dstpath == NULL) {
+      fprintf(stderr, "error malloc()'ing dstpath\n");
+      free(*imagefile);
+      free(*srcpath);
+      return -1;
+    }
+    memcpy(*dstpath, argv[i], dstpath_size);
+    i++;
   }
 
   /* There are too many arguments. */
   if (remainder >= 4) {
     fprintf(stderr, "Too many arguments.\n");
+    free(imagefile);
+    free(srcpath);
+    free(dstpath);
     return -1;
   }
 
