@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-#include "utils.h"
+#include "input.h"
 #include "messages.h"
 
 int main (int argc, char *argv[]) {

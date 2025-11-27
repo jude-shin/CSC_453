@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "utils.h"
+#include "input.h"
 
 #define MAX_PRIM_PART 4
 

@@ -1,5 +1,5 @@
-#ifndef UTILS 
-#define UTILS 
+#ifndef INPUT 
+#define INPUT 
 
 /* Parses the flags given. Exits with EXIT_FAILURE if anything goes wrong. */
 int parse_flags(
