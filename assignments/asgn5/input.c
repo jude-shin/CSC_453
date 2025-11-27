@@ -202,46 +202,22 @@ int parse_minget_input(
 
   /* There is an imagefile and srcpath. */
   if (remainder >= 2) {
-    size_t imagefile_size = sizeof(char)*strlen(argv[i])+1;
-    *imagefile = malloc(imagefile_size);
-    if (*imagefile == NULL) {
-      fprintf(stderr, "error malloc()'ing imagefile\n");
-      return -1;
-    }
-    memcpy(*imagefile, argv[i], imagefile_size);
-    i++;
+    /* point imagefile to the existing string data in argv */
+    *imagefile = argv[i++];
 
-    size_t srcpath_size = sizeof(char)*strlen(argv[i])+1;
-    *srcpath = malloc(srcpath_size);
-    if (*srcpath == NULL) {
-      fprintf(stderr, "error malloc()'ing srcpath\n");
-      free(*imagefile);
-      return -1;
-    }
-    memcpy(*dstpath, argv[i], srcpath_size);
-    i++;
+    /* point srcpath to the existing string data in argv */
+    *srcpath = argv[i++];
   }
 
   /* There is also a dstpath. */
   if (remainder >= 3) {
-    size_t dstpath_size = sizeof(char)*strlen(argv[i])+1;
-    *dstpath = malloc(dstpath_size);
-    if (*dstpath == NULL) {
-      fprintf(stderr, "error malloc()'ing dstpath\n");
-      free(*imagefile);
-      free(*srcpath);
-      return -1;
-    }
-    memcpy(*dstpath, argv[i], dstpath_size);
-    i++;
+    /* point dstpath to the existing string data in argv */
+    *dstpath = argv[i++];
   }
 
   /* There are too many arguments. */
   if (remainder >= 4) {
     fprintf(stderr, "Too many arguments.\n");
-    free(imagefile);
-    free(srcpath);
-    free(dstpath);
     return -1;
   }
 
