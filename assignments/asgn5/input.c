@@ -121,8 +121,8 @@ int parse_positive_int(char* s) {
  * @param argc number of arguments passed to the main function
  * @param argv[] array of strings passes as arguments to the main function
  * @param imagefile a ptr to the string that represents the imagefile (req)
- * @param path a ptr to the string that represents the imagefile. Note that this
- *  is set to the root path "/" if the user does not specify it.
+ * @param path a ptr to the string that represents the path directory. Note
+ *  that this is set to NULL if the user does not specify it.
  * @return the number of arguments that were processed, -1 if anything goes
  *  wrong.
  */
@@ -138,52 +138,30 @@ int parse_minls_input(
   /* How many arguments are there (aside from the flags). */
   int remainder = argc - i;
 
-  /* path is optional, and is set to the default root path. */
-  /* size of the path string including the null terminator. */
-  size_t path_size = sizeof(char)*strlen("/")+1;
-  *path = malloc(path_size);
-  if (*path == NULL) {
-    fprintf(stderr, "error malloc()'ing path\n");
-    return -1;
-  }
-  memcpy(*path, "/", path_size);
+  /* path is optional, and is set to NULL. */
+  *path = NULL;
 
   /* There aren't enough arguments. */
   if (remainder <= 0) {
     fprintf(stderr, "Too few arguments.\n");
-    free(*path);
     return -1;
   }
 
   /* There is an imagefile. */
   if (remainder >= 1) {
-    size_t imagefile_size = sizeof(char)*(strlen(argv[i])+1);
-    *imagefile = malloc(imagefile_size);
-    if (*path == NULL) {
-      fprintf(stderr, "error malloc()'ing imagefile\n");
-      return -1;
-    }
-    memcpy(*imagefile, argv[i], imagefile_size);
-    i++;
+    /* point imagefile to the existing string data in argv */
+    *imagefile = argv[i++];
   }
 
   /* There is also a path. */
   if (remainder >= 2) {
-    free(*path);
-    path_size = sizeof(char)*strlen(argv[i])+1;
-    *path = malloc(path_size);
-    if (*path == NULL) {
-      fprintf(stderr, "error malloc()'ing path\n");
-      return -1;
-    }
-    memcpy(*path, argv[i], path_size);
+    /* point path to the existing string data in argv */
+    *path = argv[i++];
   }
 
   /* There are too many arguments. */
   if (remainder >= 3) {
     fprintf(stderr, "Too many arguments.\n");
-    free(*imagefile);
-    free(*path);
     return -1;
   }
 
@@ -214,7 +192,6 @@ int parse_minget_input(
   int remainder = argc - i;
 
   /* dstpath is optional, and is set to NULL */
-  /* TODO: This is later "translated" to stdout */
   *dstpath = NULL;
 
   /* There aren't enough arguments. */

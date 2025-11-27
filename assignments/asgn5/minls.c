@@ -52,6 +52,15 @@ int main (int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  if (imagefile == NULL) {
+    /* foo */
+  }
+
+  if (path == NULL) {
+    /* foo */
+    path = "/";
+  }
+
   printf("\n--- PARSED ITEMS ---\n");
   printf("IMAGEFILE: %s\n", imagefile);
   printf("PATH: %s\n", path);

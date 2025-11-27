@@ -5,7 +5,7 @@ LDFLAGS = -Wall -g -pedantic -lrt -lpthread
 
 ALL_PROGS = minls minget
 OBJS = minls.o minget.o 
-HELPER_OBJS	= disk.o messages.o utils.o
+HELPER_OBJS	= disk.o messages.o input.o
 
 .PHONY: all allclean clean 
 
