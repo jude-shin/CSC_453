@@ -14,7 +14,8 @@ int parse_minls_input(
     int argc, 
     char* argv[], 
     char** imagefile,
-    char** path);
+    char** path,
+    int i);
 
 /* Parses the rest of the input for minget, setting the caller values. */
 int parse_minget_input(
@@ -22,7 +23,8 @@ int parse_minget_input(
     char* argv[], 
     char** imagefile,
     char** srcpath, 
-    char** dstpath);
+    char** dstpath,
+    int i);
 
 /* Safely parses an argument that is supposed to be a positive integer. Returns
    -1 if something goes wrong. */

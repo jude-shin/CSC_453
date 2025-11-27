@@ -3,10 +3,6 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-// #include <sys/time.h>
-// #include <pthread.h>
-// #include <semaphore.h>
-
 #include "input.h"
 #include "messages.h"
 
@@ -26,38 +22,27 @@ int main (int argc, char *argv[]) {
 
   /* The path argument given. */
   char* path = NULL;
-
-  /* Parse the inputs. */
+  
   /* Parses the flags passed into this function, setting the verbosity, primary
      partition, subpartition numbers, and returning the number of flags
-     processed. */
-  int parsed_flags = parse_flags(argc, argv, &verbose, &prim_part, &sub_part);
-  /* If something went wrong in parse_flags, -1 is returned, and the error 
-     message is printed in the function. Catch this case by printing the 
-     general usage statement and exiting. */
-  if (parsed_flags == -1) {
+     processed. If something went wrong when parsing the flags, -1 is returned,
+     and the error message is printed in the function. */
+  int pd_flags = parse_flags(argc, argv, &verbose, &prim_part, &sub_part);
+
+  /* Parses the path arguments, pointing imagefile and path to the respective
+     strings in argv upon success. If something went wrong when parsing the 
+     arguments, -1 is returned, and the error message is printed in that 
+     function. */
+  int pd_args = parse_minls_input(argc, argv, &imagefile, &path, pd_flags);
+
+  /* Catch errors by printing the general usage statement and exiting. */
+  if (pd_flags == -1 || pd_args == -1) {
     minls_usage();
     exit(EXIT_FAILURE);
-  }
-
-  /* Parses the path arguments, malloc'ing space for the imagefile and path 
-     upon success. Upon failure, the respective pointers are cleaned up
-     (freed) already.*/
-  int parsed_args = parse_minls_input(argc, argv, &imagefile, &path);
-  /* If something went wrong when parsing the arguments, -1 is returned, and 
-     the error message is printed in that function. Catch this case by printing
-     the general usage statement and exiting. */
-  if (parsed_args == -1) {
-    minls_usage();
-    exit(EXIT_FAILURE);
-  }
-
-  if (imagefile == NULL) {
-    /* foo */
   }
 
   if (path == NULL) {
-    /* foo */
+    /* Set the default path to the root directory '/' */
     path = "/";
   }
 

@@ -123,6 +123,7 @@ int parse_positive_int(char* s) {
  * @param imagefile a ptr to the string that represents the imagefile (req)
  * @param path a ptr to the string that represents the path directory. Note
  *  that this is set to NULL if the user does not specify it.
+ * @param i the number of flags that were parsed.
  * @return the number of arguments that were processed, -1 if anything goes
  *  wrong.
  */
@@ -130,10 +131,14 @@ int parse_minls_input(
     int argc, 
     char* argv[], 
     char** imagefile,
-    char** path) {
+    char** path,
+    int i) {
 
-  /* The number of flags that were parsed. */
-  int i = optind;
+  /* Make sure the number of flags processed was correct, or else the indexing
+     of the rest of the argv's will be off. */
+  if (i < 0) {
+    return -1;
+  }
 
   /* How many arguments are there (aside from the flags). */
   int remainder = argc - i;
@@ -175,6 +180,7 @@ int parse_minls_input(
  * @param srcpath a ptr to the string that represents the source path.
  * @param dstpath a ptr to the string that represents the destination path. Note
  *  that this is set to NULL if the user does not specify it.
+ * @param i the number of flags that were parsed.
  * @return the number of arguments that were processed. -1 if anything goes
  *  wrong.
  */
@@ -183,10 +189,14 @@ int parse_minget_input(
     char* argv[], 
     char** imagefile,
     char** srcpath, 
-    char** dstpath) {
+    char** dstpath, 
+    int i) {
 
-  /* The number of flags that were parsed. */
-  int i = optind;
+  /* Make sure the number of flags processed was correct, or else the indexing
+     of the rest of the argv's will be off. */
+  if (i < 0) {
+    return -1;
+  }
 
   /* How many arguments are there (aside from the flags). */
   int remainder = argc - i;
