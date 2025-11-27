@@ -1,16 +1,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/time.h>
-#include <pthread.h>
-#include <semaphore.h>
+#include <stdbool.h>
+
+// #include <sys/time.h>
+// #include <pthread.h>
+// #include <semaphore.h>
 
 #include "input.h"
 #include "messages.h"
 
 int main (int argc, char *argv[]) {
-  /* Verbosity. The higher the number, the more this program talks. */
-  int verbosity = 0;
+  /* Verbosity. If set, print the partition table(s) superblock, and inode of 
+     source file/directory to stderr. */
+  int verbose = false;
   
   /* What primarty partition number to use (-1 means unpartitioned. )*/
   int prim_part = -1;
@@ -28,7 +31,7 @@ int main (int argc, char *argv[]) {
   /* Parses the flags passed into this function, setting the verbosity, primary
      partition, subpartition numbers, and returning the number of flags
      processed. */
-  int parsed_flags = parse_flags(argc, argv, &verbosity, &prim_part, &sub_part);
+  int parsed_flags = parse_flags(argc, argv, &verbose, &prim_part, &sub_part);
   /* If something went wrong in parse_flags, -1 is returned, and the error 
      message is printed in the function. Catch this case by printing the 
      general usage statement and exiting. */
@@ -52,7 +55,7 @@ int main (int argc, char *argv[]) {
   printf("\n--- PARSED ITEMS ---\n");
   printf("IMAGEFILE: %s\n", imagefile);
   printf("PATH: %s\n", path);
-  printf("VERBOSITY: %d\n", verbosity);
+  printf("VERBOSE: %d\n", verbose);
   printf("PRIM PART: %d\n", prim_part);
   printf("SUB PART: %d\n\n", sub_part);
 

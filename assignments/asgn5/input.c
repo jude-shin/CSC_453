@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdbool.h>
 
 #include "input.h"
 
@@ -13,7 +14,7 @@
  * handled in the caller.
  * @param argc number of arguments passed to the main function
  * @param argv[] array of strings passes as arguments to the main function
- * @param verbosity a ptr to the int tracking the verbosity
+ * @param verbose a ptr to the int tracking the verbosity 
  * @param prim_part a ptr to the int tracking the number of primary partition
  * @param sub_part a ptr to the int tracking the number of sub partitions 
  * @param the 
@@ -22,7 +23,7 @@
 int parse_flags(
     int argc, 
     char* argv[], 
-    int* verbosity, 
+    int* verbose, 
     int* prim_part, 
     int* sub_part) {
   /* Loop through all of the arguments, only accepting the flagw -v -p and -s
@@ -32,7 +33,7 @@ int parse_flags(
     switch (opt) {
       /* Verbosity flag */
       case 'v':
-        verbosity++;
+        *verbose = true;
         break;
 
         /* Partition flag (primary) */
