@@ -10,6 +10,5 @@ void minls_usage(void);
 void minget_usage(void);
 
 /* GENERAL */
-long parse_int(char* s);
 
 #endif

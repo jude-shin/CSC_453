@@ -4,7 +4,8 @@ LD = /bin/gcc
 LDFLAGS = -Wall -g -pedantic -lrt -lpthread
 
 ALL_PROGS = minls minget
-OBJS = minls.o minget.o disk.o messages.o
+OBJS = minls.o minget.o 
+HELPER_OBJS	= disk.o messages.o utils.o
 
 .PHONY: all allclean clean 
 
@@ -16,14 +17,14 @@ allclean: clean
 	rm -f $(ALL_PROGS) 
 
 clean:	
-	rm -f $(OBJS)
+	rm -f $(OBJS) $(HELPER_OBJS)
 
 # =====================================================================
 
-minls: minls.o disk.o messages.o
+minls: minls.o $(HELPER_OBJS) 
 	$(LD) $(LDFLAGS) -o $@ $^
 
-minget: minget.o disk.o messages.o
+minget: minget.o $(HELPER_OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
 %.o: %.c

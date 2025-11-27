@@ -1,0 +1,31 @@
+#ifndef UTILS 
+#define UTILS 
+
+/* Parses the flags given. Exits with EXIT_FAILURE if anything goes wrong. */
+int parse_flags(
+    int argc, 
+    char* argv[], 
+    int* verbosity, 
+    int* prim_part, 
+    int* sub_part);
+
+/* Parses the rest of the input for minls, setting the caller values. */
+int parse_minls_input(
+    int argc, 
+    char* argv[], 
+    char** imagefile,
+    char** path);
+
+/* Parses the rest of the input for minget, setting the caller values. */
+int parse_minget_input(
+    int argc, 
+    char* argv[], 
+    char** imagefile,
+    char** srcpath, 
+    char** dstpath);
+
+/* Safely parses an argument that is supposed to be a positive integer. Returns
+   -1 if something goes wrong. */
+int parse_positive_int(char* s);
+
+#endif
