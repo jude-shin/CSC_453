@@ -21,10 +21,18 @@
 #define SIG511_OFFSET 511
 #define SIG511_EXPECTED 0xAA
 
-/* TODO: check the addr parameter */
-void load_part_table(part_tbl* partition_table, int addr, FILE* image) { 
+/* Based on an address (primary partition will start at 0, and any subpartition
+ * will start somewhere else) this function populates the given partition_table
+ * struct with the data read in the image. Whether the populated data is valid 
+ * is entirely up to the address variable.
+ * @param partition_table the struct that will be filled (& referenced later).
+ * @param addr the address that the partition will start at. 
+ * @param image the imagefile that the disk is stored in.
+ * @return void.
+ */
+void load_part_table(part_tbl* partition_table, long addr, FILE* image) { 
   /* Seek to the correct location that the partition table resides. */
-  fseek(image, PART_TABLE_ADDR, SEEK_SET);
+  fseek(image, addr, SEEK_SET);
   
   /* Read the partition_table, storing its contents in the struct for us to 
      reference later on. */
@@ -35,8 +43,17 @@ void load_part_table(part_tbl* partition_table, int addr, FILE* image) {
   }
 }
 
+/* Check to see if the partition table holds useful information for this
+ * assignment. This includes the two signatures, that this is a bootable image,
+ * and if the partition is from minix. This function does not return anything;
+ * If the program does not exit after calling this function, then the partition
+ * table is valid. Otherwise, it will just exit and do nothing.
+ * @param partition_table the struct that holds all this information. 
+ * @return void.
+ */
 void validate_part_table(part_tbl* partition_table) {
   /* check that the image is bootable */
+  /* TODO: we might not actually want this. */
   if (partition_table->bootind != BOOTABLE_MAGIC) {
     fprintf(stderr, "this image is not bootable\n");
     exit(EXIT_FAILURE);
@@ -68,7 +85,19 @@ void validate_part_table(part_tbl* partition_table) {
 }
   
 
-/* Opens the imagefile as readonly, and calculates the offset of the. */
+/* Opens the imagefile as readonly, and calculates the offset of the specified
+ * partition. If anything goes wrong, then this function will exit with 
+ * EXIT_FAILURE. 
+ * @param mfs a struct that holds an open file descriptor, and the offset (the
+ *  offset from the beginning of the image which indicates the beginning of the
+ *  partition that holds the filesystem.
+ * @param imagefile_path the host path to the image that we are looking at.
+ * @param prim_part what partition number we are interested in. -1 means that
+ *  this image is unpartitioned.
+ * @param sub_part what subpartition number we are interested in. -1 means that
+ *  there are no subpartitions. 
+ * @return void. 
+ */
 void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
   FILE* imagefile = fopen(imagefile_path, "r");
   if (imagefile == 0) {
@@ -77,7 +106,7 @@ void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
   }
 
   /* How far from the beginning of the disk the filesystem resides. */
-  int offset = 0;
+  long offset = 0;
 
   /* The partition_table that is read from the image. */
   part_tbl pt = {};
