@@ -7,6 +7,7 @@
 
 #include "input.h"
 #include "messages.h"
+#include "disk.h"
 
 int main (int argc, char *argv[]) {
   /* Verbosity. If set, print the partition table(s) superblock, and inode of 
@@ -55,19 +56,21 @@ int main (int argc, char *argv[]) {
   printf("PRIM PART: %d\n", prim_part);
   printf("SUB PART: %d\n\n", sub_part);
 
-  /* load the imagefile as readonly */
-  int imagefile_fd = open(imagefile_path, O_RDONLY);
-  if (imagefile_fd == 0) {
-    fprintf(
-        stderr, 
-        "could not open the imagefile at %s: %d", 
-        imagefile_path, 
-        errno);
-    exit(EXIT_FAILURE);
-  }
+  /* ======================================================================== */
 
-  
-  close(imagefile_fd);
+  /* A struct that represents the minix filesystem (set as default to impossible
+     values for my own sanity). */
+  min_fs mfs = {NULL, -1, -1, -1, -1};
+
+  /* Open the minix filesystem, populating the values in the min_fs struct. */
+  open_mfs(&mfs, imagefile_path, prim_part, sub_part);
+
+  /* TODO: do your ls thing. */
+
+  /* Close the minix filesystem. */
+  close_mfs(&mfs);
+
+
   exit(EXIT_SUCCESS);
 }
 
