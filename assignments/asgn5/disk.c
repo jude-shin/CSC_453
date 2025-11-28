@@ -109,7 +109,7 @@ void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
   long offset = 0;
 
   /* The partition_table that is read from the image. */
-  part_tbl pt = {};
+  part_tbl pt = {0};
  
   /* Populate the partition table (pt) */
   load_part_table(&pt, PART_TABLE_ADDR, imagefile);
@@ -128,7 +128,7 @@ void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
   /* Treat the subpartition as unpartitioned. */
   if (sub_part != -1) { 
     /* The subpartition table that is read from the image. */
-    part_tbl spt = {};
+    part_tbl spt = {0};
   
     /* Populate the subpartition table (spt). */
     load_part_table(&spt, offset+PART_TABLE_ADDR, imagefile);
