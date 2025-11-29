@@ -70,8 +70,10 @@ int main (int argc, char *argv[]) {
 
   /* Populate the superblock based on the minix filesystem. */
   load_superblock(&mfs, &sb);
-  
-  print_superblock(&sb);
+ 
+  if (verbose) {
+    print_superblock(&sb);
+  }
 
   /* TODO: do your ls thing. */
 

@@ -140,9 +140,6 @@ void close_mfs(min_fs* mfs) {
  * @return void.
  */
 void validate_part_table(part_tbl* partition_table) {
-
-  print_part_table(partition_table);
-
   // /* Check that the image is bootable */
   // if (partition_table->bootind != BOOTABLE_MAGIC) {
   //   fprintf(stderr, "Bad magic number. (%#x)\n", partition_table->bootind);
