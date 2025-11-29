@@ -20,7 +20,7 @@ void minls_usage(void) {
 }
 
 /* MINGET */
-/* Prints an error that shows the flags that can be used with minls.
+/* Prints an error that shows the flags that can be used with minget.
  * @param void. 
  * @return void.
  */
@@ -42,20 +42,20 @@ void minget_usage(void) {
  * @return void. 
  */
 void print_part_table(part_tbl* pt) {
-  printf("\n\n=== PARTITION TABLE ===\n\n");
+  printf("\n\n=== PARTITION TABLE ===============\n\n");
 
-  printf("bootind: %d\n", pt->bootind);
-  printf("start_head: %d\n", pt->start_head);
-  printf("start_sec: %d\n", pt->start_sec);
-  printf("start_cyl: %d\n", pt->start_cyl);
-  printf("type: %d\n", pt->type);
-  printf("end_head: %d\n", pt->end_head);
-  printf("end_sec: %d\n", pt->end_sec);
-  printf("end_cyl: %d\n", pt->end_cyl);
-  printf("lFirst: %d\n", pt->lFirst);
-  printf("size: %d\n", pt->size);
+  printf("bootind: 0x%04x\n", pt->bootind);
+  printf("start_head: 0x%04x\n", pt->start_head);
+  printf("start_sec: 0x%04x\n", pt->start_sec);
+  printf("start_cyl: 0x%04x\n", pt->start_cyl);
+  printf("type: 0x%04x\n", pt->type);
+  printf("end_head: 0x%04x\n", pt->end_head);
+  printf("end_sec: 0x%04x\n", pt->end_sec);
+  printf("end_cyl: 0x%04x\n", pt->end_cyl);
+  printf("lFirst: 0x%04x\n", pt->lFirst);
+  printf("size: %u\n", pt->size);
 
-  printf("\n=== (end partition table info) ===\n\n");
+  printf("\n=== (end partition table info) ====\n\n");
 }
 
 
@@ -64,19 +64,19 @@ void print_part_table(part_tbl* pt) {
  * @return void. 
  */
 void print_superblock(superblock* sb) {
-  printf("\n\n=== SUPERBLOCK ===\n\n");
+  printf("\n\n=== SUPERBLOCK ===============\n\n");
 
-  printf("ninodes: %d\n", sb->ninodes);
+  printf("ninodes: %u\n", sb->ninodes);
   printf("i_blocks: %d\n", sb->i_blocks);
   printf("z_blocks: %d\n", sb->z_blocks);
-  printf("firstdata: %d\n", sb->firstdata);
+  printf("firstdata: %u\n", sb->firstdata);
   printf("log_zone_size: %d\n", sb->log_zone_size);
-  printf("max_file: %d\n", sb->max_file);
-  printf("zones: %d\n", sb->zones);
-  printf("magic: %d\n", sb->magic);
-  printf("blocksize: %d\n", sb->blocksize);
-  printf("subversion: %d\n", sb->subversion);
+  printf("max_file: %u\n", sb->max_file);
+  printf("zones: %u\n", sb->zones);
+  printf("magic: 0x%04x\n", sb->magic);
+  printf("blocksize: %u\n", sb->blocksize);
+  printf("subversion: %u\n", sb->subversion);
 
-  printf("\n=== (end superblock info) ===\n\n");
+  printf("\n=== (end superblock info) ====\n\n");
 }
 

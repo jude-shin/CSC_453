@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <errno.h>
 
 #include "disk.h"
@@ -63,15 +64,19 @@ void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
   /* Seek to the primary partition */
   /* Otherwise treat the image as unpartitioned. (offset of 0) */
   if (prim_part != -1) {
+
     /* Populate the partition table (pt) */
     load_part_table(&pt, PART_TABLE_ADDR, imagefile);
 
-    /* Validate the two signatures in the beginning of the disk. */
-    validate_signatures(imagefile, offset);
-
     /* Check the signatures, system type, and if this is bootable. */
     validate_part_table(&pt);
-  
+
+    /* Validate the two signatures in the beginning of the disk. */
+    if (!validate_signatures(imagefile, offset)) {
+      fprintf(stderr, "primary partition table signatures are not valid\n");
+      exit(EXIT_FAILURE);
+    }
+
     /* Calculate the offset (where the important partition resides) */
     offset += (prim_part * (pt.size*SECTOR_SIZE));
 
@@ -80,8 +85,12 @@ void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
       /* Populate the subpartition table (spt). */
       load_part_table(&spt, offset+PART_TABLE_ADDR, imagefile);
 
-      /* Validate the two signatures in the partition. */
-      validate_signatures(imagefile, offset);
+      /* TODO: ask Ask ASK are there supposed to be signatures here as well? */
+      // /* Validate the two signatures in the partition. */
+      // if (!validate_signatures(imagefile, offset+PART_TABLE_ADDR)) {
+      //   fprintf(stderr, "subpartition table signatures are not valid\n");
+      //   exit(EXIT_FAILURE);
+      // }
 
       /* Check the signatures, system type, and if this is bootable. */
       validate_part_table(&spt);
@@ -89,10 +98,16 @@ void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
       /* If there is a subpartition, then this is the final address! */
       offset = spt.lFirst;
     }
+
   }
-  else {
-    /* TODO: if user says it is unpartitioned, but it is really partitioned, it should error. */
-    fprintf(stderr, "check not implemented yet!\n");
+  /* if user says it is unpartitioned, but it is really partitioned, it should error. */
+  else { /* TODO: ask Ask ASK about this? do I need to check this? */
+    /* Check to see if this image had a valid partition table. */
+    if (validate_signatures(imagefile, PART_TABLE_ADDR)) {
+      fprintf(stderr, "valid partition table is present! consider using -p\n");
+      minls_usage();
+      exit(EXIT_FAILURE);
+    }
   }
 
   /* Update the struct to reflect the file descriptor and offset found. */
@@ -125,6 +140,9 @@ void close_mfs(min_fs* mfs) {
  * @return void.
  */
 void validate_part_table(part_tbl* partition_table) {
+
+  print_part_table(partition_table);
+
   // /* Check that the image is bootable */
   // if (partition_table->bootind != BOOTABLE_MAGIC) {
   //   fprintf(stderr, "Bad magic number. (%#x)\n", partition_table->bootind);
@@ -139,15 +157,15 @@ void validate_part_table(part_tbl* partition_table) {
 
 }
 
-/* Checks to see if an image has both signatures. If they don't, just make note
- * and exit with EXIT_FAILURE. 
+/* Checks to see if an image has both signatures. If they do return true, else
+ * return false.
  * @param image the open FILE that can be read from. 
- * @return void.
+ * @return bool whether the disk (disk or secondary partition) has the signature
+ *  indicating that there is a valid partition table present.
  */
-void validate_signatures(FILE* image, long offset) {
+bool validate_signatures(FILE* image, long offset) {
   ssize_t bytes;
   unsigned char sig510, sig511;
-  // unsigned long sig510, sig511;
   
   /* Seek the read head to the address with the signature. */
   fseek(image, offset+SIG510_OFFSET, SEEK_SET);
@@ -155,14 +173,6 @@ void validate_signatures(FILE* image, long offset) {
   bytes = fread(&sig510, sizeof(unsigned char), 1, image);
   if (bytes < 1) {
     fprintf(stderr, "error reading signature 1: %d\n", errno);
-    exit(EXIT_FAILURE);
-  }
-  if (sig510 != SIG510_EXPECTED) {
-    fprintf(stderr, 
-        "signature at (%ld) does not match. \nexpected: (%d) \n given: (%d)\n", 
-        offset+SIG510_OFFSET,
-        SIG510_EXPECTED,
-        sig510);
     exit(EXIT_FAILURE);
   }
 
@@ -174,15 +184,8 @@ void validate_signatures(FILE* image, long offset) {
     fprintf(stderr, "error reading signature 2: %d\n", errno);
     exit(EXIT_FAILURE);
   }
-  if (sig511 != SIG511_EXPECTED) {
-    fprintf(stderr, 
-        "signature at (%ld) does not match. \nexpected: (%d) \n given: (%d)\n", 
-        offset+SIG511_OFFSET,
-        SIG511_EXPECTED,
-        sig511);
-    exit(EXIT_FAILURE);
-  }
 
+  return (sig510 == SIG510_EXPECTED) && (sig511 == SIG511_EXPECTED);
 }
 
 

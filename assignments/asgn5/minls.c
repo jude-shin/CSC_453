@@ -12,6 +12,7 @@
 int main (int argc, char *argv[]) {
   /* Verbosity. If set, print the partition table(s) superblock, and inode of 
      source file/directory to stderr. */
+  /* TODO: do some printing with this. */
   int verbose = false;
   
   /* What primarty partition number to use (-1 means unpartitioned. )*/
@@ -25,6 +26,12 @@ int main (int argc, char *argv[]) {
 
   /* The path to ls in minix.*/
   char* minix_path = NULL;
+  
+  /* A struct that represents the minix filesystem. */
+  min_fs mfs;
+
+  /* A struct that represents the superblock of a filesystem. */
+  superblock sb;
   
   /* Parses the flags passed into this function, setting the verbosity, primary
      partition, subpartition numbers, and returning the number of flags
@@ -58,12 +65,13 @@ int main (int argc, char *argv[]) {
 
   /* ======================================================================== */
 
-  /* A struct that represents the minix filesystem (set as default to impossible
-     values for my own sanity). */
-  min_fs mfs = {NULL, -1, -1, -1, -1};
-
   /* Open the minix filesystem, populating the values in the min_fs struct. */
   open_mfs(&mfs, imagefile_path, prim_part, sub_part);
+
+  /* Populate the superblock based on the minix filesystem. */
+  load_superblock(&mfs, &sb);
+  
+  print_superblock(&sb);
 
   /* TODO: do your ls thing. */
 

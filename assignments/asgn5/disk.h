@@ -2,6 +2,7 @@
 #define DISK
 
 #include <stddef.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -94,9 +95,9 @@ void close_mfs(min_fs* mfs);
 /*============*/
 
 /* Checks to see if an image has both signatures in relation to the offset (This
-   allows for subpartitions to be checked also). If they don't, just make note
-   and exit with EXIT_FAILURE. */
-void validate_signatures(FILE* image, long offset);
+   allows for subpartitions to be checked also). If they do, return true, else
+   return false. */
+bool validate_signatures(FILE* image, long offset);
 
 /* Check to see if the partition table holds useful information for this
    assignment. This includes whether an image is bootable, and if the partition
