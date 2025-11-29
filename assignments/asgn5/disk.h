@@ -83,7 +83,12 @@ typedef struct __attribute__ ((__packed__)) superblock {
 /* Opens the minix filesystem for reading from the imagefile path. This also 
    populates the mfs struct (in this case, the file descriptor) that will be 
    passed around. */
-void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part);
+void open_mfs(
+    min_fs* mfs, 
+    char* imagefile_path, 
+    int prim_part, 
+    int sub_part,
+    bool verbose);
 
 /* Closes the minix filesystem. This closes the file descriptor, along with
    cleaning up anything else that is needed. */
@@ -115,9 +120,9 @@ void validate_part_table(part_tbl* partition_table);
    will start somewhere else) this function populates the given partition_table
    struct with the data read in the image. Whether the populated data is valid 
    is entirely up to the address variable. */
-void load_part_table(part_tbl* partition_table, long addr, FILE* image);
+void load_part_table(part_tbl* pt, long addr, FILE* image, bool verbose);
 
 /* Fills a superblock based ona minix filesystem (a image and an offset) */ 
-void load_superblock(min_fs* mfs, superblock* sb);
+void load_superblock(min_fs* mfs, superblock* sb, bool verbose);
 
 #endif

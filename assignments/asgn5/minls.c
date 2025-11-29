@@ -66,15 +66,11 @@ int main (int argc, char *argv[]) {
   /* ======================================================================== */
 
   /* Open the minix filesystem, populating the values in the min_fs struct. */
-  open_mfs(&mfs, imagefile_path, prim_part, sub_part);
+  open_mfs(&mfs, imagefile_path, prim_part, sub_part, verbose);
 
   /* Populate the superblock based on the minix filesystem. */
-  load_superblock(&mfs, &sb);
+  load_superblock(&mfs, &sb, verbose);
  
-  if (verbose) {
-    print_superblock(&sb);
-  }
-
   /* TODO: do your ls thing. */
 
   /* Close the minix filesystem. */

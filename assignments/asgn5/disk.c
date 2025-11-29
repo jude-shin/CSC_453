@@ -41,9 +41,15 @@
  *  this image is unpartitioned.
  * @param sub_part what subpartition number we are interested in. -1 means that
  *  there are no subpartitions. 
+ * @param verbose if this is true, print the partition table's contents
  * @return void. 
  */
-void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
+void open_mfs(
+    min_fs* mfs, 
+    char* imagefile_path, 
+    int prim_part, 
+    int sub_part,
+    bool verbose) {
   /* How far from the beginning of the disk the filesystem resides. */
   long offset;
 
@@ -66,7 +72,7 @@ void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
   if (prim_part != -1) {
 
     /* Populate the partition table (pt) */
-    load_part_table(&pt, PART_TABLE_ADDR, imagefile);
+    load_part_table(&pt, PART_TABLE_ADDR, imagefile, verbose);
 
     /* Check the signatures, system type, and if this is bootable. */
     validate_part_table(&pt);
@@ -83,7 +89,7 @@ void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
     /* Seek to the subpartition */
     if (sub_part != -1) { 
       /* Populate the subpartition table (spt). */
-      load_part_table(&spt, offset+PART_TABLE_ADDR, imagefile);
+      load_part_table(&spt, offset+PART_TABLE_ADDR, imagefile, verbose);
 
       /* TODO: ask Ask ASK are there supposed to be signatures here as well? */
       // /* Validate the two signatures in the partition. */
@@ -191,24 +197,32 @@ bool validate_signatures(FILE* image, long offset) {
 /*==============*/
 
 /* Based on an address (primary partition will start at 0, and any subpartition
- * will start somewhere else) this function populates the given partition_table
+ * will start somewhere else) this function populates the given partition table
  * struct with the data read in the image. Whether the populated data is valid 
  * is entirely up to the address variable.
- * @param partition_table the struct that will be filled (& referenced later).
+ * @param pt the struct that will be filled (& referenced later).
  * @param addr the address that the partition will start at. 
  * @param image the imagefile that the disk is stored in.
+ * @param verbose if this is true, print the partition table's contents
  * @return void.
  */
-void load_part_table(part_tbl* partition_table, long addr, FILE* image) { 
+void load_part_table(part_tbl* pt, long addr, FILE* image, bool verbose) { 
+  ssize_t bytes;
+
   /* Seek to the correct location that the partition table resides. */
   fseek(image, addr, SEEK_SET);
 
-  /* Read the partition_table, storing its contents in the struct for us to 
+  /* Read the partition table, storing its contents in the struct for us to 
      reference later on. */
-  ssize_t bytes = fread(partition_table, sizeof(part_tbl), 1, image);
+  bytes = fread(pt, sizeof(part_tbl), 1, image);
   if (bytes < 1) {
     fprintf(stderr, "error with fread() on partition table: %d\n", errno);
     exit(EXIT_FAILURE);
+  }
+
+  /* Print the contents if you want to. */
+  if (verbose) {
+    print_part_table(pt);
   }
 }
 
@@ -217,15 +231,26 @@ void load_part_table(part_tbl* partition_table, long addr, FILE* image) {
  *  offset from the beginning of the image which indicates the beginning of the 
  *  partition that holds the filesystem.
  * @param sb the superblock struct that will be filled.
+ * @param verbose if this is true, print the superblock's contents
  * @return void.
  */
-void load_superblock(min_fs* mfs, superblock* sb) {
+void load_superblock(min_fs* mfs, superblock* sb, bool verbose) {
   ssize_t bytes;
-
+  
+  /* Seek to the start of the partition, and then go another SUPERBLOCK_OFFSET
+     bytes. No matter the block size, this is where the superblock lives. */
   fseek(mfs->file, mfs->partition_start+SUPERBLOCK_OFFSET, SEEK_SET);
+
+  /* Read the superblock, storing its contents in the struct for us to 
+     reference later on. */
   bytes = fread(sb, sizeof(superblock), 1, mfs->file);
   if (bytes < 1) {
     fprintf(stderr, "error with fread() on superblock: %d\n", errno);
     exit(EXIT_FAILURE);
+  }
+  
+  /* Print the contents if you want to. */
+  if (verbose) {
+    print_superblock(sb);
   }
 }
