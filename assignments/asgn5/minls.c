@@ -29,9 +29,6 @@ int main (int argc, char *argv[]) {
   /* A struct that represents the minix filesystem. */
   min_fs mfs;
 
-  /* A struct that represents the superblock of a filesystem. */
-  superblock sb;
-  
   /* Parses the flags passed into this function, setting the verbosity, primary
      partition, subpartition numbers, and returning the number of flags
      processed. If something went wrong when parsing the flags, -1 is returned,
@@ -67,9 +64,6 @@ int main (int argc, char *argv[]) {
   /* Open the minix filesystem, populating the values in the min_fs struct. */
   open_mfs(&mfs, imagefile_path, prim_part, sub_part, verbose);
 
-  /* Populate the superblock based on the minix filesystem. */
-  load_superblock(&mfs, &sb, verbose);
- 
   /* TODO: do your ls thing. */
 
   /* Close the minix filesystem. */

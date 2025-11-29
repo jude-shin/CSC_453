@@ -33,17 +33,6 @@
 /* DATA DEFINITIONS */
 /*==================*/
 
-/* Essentially defines the beginning of the filesystem of an image. 
-   It includes the open imagefile filedescriptor, and the offset of where the 
-   actual files start. */
-typedef struct MinixFileSystem {
-  FILE* file;
-  size_t partition_start;
-  size_t sector_size;
-  size_t block_size;
-  size_t zone_size;
-} min_fs;
-
 /* The struct used as the partition table in a minix MBR filesystem. */
 typedef struct __attribute__ ((__packed__)) partition_table {
   uint8_t bootind;    /* Boot magic number (0x80 if bootable). */
@@ -55,7 +44,7 @@ typedef struct __attribute__ ((__packed__)) partition_table {
   uint8_t end_sec;
   uint8_t end_cyl;
   uint32_t lFirst;     /* First sector (LBA addressing). */
-  uint32_t size;      /* Size of partition (in sectors). */
+  uint32_t size;       /* Size of partition (in sectors). */
 } part_tbl;
 
 /* Superblock structure found in fs/super.h in minix 3.1.1. */
@@ -75,14 +64,29 @@ typedef struct __attribute__ ((__packed__)) superblock {
   uint8_t subversion;     /* filesystem sub–version */
 } superblock;
 
+/* Essentially defines the beginning of the filesystem of an image. 
+   It includes the open imagefile filedescriptor, and the offset of where the 
+   actual files start. */
+typedef struct MinixFileSystem {
+  FILE* file;             /* the file that the (minix) image is on */
+  size_t partition_start; /* aka, the offset */
+  
+  superblock sb;          /* The superblock and it's information for the fs. */
+
+  size_t sector_size;
+  size_t block_size;
+  size_t zone_size;
+} min_fs;
+
 
 /*==========*/
 /* BASIC IO */
 /*==========*/
 
-/* Opens the minix filesystem for reading from the imagefile path. This also 
-   populates the mfs struct (in this case, the file descriptor) that will be 
-   passed around. */
+/* Opens the imagefile as readonly, and calculates the offset of the specified
+   partition. This populates the filesystem struct and superblock structs that
+   are allocated in the caller.
+   If anything goes wrong, then this function will exit with EXIT_FAILURE. */
 void open_mfs(
     min_fs* mfs, 
     char* imagefile_path, 
@@ -123,6 +127,6 @@ void validate_part_table(part_tbl* partition_table);
 void load_part_table(part_tbl* pt, long addr, FILE* image, bool verbose);
 
 /* Fills a superblock based ona minix filesystem (a image and an offset) */ 
-void load_superblock(min_fs* mfs, superblock* sb, bool verbose);
+void load_superblock(min_fs* mfs, bool verbose);
 
 #endif

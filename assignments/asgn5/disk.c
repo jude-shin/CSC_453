@@ -31,8 +31,9 @@
 /*==========*/
 
 /* Opens the imagefile as readonly, and calculates the offset of the specified
- * partition. If anything goes wrong, then this function will exit with 
- * EXIT_FAILURE. 
+ * partition. This populates the filesystem struct and superblock structs that
+ * are allocated in the caller.
+ * If anything goes wrong, then this function will exit with EXIT_FAILURE. 
  * @param mfs a struct that holds an open file descriptor, and the offset (the
  *  offset from the beginning of the image which indicates the beginning of the
  *  partition that holds the filesystem.
@@ -106,7 +107,8 @@ void open_mfs(
     }
 
   }
-  /* if user says it is unpartitioned, but it is really partitioned, it should error. */
+  /* if user says it is unpartitioned, but it is really partitioned, it should 
+     error. */
   else { /* TODO: ask Ask ASK about this? do I need to check this? */
     /* Check to see if this image had a valid partition table. */
     if (validate_signatures(imagefile, PART_TABLE_ADDR)) {
@@ -119,6 +121,12 @@ void open_mfs(
   /* Update the struct to reflect the file descriptor and offset found. */
   mfs->file = imagefile;
   mfs->partition_start = offset;
+
+  /* ======================================================================== */
+
+  /* Load the superblock */
+  load_superblock(mfs, verbose);
+
 }
 
 /* Closes the file descriptor for the file in the min_fs struct given.
@@ -227,14 +235,12 @@ void load_part_table(part_tbl* pt, long addr, FILE* image, bool verbose) {
 }
 
 /* Fills a superblock based ona minix filesystem (a image and an offset)
- * @param mfs a struct that holds an open file descriptor, and the offset (the
- *  offset from the beginning of the image which indicates the beginning of the 
- *  partition that holds the filesystem.
- * @param sb the superblock struct that will be filled.
+ * @param mfs a struct that holds information; most importantly, the struct for
+ *  the superblock.
  * @param verbose if this is true, print the superblock's contents
  * @return void.
  */
-void load_superblock(min_fs* mfs, superblock* sb, bool verbose) {
+void load_superblock(min_fs* mfs, bool verbose) {
   ssize_t bytes;
   
   /* Seek to the start of the partition, and then go another SUPERBLOCK_OFFSET
@@ -243,7 +249,7 @@ void load_superblock(min_fs* mfs, superblock* sb, bool verbose) {
 
   /* Read the superblock, storing its contents in the struct for us to 
      reference later on. */
-  bytes = fread(sb, sizeof(superblock), 1, mfs->file);
+  bytes = fread(&mfs->sb, sizeof(superblock), 1, mfs->file);
   if (bytes < 1) {
     fprintf(stderr, "error with fread() on superblock: %d\n", errno);
     exit(EXIT_FAILURE);
@@ -251,6 +257,6 @@ void load_superblock(min_fs* mfs, superblock* sb, bool verbose) {
   
   /* Print the contents if you want to. */
   if (verbose) {
-    print_superblock(sb);
+    print_superblock(&mfs->sb);
   }
 }
