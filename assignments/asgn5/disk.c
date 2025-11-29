@@ -5,6 +5,7 @@
 #include <errno.h>
 
 #include "disk.h"
+#include "messages.h"
 
 #define SECTOR_SIZE 512 /* the sector size for a minix fs is 512 bytes. */
 
@@ -21,87 +22,9 @@
 #define SIG511_OFFSET 511
 #define SIG511_EXPECTED 0xAA
 
-void print_part_table(part_tbl* pt) {
-  printf("\n\n=== PARTITION TABLE ===\n\n");
-
-  printf("bootind: %d\n", pt->bootind);
-  printf("start_head: %d\n", pt->start_head);
-  printf("start_sec: %d\n", pt->start_sec);
-  printf("start_cyl: %d\n", pt->start_cyl);
-  printf("type: %d\n", pt->type);
-  printf("end_head: %d\n", pt->end_head);
-  printf("end_sec: %d\n", pt->end_sec);
-  printf("end_cyl: %d\n", pt->end_cyl);
-  printf("lFirst: %d\n", pt->lFirst);
-  printf("size: %d\n", pt->size);
-
-  printf("\n=== (end partition table) ===\n\n");
-}
-
-/* Based on an address (primary partition will start at 0, and any subpartition
- * will start somewhere else) this function populates the given partition_table
- * struct with the data read in the image. Whether the populated data is valid 
- * is entirely up to the address variable.
- * @param partition_table the struct that will be filled (& referenced later).
- * @param addr the address that the partition will start at. 
- * @param image the imagefile that the disk is stored in.
- * @return void.
- */
-void load_part_table(part_tbl* partition_table, long addr, FILE* image) { 
-  /* Seek to the correct location that the partition table resides. */
-  fseek(image, addr, SEEK_SET);
-
-  /* Read the partition_table, storing its contents in the struct for us to 
-     reference later on. */
-  ssize_t bytes = fread(partition_table, sizeof(part_tbl), 1, image);
-  if (bytes < 1) {
-    fprintf(stderr, "error with fread() on partition table: %d\n", errno);
-    exit(EXIT_FAILURE);
-  }
-}
-
-/* Check to see if the partition table holds useful information for this
- * assignment. This includes the two signatures, that this is a bootable image,
- * and if the partition is from minix. This function does not return anything;
- * If the program does not exit after calling this function, then the partition
- * table is valid. Otherwise, it will just exit and do nothing.
- * @param partition_table the struct that holds all this information. 
- * @return void.
- */
-void validate_part_table(part_tbl* partition_table) {
-  // /* Check that the image is bootable */
-  // if (partition_table->bootind != BOOTABLE_MAGIC) {
-  //   fprintf(stderr, "Bad magic number. (%#x)\n", partition_table->bootind);
-  //   exit(EXIT_FAILURE);
-  // }
-
-  /* Check that the partition type is of minix. */
-  if (partition_table->type != MINIX_PARTITION_TYPE) {
-    fprintf(stderr, "This is not a minix image.\n");
-    exit(EXIT_FAILURE);
-  }
-
-}
-
-void validate_signatures(FILE* image) {
-  ssize_t bytes;
-  char sig510, sig511;
-
-  fseek(image, SIG510_OFFSET, SEEK_SET);
-  bytes = fread(&sig510, sizeof(char), 1, image);
-  if (bytes < 1) {
-    fprintf(stderr, "error with signature 1: %d\n", errno);
-    exit(EXIT_FAILURE);
-  }
-
-  fseek(image, SIG511_OFFSET, SEEK_SET);
-  bytes = fread(&sig511, sizeof(char), 1, image);
-  if (bytes < 1) {
-    fprintf(stderr, "error with signature 1: %d\n", errno);
-    exit(EXIT_FAILURE);
-  }
-}
-  
+/*==========*/
+/* BASIC IO */
+/*==========*/
 
 /* Opens the imagefile as readonly, and calculates the offset of the specified
  * partition. If anything goes wrong, then this function will exit with 
@@ -177,3 +100,82 @@ void close_mfs(min_fs* mfs) {
     exit(EXIT_FAILURE);
   }
  }
+
+
+/*============*/
+/* VALIDATION */
+/*============*/
+
+/* Check to see if the partition table holds useful information for this
+ * assignment. This includes whether an image is bootable, and if the partition
+ * is from minix. This function does not return anything.
+ * If the program does not exit after calling this function, then the partition
+ * table is valid. Otherwise, it will just exit and do nothing.
+ * @param partition_table the struct that holds all this information. 
+ * @return void.
+ */
+void validate_part_table(part_tbl* partition_table) {
+  // /* Check that the image is bootable */
+  // if (partition_table->bootind != BOOTABLE_MAGIC) {
+  //   fprintf(stderr, "Bad magic number. (%#x)\n", partition_table->bootind);
+  //   exit(EXIT_FAILURE);
+  // }
+
+  /* Check that the partition type is of minix. */
+  if (partition_table->type != MINIX_PARTITION_TYPE) {
+    fprintf(stderr, "This is not a minix image.\n");
+    exit(EXIT_FAILURE);
+  }
+
+}
+
+/* Checks to see if an image has both signatures. If they don't, just make note
+ * and exit with EXIT_FAILURE. 
+ * @param image the open FILE that can be read from. 
+ * @return void.
+ */
+void validate_signatures(FILE* image) {
+  ssize_t bytes;
+  char sig510, sig511;
+
+  fseek(image, SIG510_OFFSET, SEEK_SET);
+  bytes = fread(&sig510, sizeof(char), 1, image);
+  if (bytes < 1) {
+    fprintf(stderr, "error with signature 1: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+
+  fseek(image, SIG511_OFFSET, SEEK_SET);
+  bytes = fread(&sig511, sizeof(char), 1, image);
+  if (bytes < 1) {
+    fprintf(stderr, "error with signature 1: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+}
+
+
+/*==============*/
+/* MISC HELPERS */
+/*==============*/
+
+/* Based on an address (primary partition will start at 0, and any subpartition
+ * will start somewhere else) this function populates the given partition_table
+ * struct with the data read in the image. Whether the populated data is valid 
+ * is entirely up to the address variable.
+ * @param partition_table the struct that will be filled (& referenced later).
+ * @param addr the address that the partition will start at. 
+ * @param image the imagefile that the disk is stored in.
+ * @return void.
+ */
+void load_part_table(part_tbl* partition_table, long addr, FILE* image) { 
+  /* Seek to the correct location that the partition table resides. */
+  fseek(image, addr, SEEK_SET);
+
+  /* Read the partition_table, storing its contents in the struct for us to 
+     reference later on. */
+  ssize_t bytes = fread(partition_table, sizeof(part_tbl), 1, image);
+  if (bytes < 1) {
+    fprintf(stderr, "error with fread() on partition table: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+}
