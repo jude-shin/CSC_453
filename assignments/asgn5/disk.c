@@ -54,7 +54,7 @@ void load_part_table(part_tbl* partition_table, long addr, FILE* image) {
   /* Read the partition_table, storing its contents in the struct for us to 
      reference later on. */
   ssize_t bytes = fread(partition_table, sizeof(part_tbl), 1, image);
-  if (bytes <= 1) {
+  if (bytes < 1) {
     fprintf(stderr, "error with fread() on partition table: %d\n", errno);
     exit(EXIT_FAILURE);
   }
