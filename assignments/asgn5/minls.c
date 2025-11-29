@@ -12,7 +12,6 @@
 int main (int argc, char *argv[]) {
   /* Verbosity. If set, print the partition table(s) superblock, and inode of 
      source file/directory to stderr. */
-  /* TODO: do some printing with this. */
   int verbose = false;
   
   /* What primarty partition number to use (-1 means unpartitioned. )*/

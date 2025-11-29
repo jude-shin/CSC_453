@@ -42,20 +42,20 @@ void minget_usage(void) {
  * @return void. 
  */
 void print_part_table(part_tbl* pt) {
-  printf("\n\n=== PARTITION TABLE ===============\n\n");
+  fprintf(stderr, "\n\n=== PARTITION TABLE ===============\n\n");
 
-  printf("bootind: 0x%04x\n", pt->bootind);
-  printf("start_head: 0x%04x\n", pt->start_head);
-  printf("start_sec: 0x%04x\n", pt->start_sec);
-  printf("start_cyl: 0x%04x\n", pt->start_cyl);
-  printf("type: 0x%04x\n", pt->type);
-  printf("end_head: 0x%04x\n", pt->end_head);
-  printf("end_sec: 0x%04x\n", pt->end_sec);
-  printf("end_cyl: 0x%04x\n", pt->end_cyl);
-  printf("lFirst: 0x%04x\n", pt->lFirst);
-  printf("size: %u\n", pt->size);
+  fprintf(stderr, "bootind: 0x%04x\n", pt->bootind);
+  fprintf(stderr, "start_head: 0x%04x\n", pt->start_head);
+  fprintf(stderr, "start_sec: 0x%04x\n", pt->start_sec);
+  fprintf(stderr, "start_cyl: 0x%04x\n", pt->start_cyl);
+  fprintf(stderr, "type: 0x%04x\n", pt->type);
+  fprintf(stderr, "end_head: 0x%04x\n", pt->end_head);
+  fprintf(stderr, "end_sec: 0x%04x\n", pt->end_sec);
+  fprintf(stderr, "end_cyl: 0x%04x\n", pt->end_cyl);
+  fprintf(stderr, "lFirst: 0x%04x\n", pt->lFirst);
+  fprintf(stderr, "size: %u\n", pt->size);
 
-  printf("\n=== (end partition table info) ====\n\n");
+  fprintf(stderr, "\n=== (end partition table info) ====\n\n");
 }
 
 
@@ -64,19 +64,19 @@ void print_part_table(part_tbl* pt) {
  * @return void. 
  */
 void print_superblock(superblock* sb) {
-  printf("\n\n=== SUPERBLOCK ===============\n\n");
+  fprintf(stderr, "\n\n=== SUPERBLOCK ===============\n\n");
 
-  printf("ninodes: %u\n", sb->ninodes);
-  printf("i_blocks: %d\n", sb->i_blocks);
-  printf("z_blocks: %d\n", sb->z_blocks);
-  printf("firstdata: %u\n", sb->firstdata);
-  printf("log_zone_size: %d\n", sb->log_zone_size);
-  printf("max_file: %u\n", sb->max_file);
-  printf("zones: %u\n", sb->zones);
-  printf("magic: 0x%04x\n", sb->magic);
-  printf("blocksize: %u\n", sb->blocksize);
-  printf("subversion: %u\n", sb->subversion);
+  fprintf(stderr, "ninodes: %u\n", sb->ninodes);
+  fprintf(stderr, "i_blocks: %d\n", sb->i_blocks);
+  fprintf(stderr, "z_blocks: %d\n", sb->z_blocks);
+  fprintf(stderr, "firstdata: %u\n", sb->firstdata);
+  fprintf(stderr, "log_zone_size: %d\n", sb->log_zone_size);
+  fprintf(stderr, "max_file: %u\n", sb->max_file);
+  fprintf(stderr, "zones: %u\n", sb->zones);
+  fprintf(stderr, "magic: 0x%04x\n", sb->magic);
+  fprintf(stderr, "blocksize: %u\n", sb->blocksize);
+  fprintf(stderr, "subversion: %u\n", sb->subversion);
 
-  printf("\n=== (end superblock info) ====\n\n");
+  fprintf(stderr, "\n=== (end superblock info) ====\n\n");
 }
 
