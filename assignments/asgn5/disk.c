@@ -23,6 +23,7 @@
 #define SIG511_EXPECTED 0xAA
 
 /* Where the superblock lies in relation to the beginning of the partition. */
+#define SUPERBLOCK_OFFSET 1024
 
 /*==========*/
 /* BASIC IO */
@@ -145,21 +146,43 @@ void validate_part_table(part_tbl* partition_table) {
  */
 void validate_signatures(FILE* image, long offset) {
   ssize_t bytes;
-  char sig510, sig511;
-
+  unsigned char sig510, sig511;
+  // unsigned long sig510, sig511;
+  
+  /* Seek the read head to the address with the signature. */
   fseek(image, offset+SIG510_OFFSET, SEEK_SET);
-  bytes = fread(&sig510, sizeof(char), 1, image);
+  /* Read the value at that address. */
+  bytes = fread(&sig510, sizeof(unsigned char), 1, image);
   if (bytes < 1) {
-    fprintf(stderr, "error with signature 1: %d\n", errno);
+    fprintf(stderr, "error reading signature 1: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+  if (sig510 != SIG510_EXPECTED) {
+    fprintf(stderr, 
+        "signature at (%ld) does not match. \nexpected: (%d) \n given: (%d)\n", 
+        offset+SIG510_OFFSET,
+        SIG510_EXPECTED,
+        sig510);
     exit(EXIT_FAILURE);
   }
 
+  /* Seek the read head to the address with the signature. */
   fseek(image, offset+SIG511_OFFSET, SEEK_SET);
-  bytes = fread(&sig511, sizeof(char), 1, image);
+  /* Read the value at that address. */
+  bytes = fread(&sig511, sizeof(unsigned char), 1, image);
   if (bytes < 1) {
-    fprintf(stderr, "error with signature 1: %d\n", errno);
+    fprintf(stderr, "error reading signature 2: %d\n", errno);
     exit(EXIT_FAILURE);
   }
+  if (sig511 != SIG511_EXPECTED) {
+    fprintf(stderr, 
+        "signature at (%ld) does not match. \nexpected: (%d) \n given: (%d)\n", 
+        offset+SIG511_OFFSET,
+        SIG511_EXPECTED,
+        sig511);
+    exit(EXIT_FAILURE);
+  }
+
 }
 
 
@@ -185,6 +208,24 @@ void load_part_table(part_tbl* partition_table, long addr, FILE* image) {
   ssize_t bytes = fread(partition_table, sizeof(part_tbl), 1, image);
   if (bytes < 1) {
     fprintf(stderr, "error with fread() on partition table: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+}
+
+/* Fills a superblock based ona minix filesystem (a image and an offset)
+ * @param mfs a struct that holds an open file descriptor, and the offset (the
+ *  offset from the beginning of the image which indicates the beginning of the 
+ *  partition that holds the filesystem.
+ * @param sb the superblock struct that will be filled.
+ * @return void.
+ */
+void load_superblock(min_fs* mfs, superblock* sb) {
+  ssize_t bytes;
+
+  fseek(mfs->file, mfs->partition_start+SUPERBLOCK_OFFSET, SEEK_SET);
+  bytes = fread(sb, sizeof(superblock), 1, mfs->file);
+  if (bytes < 1) {
+    fprintf(stderr, "error with signature 1: %d\n", errno);
     exit(EXIT_FAILURE);
   }
 }

@@ -116,4 +116,7 @@ void validate_part_table(part_tbl* partition_table);
    is entirely up to the address variable. */
 void load_part_table(part_tbl* partition_table, long addr, FILE* image);
 
+/* Fills a superblock based ona minix filesystem (a image and an offset) */ 
+void load_superblock(min_fs* mfs, superblock* sb);
+
 #endif
