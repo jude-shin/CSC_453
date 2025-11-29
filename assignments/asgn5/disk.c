@@ -81,21 +81,23 @@ void validate_part_table(part_tbl* partition_table) {
     exit(EXIT_FAILURE);
   }
 
-  /* Check the first signature. 510 bytes from the beginning of the 
-     partition table. */
-  unsigned char sig510 = *((unsigned char*)partition_table+SIG510_OFFSET);
-  fprintf(stderr, "SIG510: %c\n", sig510);
-  if (sig510 != SIG510_EXPECTED) {
-    fprintf(stderr, "first signature could not be validated.\n");
+}
+
+void validate_signatures(FILE* image) {
+  ssize_t bytes;
+  char sig510, sig511;
+
+  fseek(image, SIG510_OFFSET, SEEK_SET);
+  bytes = fread(&sig510, sizeof(char), 1, image);
+  if (bytes < 1) {
+    fprintf(stderr, "error with signature 1: %d\n", errno);
     exit(EXIT_FAILURE);
   }
 
-  /* Check the first signature. 511 bytes from the beginning of the 
-     partition table. */
-  unsigned char sig511 = *((unsigned char*)partition_table+SIG511_OFFSET);
-  fprintf(stderr, "SIG511: %c\n", sig511);
-  if (sig511 != SIG511_EXPECTED) {
-    fprintf(stderr, "second signature could not be validated.\n");
+  fseek(image, SIG511_OFFSET, SEEK_SET);
+  bytes = fread(&sig511, sizeof(char), 1, image);
+  if (bytes < 1) {
+    fprintf(stderr, "error with signature 1: %d\n", errno);
     exit(EXIT_FAILURE);
   }
 }
@@ -115,49 +117,49 @@ void validate_part_table(part_tbl* partition_table) {
  * @return void. 
  */
 void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
-  FILE* imagefile = fopen(imagefile_path, "rb");
+  /* How far from the beginning of the disk the filesystem resides. */
+  long offset;
+
+  /* The (sub)partition table that is read from the image. */
+  part_tbl pt, spt;
+  
+  /* The FILE that the image resides in. */
+  FILE* imagefile;
+
+  imagefile = fopen(imagefile_path, "rb");
   if (imagefile == 0) {
     fprintf(stderr, "error opening %s: %d\n", imagefile_path, errno);
     exit(EXIT_FAILURE);
   }
 
-  /* How far from the beginning of the disk the filesystem resides. */
-  long offset = 0;
+  /* Validate the two signatures in the beginning of the disk. */
+  validate_signatures(imagefile);
 
-  /* The partition_table that is read from the image. */
-  part_tbl pt = {0};
-
-  print_part_table(&pt); /* TODO: remove this. */
- 
-  /* Populate the partition table (pt) */
-  load_part_table(&pt, PART_TABLE_ADDR, imagefile);
-
-  print_part_table(&pt); /* TODO: remove this. */
-
-  /* Check the signatures, system type, and if this is bootable. */
-  validate_part_table(&pt);
+  offset = 0;
 
   /* Seek to the primary partition */
-  /* Treat the primary partition as unpartitioned. */
+  /* Otherwise treat the image as unpartitioned. (offset of 0) */
   if (prim_part != -1) {
-    offset += prim_part * (pt.size*SECTOR_SIZE);
-  }
-  offset += pt.lFirst;
-
-  /* Seek to the subpartition */
-  /* Treat the subpartition as unpartitioned. */
-  if (sub_part != -1) { 
-    /* The subpartition table that is read from the image. */
-    part_tbl spt = {0};
-  
-    /* Populate the subpartition table (spt). */
-    load_part_table(&spt, offset+PART_TABLE_ADDR, imagefile);
+    /* Populate the partition table (pt) */
+    load_part_table(&pt, PART_TABLE_ADDR, imagefile);
 
     /* Check the signatures, system type, and if this is bootable. */
-    validate_part_table(&spt);
+    validate_part_table(&pt);
+  
+    /* Calculate the offset (where the important partition resides) */
+    offset += (prim_part * (pt.size*SECTOR_SIZE));
 
-    /* If there is a subpartition, then this is the final address! */
-    offset = spt.lFirst;
+    /* Seek to the subpartition */
+    if (sub_part != -1) { 
+      /* Populate the subpartition table (spt). */
+      load_part_table(&spt, offset+PART_TABLE_ADDR, imagefile);
+
+      /* Check the signatures, system type, and if this is bootable. */
+      validate_part_table(&spt);
+
+      /* If there is a subpartition, then this is the final address! */
+      offset = spt.lFirst;
+    }
   }
 
   /* Update the struct to reflect the file descriptor and offset found. */
