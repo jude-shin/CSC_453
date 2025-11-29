@@ -13,8 +13,8 @@
 #define PART_TABLE_ADDR 0x1BE 
 /* the partition type that indicates this is a minix system */
 #define MINIX_PARTITION_TYPE 0x81
-// /* bootind will be equal to this macro if the partition is bootable */
-// #define BOOTABLE_MAGIC 0x80
+/* bootind will be equal to this macro if the partition is bootable */
+#define BOOTABLE_MAGIC 0x80
 
 /* byte addresses & the expected values for verifying a partition signature. */
 #define SIG510_OFFSET 510 
@@ -115,11 +115,11 @@ void close_mfs(min_fs* mfs) {
  * @return void.
  */
 void validate_part_table(part_tbl* partition_table) {
-  // /* Check that the image is bootable */
-  // if (partition_table->bootind != BOOTABLE_MAGIC) {
-  //   fprintf(stderr, "Bad magic number. (%#x)\n", partition_table->bootind);
-  //   exit(EXIT_FAILURE);
-  // }
+  /* Check that the image is bootable */
+  if (partition_table->bootind != BOOTABLE_MAGIC) {
+    fprintf(stderr, "Bad magic number. (%#x)\n", partition_table->bootind);
+    exit(EXIT_FAILURE);
+  }
 
   /* Check that the partition type is of minix. */
   if (partition_table->type != MINIX_PARTITION_TYPE) {
