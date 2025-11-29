@@ -55,8 +55,28 @@ void print_part_table(part_tbl* pt) {
   printf("lFirst: %d\n", pt->lFirst);
   printf("size: %d\n", pt->size);
 
-  printf("\n=== (end partition table) ===\n\n");
+  printf("\n=== (end partition table info) ===\n\n");
 }
 
 
+/* Prints all of the information in a superblock.
+ * @param pt a pointer to the superblock struct
+ * @return void. 
+ */
+void print_superblock(superblock* sb) {
+  printf("\n\n=== SUPERBLOCK ===\n\n");
+
+  printf("ninodes: %d\n", sb->ninodes);
+  printf("i_blocks: %d\n", sb->i_blocks);
+  printf("z_blocks: %d\n", sb->z_blocks);
+  printf("firstdata: %d\n", sb->firstdata);
+  printf("log_zone_size: %d\n", sb->log_zone_size);
+  printf("max_file: %d\n", sb->max_file);
+  printf("zones: %d\n", sb->zones);
+  printf("magic: %d\n", sb->magic);
+  printf("blocksize: %d\n", sb->blocksize);
+  printf("subversion: %d\n", sb->subversion);
+
+  printf("\n=== (end superblock info) ===\n\n");
+}
 
