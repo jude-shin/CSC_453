@@ -225,7 +225,7 @@ void load_superblock(min_fs* mfs, superblock* sb) {
   fseek(mfs->file, mfs->partition_start+SUPERBLOCK_OFFSET, SEEK_SET);
   bytes = fread(sb, sizeof(superblock), 1, mfs->file);
   if (bytes < 1) {
-    fprintf(stderr, "error with signature 1: %d\n", errno);
+    fprintf(stderr, "error with fread() on superblock: %d\n", errno);
     exit(EXIT_FAILURE);
   }
 }
