@@ -12,14 +12,31 @@
 #define PART_TABLE_ADDR 0x1BE 
 /* the partition type that indicates this is a minix system */
 #define MINIX_PARTITION_TYPE 0x81
-/* bootind will be equal to this macro if the partition is bootable */
-#define BOOTABLE_MAGIC 0x80
+// /* bootind will be equal to this macro if the partition is bootable */
+// #define BOOTABLE_MAGIC 0x80
 
 /* byte addresses & the expected values for verifying a partition signature. */
 #define SIG510_OFFSET 510 
 #define SIG510_EXPECTED 0x55 
 #define SIG511_OFFSET 511
 #define SIG511_EXPECTED 0xAA
+
+void print_part_table(part_tbl* pt) {
+  printf("\n\n=== PARTITION TABLE ===\n\n");
+
+  printf("bootind: %d\n", pt->bootind);
+  printf("start_head: %d\n", pt->start_head);
+  printf("start_sec: %d\n", pt->start_sec);
+  printf("start_cyl: %d\n", pt->start_cyl);
+  printf("type: %d\n", pt->type);
+  printf("end_head: %d\n", pt->end_head);
+  printf("end_sec: %d\n", pt->end_sec);
+  printf("end_cyl: %d\n", pt->end_cyl);
+  printf("lFirst: %d\n", pt->lFirst);
+  printf("size: %d\n", pt->size);
+
+  printf("\n=== (end partition table) ===\n\n");
+}
 
 /* Based on an address (primary partition will start at 0, and any subpartition
  * will start somewhere else) this function populates the given partition_table
@@ -33,12 +50,12 @@
 void load_part_table(part_tbl* partition_table, long addr, FILE* image) { 
   /* Seek to the correct location that the partition table resides. */
   fseek(image, addr, SEEK_SET);
-  
+
   /* Read the partition_table, storing its contents in the struct for us to 
      reference later on. */
   ssize_t bytes = fread(partition_table, sizeof(part_tbl), 1, image);
-  if (bytes <= sizeof(part_tbl)) {
-    fprintf(stderr, "error reading partition table: %d\n", errno);
+  if (bytes <= 1) {
+    fprintf(stderr, "error with fread() on partition table: %d\n", errno);
     exit(EXIT_FAILURE);
   }
 }
@@ -52,16 +69,15 @@ void load_part_table(part_tbl* partition_table, long addr, FILE* image) {
  * @return void.
  */
 void validate_part_table(part_tbl* partition_table) {
-  /* check that the image is bootable */
-  /* TODO: we might not actually want this. */
-  if (partition_table->bootind != BOOTABLE_MAGIC) {
-    fprintf(stderr, "this image is not bootable\n");
-    exit(EXIT_FAILURE);
-  }
+  // /* Check that the image is bootable */
+  // if (partition_table->bootind != BOOTABLE_MAGIC) {
+  //   fprintf(stderr, "Bad magic number. (%#x)\n", partition_table->bootind);
+  //   exit(EXIT_FAILURE);
+  // }
 
-  /* check that the partition type is of minix. */
+  /* Check that the partition type is of minix. */
   if (partition_table->type != MINIX_PARTITION_TYPE) {
-    fprintf(stderr, "this is not a minix image\n");
+    fprintf(stderr, "This is not a minix image.\n");
     exit(EXIT_FAILURE);
   }
 
@@ -99,7 +115,7 @@ void validate_part_table(part_tbl* partition_table) {
  * @return void. 
  */
 void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
-  FILE* imagefile = fopen(imagefile_path, "r");
+  FILE* imagefile = fopen(imagefile_path, "rb");
   if (imagefile == 0) {
     fprintf(stderr, "error opening %s: %d\n", imagefile_path, errno);
     exit(EXIT_FAILURE);
@@ -110,9 +126,13 @@ void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
 
   /* The partition_table that is read from the image. */
   part_tbl pt = {0};
+
+  print_part_table(&pt); /* TODO: remove this. */
  
   /* Populate the partition table (pt) */
   load_part_table(&pt, PART_TABLE_ADDR, imagefile);
+
+  print_part_table(&pt); /* TODO: remove this. */
 
   /* Check the signatures, system type, and if this is bootable. */
   validate_part_table(&pt);

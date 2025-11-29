@@ -40,7 +40,7 @@ typedef struct MinixFileSystem {
 } min_fs;
 
 /* The struct used as the partition table in a minix MBR filesystem. */
-typedef struct partition_table {
+typedef struct __attribute__ ((__packed__)) partition_table {
   uint8_t bootind;    /* Boot magic number (0x80 if bootable). */
   uint8_t start_head; /* Start of partition in CHS. */
   uint8_t start_sec;
