@@ -57,6 +57,23 @@ typedef struct __attribute__ ((__packed__)) partition_table {
   uint32_t size;      /* Size of partition (in sectors). */
 } part_tbl;
 
+/* Superblock structure found in fs/super.h in minix 3.1.1. */
+typedef struct __attribute__ ((__packed__)) superblock {
+  uint32_t ninodes;       /* number of inodes in this filesystem */
+  uint16_t pad1;          /* make things line up properly */
+  int16_t i_blocks;       /* # of blocks used by inode bit map */
+  int16_t z_blocks;       /* # of blocks used by zone bit map */
+  uint16_t firstdata;     /* number of first data zone */
+  int16_t log_zone_size;  /* log2 of blocks per zone */
+  int16_t pad2;           /* make things line up again */
+  uint32_t max_file;      /* maximum file size */
+  uint32_t zones;         /* number of zones on disk */
+  int16_t magic;          /* magic number */
+  int16_t pad3;           /* make things line up again */
+  uint16_t blocksize;     /* block size in bytes */
+  uint8_t subversion;     /* filesystem sub–version */
+} superblock;
+
 
 /*==========*/
 /* BASIC IO */
@@ -76,9 +93,10 @@ void close_mfs(min_fs* mfs);
 /* VALIDATION */
 /*============*/
 
-/* Checks to see if an image has both signatures. If they don't, just make note
+/* Checks to see if an image has both signatures in relation to the offset (This
+   allows for subpartitions to be checked also). If they don't, just make note
    and exit with EXIT_FAILURE. */
-void validate_signatures(FILE* image);
+void validate_signatures(FILE* image, long offset);
 
 /* Check to see if the partition table holds useful information for this
    assignment. This includes whether an image is bootable, and if the partition

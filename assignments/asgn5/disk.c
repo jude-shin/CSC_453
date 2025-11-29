@@ -22,6 +22,8 @@
 #define SIG511_OFFSET 511
 #define SIG511_EXPECTED 0xAA
 
+/* Where the superblock lies in relation to the beginning of the partition. */
+
 /*==========*/
 /* BASIC IO */
 /*==========*/
@@ -55,9 +57,6 @@ void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
     exit(EXIT_FAILURE);
   }
 
-  /* Validate the two signatures in the beginning of the disk. */
-  validate_signatures(imagefile);
-
   offset = 0;
 
   /* Seek to the primary partition */
@@ -65,6 +64,9 @@ void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
   if (prim_part != -1) {
     /* Populate the partition table (pt) */
     load_part_table(&pt, PART_TABLE_ADDR, imagefile);
+
+    /* Validate the two signatures in the beginning of the disk. */
+    validate_signatures(imagefile, offset);
 
     /* Check the signatures, system type, and if this is bootable. */
     validate_part_table(&pt);
@@ -77,12 +79,19 @@ void open_mfs(min_fs* mfs, char* imagefile_path, int prim_part, int sub_part) {
       /* Populate the subpartition table (spt). */
       load_part_table(&spt, offset+PART_TABLE_ADDR, imagefile);
 
+      /* Validate the two signatures in the partition. */
+      validate_signatures(imagefile, offset);
+
       /* Check the signatures, system type, and if this is bootable. */
       validate_part_table(&spt);
 
       /* If there is a subpartition, then this is the final address! */
       offset = spt.lFirst;
     }
+  }
+  else {
+    /* TODO: if user says it is unpartitioned, but it is really partitioned, it should error. */
+    fprintf(stderr, "check not implemented yet!\n");
   }
 
   /* Update the struct to reflect the file descriptor and offset found. */
@@ -115,11 +124,11 @@ void close_mfs(min_fs* mfs) {
  * @return void.
  */
 void validate_part_table(part_tbl* partition_table) {
-  /* Check that the image is bootable */
-  if (partition_table->bootind != BOOTABLE_MAGIC) {
-    fprintf(stderr, "Bad magic number. (%#x)\n", partition_table->bootind);
-    exit(EXIT_FAILURE);
-  }
+  // /* Check that the image is bootable */
+  // if (partition_table->bootind != BOOTABLE_MAGIC) {
+  //   fprintf(stderr, "Bad magic number. (%#x)\n", partition_table->bootind);
+  //   exit(EXIT_FAILURE);
+  // }
 
   /* Check that the partition type is of minix. */
   if (partition_table->type != MINIX_PARTITION_TYPE) {
@@ -134,18 +143,18 @@ void validate_part_table(part_tbl* partition_table) {
  * @param image the open FILE that can be read from. 
  * @return void.
  */
-void validate_signatures(FILE* image) {
+void validate_signatures(FILE* image, long offset) {
   ssize_t bytes;
   char sig510, sig511;
 
-  fseek(image, SIG510_OFFSET, SEEK_SET);
+  fseek(image, offset+SIG510_OFFSET, SEEK_SET);
   bytes = fread(&sig510, sizeof(char), 1, image);
   if (bytes < 1) {
     fprintf(stderr, "error with signature 1: %d\n", errno);
     exit(EXIT_FAILURE);
   }
 
-  fseek(image, SIG511_OFFSET, SEEK_SET);
+  fseek(image, offset+SIG511_OFFSET, SEEK_SET);
   bytes = fread(&sig511, sizeof(char), 1, image);
   if (bytes < 1) {
     fprintf(stderr, "error with signature 1: %d\n", errno);
