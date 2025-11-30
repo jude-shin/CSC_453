@@ -96,11 +96,25 @@ void print_inode(min_inode* inode) {
   fprintf(stderr, "atime: %d\n", inode->atime);
   fprintf(stderr, "mtime: %d\n", inode->mtime);
   fprintf(stderr, "ctime: %d\n", inode->ctime);
-  fprintf(stderr, "zone addr: %p\n", inode->zone); /* TODO: check the formatting*/
+  fprintf(stderr, "zone addr: %p\n", inode->zone); /* TODO: check formatting */
   fprintf(stderr, "indirect: %u\n", inode->indirect);
   fprintf(stderr, "two_indirect: %u\n", inode->two_indirect);
   fprintf(stderr, "unused: %u\n", inode->unused);
 
   fprintf(stderr, "\n=== (end inode info) ====\n\n");
+}
+
+
+/* Prints all of the information in a directory entry.
+ * @param pt a pointer to the dir entry struct
+ * @return void. 
+ */
+void print_dir(min_dir* dir) {
+  fprintf(stderr, "\n\n=== DIRECTORY ===============\n\n");
+
+  fprintf(stderr, "inode: %u\n", dir->inode);
+  fprintf(stderr, "links: %s\n", dir->name);
+
+  fprintf(stderr, "\n=== (end directory info) ====\n\n");
 }
 

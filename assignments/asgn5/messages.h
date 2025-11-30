@@ -20,4 +20,10 @@ void print_part_table(min_part_tbl* pt);
 /* Prints all of the information in a superblock. */
 void print_superblock(min_superblock* sb);
 
+/* Prints all of the information in a minix inode. */
+void print_inode(min_inode* inode);
+
+/* Prints all of the information in a directory entry. */
+void print_inode(min_dir* dir);
+
 #endif

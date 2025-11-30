@@ -67,6 +67,7 @@ typedef struct __attribute__ ((__packed__)) min_superblock {
   uint8_t subversion;     /* filesystem sub–version */
 } min_superblock;
 
+/* An inode in minix. */
 typedef struct __attribute__ ((__packed__)) min_inode {
   uint16_t mode;    /* mode */
   uint16_t links;   /* number or links */
@@ -81,6 +82,12 @@ typedef struct __attribute__ ((__packed__)) min_inode {
   uint32_t two_indirect;
   uint32_t unused;
 } min_inode;
+
+/* A directoy entry in minix. */
+typedef struct __attribute__ ((__packed__)) min_dir {
+  uint32_t inode;         /* Inode Number */
+  unsigned char name[60]; /* filename string */
+} min_dir;
 
 /* Essentially defines the beginning of the filesystem of an image. 
    It includes the open imagefile filedescriptor, and the offset of where the 
