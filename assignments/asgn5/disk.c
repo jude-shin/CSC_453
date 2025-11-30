@@ -576,7 +576,6 @@ uint16_t get_zone_size(min_superblock* sb) {
   int16_t log_zone_size = sb->blocksize;
   uint16_t zonesize = blocksize << log_zone_size;
 
-  printf("init_zone_size: %u\n", zonesize);
   return zonesize;
 }
 

@@ -124,16 +124,14 @@ int main (int argc, char *argv[]) {
     }
   }
 
-  /* Print the inode information. */
+  /* Print inode information when the file is found. */
   if (verbose) {
     print_inode(mfs.file, &inode);
   }
 
-
   /* If we have fully traversed the path, but we ended up at a file, we cannot
      ls on that... we must ls on a directory. */
   if (inode.mode & DIR_FT) {
-    fprintf(stderr, "ls directory not implemented yet\n");
     print_directory(stderr, &inode, canonicalized_minix_path);
     exit(EXIT_FAILURE);
   }
@@ -146,24 +144,11 @@ int main (int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  /* Print all the entries information in the inode directory. */
-
-
-
-  /* TODO: this is going to be very similar to the "search_*_zones" functions,
-     however, they will just print every inode that is encountered (that is not
-     a zero).
-
-     Put these functions in this file because it is spesific to minls. Minget
-     does not use this. */
-
-
-
 
   /* Close the minix filesystem. */
   close_mfs(&mfs);
 
-  /* Free the one thing we malloced. */
+  /* Free the malloc'ed canonicalized path string. */
   free(canonicalized_minix_path);
 
   exit(EXIT_SUCCESS);
