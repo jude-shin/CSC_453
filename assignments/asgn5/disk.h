@@ -6,6 +6,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
+/* How many zones there are in a minix inode. */
+#define DIRECT_ZONES 7
+
 /* TODO: change "disk.*" to "filesystem.*"*/
 
 
@@ -63,6 +66,21 @@ typedef struct __attribute__ ((__packed__)) superblock {
   uint16_t blocksize;     /* block size in bytes */
   uint8_t subversion;     /* filesystem sub–version */
 } superblock;
+
+typedef struct __attribute__ ((__packed__)) inode {
+  uint16_t mode;    /* mode */
+  uint16_t links;   /* number or links */
+  uint16_t uid;
+  uint16_t gid;
+  uint32_t size;
+  int32_t atime;
+  int32_t mtime;
+  int32_t ctime;
+  uint32_t zone[DIRECT_ZONES];
+  uint32_t indirect;
+  uint32_t two_indirect;
+  uint32_t unused;
+} inode;
 
 /* Essentially defines the beginning of the filesystem of an image. 
    It includes the open imagefile filedescriptor, and the offset of where the 
