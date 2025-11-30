@@ -349,6 +349,8 @@ bool search_indirect_zones(
     min_inode* next_inode, 
     char* name) {
 
+
+
   return false;
 }
 

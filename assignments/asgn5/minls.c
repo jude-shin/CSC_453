@@ -60,7 +60,7 @@ int main (int argc, char *argv[]) {
 
   if (minix_path == NULL) {
     /* Set the default path to the root directory '/' */
-    minix_path = "/foo";
+    minix_path = "/";
   }
 
   printf("\n--- PARSED ITEMS ---\n");
@@ -107,7 +107,6 @@ int main (int argc, char *argv[]) {
        an inode with a matching name. */
     min_inode next_inode;
 
-
     printf("searching direct zones\n");
 
     /* Search the dierct zones for the current inode (directory) */
@@ -152,7 +151,7 @@ int main (int argc, char *argv[]) {
   /* If we have fully traversed the path, but we ended up at a file, we cannot
      ls on that... we must ls on a directory. */
   if (!(inode.mode & DIR_FT)) {
-    fprintf(stderr, "error: the given path is not a directory!\n");
+    fprintf(stderr, "error: the found path is not a directory!\n");
     exit(EXIT_FAILURE);
   }
 
@@ -160,9 +159,12 @@ int main (int argc, char *argv[]) {
 
 
 
+  /* TODO: this is going to be very similar to the "search_*_zones" functions,
+     however, they will just print every inode that is encountered (that is not
+     a zero).
 
-
-  
+     Put these functions in this file because it is spesific to minls. Minget
+     does not use this. */
 
 
 
