@@ -163,8 +163,8 @@ void open_mfs(
   /* Update the mfs context to store the zone size of this filesystem. */
   mfs->zone_size = get_zone_size(&mfs->sb);
 
-  /* ======================================================================== */
-
+  /* The mfs context is now populated with everything we need to know in order
+     to traverse the minix filesystem. */
 }
 
 /* Closes the file descriptor for the file in the min_fs struct given.
