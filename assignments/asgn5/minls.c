@@ -27,7 +27,7 @@ void print_file(min_fs* mfs) {
     exit(EXIT_FAILURE);
   }
 
-  print_inode(&inode);
+  print_inode(stderr, &inode);
 }
 
 void print_directory() {
@@ -69,7 +69,7 @@ int main (int argc, char *argv[]) {
 
   /* Catch errors by printing the general usage statement and exiting. */
   if (pd_flags == -1 || pd_args == -1) {
-    minls_usage();
+    minls_usage(stderr);
     exit(EXIT_FAILURE);
   }
 

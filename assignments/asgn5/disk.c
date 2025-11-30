@@ -147,7 +147,6 @@ void open_mfs(
     /* Check to see if this image had a valid partition table. */
     if (validate_signatures(imagefile, PART_TABLE_ADDR)) {
       fprintf(stderr, "valid partition table is present! consider using -p\n");
-      minls_usage();
       exit(EXIT_FAILURE);
     }
   }
@@ -283,7 +282,7 @@ void load_part_table(min_part_tbl* pt, long addr, FILE* image, bool verbose) {
 
   /* Print the contents if you want to. */
   if (verbose) {
-    print_part_table(pt);
+    print_part_table(stderr, pt);
   }
 }
 
@@ -310,7 +309,7 @@ void load_superblock(min_fs* mfs, bool verbose) {
   
   /* Print the contents if you want to. */
   if (verbose) {
-    print_superblock(&mfs->sb);
+    print_superblock(stderr, &mfs->sb);
   }
 }
 
