@@ -1,11 +1,11 @@
 CC=/bin/gcc
-CFLAGS = -Wall -g -pedantic -fPIC -I ./include
+CFLAGS = -Wall -g -pedantic
 LD = /bin/gcc
-LDFLAGS = -Wall -g -pedantic -lrt -lpthread
+LDFLAGS = -Wall -g -pedantic
 
 ALL_PROGS = minls minget
 OBJS = minls.o minget.o 
-HELPER_OBJS	= disk.o messages.o input.o
+HELPER_OBJS	= disk.o print.o input.o
 
 .PHONY: all allclean clean 
 
