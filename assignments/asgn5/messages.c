@@ -5,9 +5,9 @@
 #include "disk.h"
 
 /* The max length of a label */
-#define LBL_LN 14
+#define LBL_LN 13
 /* The max length of a value */
-#define VLU_LN 12
+#define VLU_LN 11
 /* The lenfth of a hexadecimal value (the "0000" in "0x0000")*/
 #define HEX_LN 4
 /* The amount of padding needed for a hex value */
@@ -136,9 +136,9 @@ void print_dir_entry(FILE* s, min_dir_entry* dir_entry) {
 /* Pretty Prints an atime, mtime, or ctime nicely to a FILE*.
  * @param s the FILE that describes the place this will be printed.
  * @param raw_time a number that represents a time and date. 
+ * @return void.
  */
 void print_time(FILE* s, uint32_t raw_time) {
   time_t t = raw_time;
   fprintf(s, " --- %s", ctime(&t));
 }
-
