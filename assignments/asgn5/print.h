@@ -14,11 +14,10 @@ void print_minls_usage(FILE* s);
 
 /* Prints some information about an inode including the rwx permissions for the
    Group, User, and Other, it's size, and it's name. */
-void print_file(FILE* s, min_inode* inode, char* name);
+void print_file(FILE* s, min_inode* inode, unsigned char* name);
 
 /* Prints every directory entry in a directory. */
-void print_directory(FILE* s, min_inode* inode, char* can_min_path);
-
+void print_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path);
 
 
 /* ====== */

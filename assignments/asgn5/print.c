@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
 #include <time.h>
 
 #include "print.h"
@@ -44,7 +46,7 @@ void print_minls_usage(FILE* s) {
  */
 
 /* TODO: do we have to check that this is null terminated at 60 characters? */
-void print_file(FILE* s, min_inode* inode, char* name) {
+void print_file(FILE* s, min_inode* inode, unsigned char* name) {
   /* prints whether this is a directory or not */
   print_mask(s, "d", inode->mode, DIR_FT);
 
@@ -68,16 +70,76 @@ void print_file(FILE* s, min_inode* inode, char* name) {
 
 /* Prints every directory entry in a directory.
  * @param s the stream that this message will be printed to.
+ * @param mfs a struct that holds an open file descriptor, and the offset (the
+ *  offset from the beginning of the image which indicates the beginning of the
+ *  partition that holds the filesystem.
  * @param inode the inode of interest. 
- * @param can_min_path the canonicalized path that we are going to list.
+ * @param can_path the canonicalized path that we are going to list.
  * @return void.
  */
-void print_directory(FILE* s, min_inode* inode, char* can_min_path) {
+void print_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path) {
   /* print the full canonicalized minix path that we are listing. */
-  fprintf(s, "%s:", can_min_path);
+  fprintf(s, "%s:\n", can_path);
 
   /* traverse the directory. */
   /* for every entry, print_file the inode. */
+
+  /* DIRECT ZONES */
+  for(int i = 0; i < DIRECT_ZONES; i++) {
+    /* Search for the next inode who matches the name of the token. */
+    uint32_t zone_num = inode->zone[i];
+
+    /* Skip over the indirect zone if it is not used. */
+    if (zone_num == 0) {
+      continue;
+    }
+
+    /* The actual address of the zone. */
+    uint32_t zone_addr = mfs->partition_start + (zone_num * mfs->zone_size);
+
+    /* Read all directory entries in this chunk. */
+    int num_entries = mfs->zone_size / DIR_ENTRY_SIZE;
+
+    for(int j = 0; j < num_entries; j++) {
+      min_dir_entry entry;
+
+      /* Seek to the directory entry */
+      fseek(mfs->file, zone_addr + (j * DIR_ENTRY_SIZE), SEEK_SET);
+
+      /* Read the directory entry */
+      if(fread(&entry, DIR_ENTRY_SIZE, 1, mfs->file) < 1) {
+        fprintf(stderr, "error reading directory entry: %d\n", errno);
+        exit(EXIT_FAILURE);
+      }
+
+
+      /* Check if entry is valid */
+      if(entry.inode != 0) {
+        min_inode next_inode;
+
+        /* Seek to the address that holds the inode that we are on. */
+        fseek(
+            mfs->file, 
+            mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE),
+            SEEK_SET);
+
+        /* Fill the next_inode with the found informatio. */
+        if(fread(&next_inode, INODE_SIZE, 1, mfs->file) < 1) {
+          /* If there was an error writing to the inode, note it an exit. We 
+             could try to limp along, but this is not that critical of an 
+             application, so we'll just bail. */
+          fprintf(stderr, "error copying the found inode: %d \n", errno);
+          exit(EXIT_FAILURE);
+        }
+
+        print_file(s, &next_inode, entry.name);
+      }
+    }
+  }
+
+  /* TODO: INDIRECT ZONES */
+
+  /* TODO: DOUBLE INDIRECT ZONES */
 }
 
 

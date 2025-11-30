@@ -82,7 +82,7 @@ int main (int argc, char *argv[]) {
   char* token = strtok(minix_path, "/");
 
   /* The current name that was just processed. */
-  char curr_name[DIR_NAME_SIZE+1] = "/";
+  unsigned char curr_name[DIR_NAME_SIZE] = "/";
  
   /* Allocate enough space for the canonicalized interpretation of the given 
      minix path. */
@@ -93,7 +93,7 @@ int main (int argc, char *argv[]) {
   while(token != NULL) {
     /* copy the string name to curr_name so we can keep track of the last
        processed name. */
-    strcpy(curr_name, token);
+    memcpy(curr_name, token, sizeof(char)*DIR_NAME_SIZE);
 
     /* Add the token to the built canonicalized minix path. */
     strcat(canonicalized_minix_path, "/");
@@ -132,7 +132,7 @@ int main (int argc, char *argv[]) {
   /* If we have fully traversed the path, but we ended up at a file, we cannot
      ls on that... we must ls on a directory. */
   if (inode.mode & DIR_FT) {
-    print_directory(stderr, &inode, canonicalized_minix_path);
+    print_directory(stderr, &mfs, &inode, canonicalized_minix_path);
     exit(EXIT_FAILURE);
   }
   else if (inode.mode & REG_FT) {

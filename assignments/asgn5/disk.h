@@ -34,8 +34,17 @@
 /* ===================== */
 /* How many zones there are in a minix inode. */
 #define DIRECT_ZONES 7
+
 /* The max size of a directoy entry name. */
 #define DIR_NAME_SIZE 60
+
+/* The inode size for a minix fs in bytes. */
+#define INODE_SIZE 64
+
+/* The directory entry size for a minix fs in bytes. */
+#define DIR_ENTRY_SIZE 64
+
+
 
 /* TODO: change "disk.*" to "filesystem.*"*/
 

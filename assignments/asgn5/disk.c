@@ -34,12 +34,6 @@
 /* The sector size for a minix fs in bytes. */
 #define SECTOR_SIZE 512 
 
-/* The inode size for a minix fs in bytes. */
-#define INODE_SIZE 64
-
-/* The directory entry size for a minix fs in bytes. */
-#define DIR_ENTRY_SIZE 64
-
 /* The block number for the imap block in a minix fs. */
 #define IMAP_BLOCK_NUMBER 2
 
