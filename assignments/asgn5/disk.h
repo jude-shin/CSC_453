@@ -195,10 +195,10 @@ void validate_part_table(min_part_tbl* partition_table);
    will start somewhere else) this function populates the given partition_table
    struct with the data read in the image. Whether the populated data is valid 
    is entirely up to the address variable. */
-void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* image, bool verbose);
+void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* image);
 
 /* Fills a superblock based ona minix filesystem (a image and an offset) */ 
-void load_superblock(min_fs* mfs, bool verbose);
+void load_superblock(min_fs* mfs);
 
 
 

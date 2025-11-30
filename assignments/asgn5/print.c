@@ -113,7 +113,7 @@ void print_files_in_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
           /* If there was an error writing to the inode, note it an exit. We 
              could try to limp along, but this is not that critical of an 
              application, so we'll just bail. */
-          fprintf(stderr, "error copying the found inode: %d \n", errno);
+          fprintf(stderr, "error getting next inode for printing: %d\n", errno);
           exit(EXIT_FAILURE);
         }
 

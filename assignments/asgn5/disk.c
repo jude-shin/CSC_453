@@ -103,10 +103,15 @@ void open_mfs(
   if (prim_part != -1) {
 
     /* Populate the partition table (pt) */
-    load_part_table(&pt, PART_TABLE_OFFSET, imagefile, verbose);
+    load_part_table(&pt, PART_TABLE_OFFSET, imagefile);
 
     /* Check the signatures, system type, and if this is bootable. */
     validate_part_table(&pt);
+
+    /* Print the contents if you want to. */
+    if (verbose) {
+      print_part_table(stderr, &pt);
+    }
 
     /* Validate the two signatures in the beginning of the disk. */
     if (!validate_signatures(imagefile, offset)) {
@@ -120,7 +125,7 @@ void open_mfs(
     /* Seek to the subpartition */
     if (sub_part != -1) { 
       /* Populate the subpartition table (spt). */
-      load_part_table(&spt, offset+PART_TABLE_OFFSET, imagefile, verbose);
+      load_part_table(&spt, offset+PART_TABLE_OFFSET, imagefile);
 
       /* TODO: ask Ask ASK are there supposed to be signatures here as well? */
       // /* Validate the two signatures in the partition. */
@@ -131,6 +136,12 @@ void open_mfs(
 
       /* Check the signatures, system type, and if this is bootable. */
       validate_part_table(&spt);
+
+      /* Print the contents if you want to. */
+      if (verbose) {
+        fprintf(stderr, "(sub)");
+        print_part_table(stderr, &pt);
+      }
 
       /* Calculate where the important part of the partition is. */
       offset = spt.lFirst*SECTOR_SIZE;
@@ -154,7 +165,14 @@ void open_mfs(
      stored in the mfs context! */
 
   /* Load the superblock. */
-  load_superblock(mfs, verbose);
+  load_superblock(mfs);
+
+  /* TODO: validate the superblock? */
+
+  /* Print the contents if you want to. */
+  if (verbose) {
+    print_superblock(stderr, &mfs->sb);
+  }
 
   /* Update the mfs context to store the zone size of this filesystem. */
   mfs->zone_size = get_zone_size(&mfs->sb);
@@ -252,10 +270,9 @@ bool validate_signatures(FILE* image, uint32_t offset) {
  * @param pt the struct that will be filled (& referenced later).
  * @param addr the address that the partition will start at. 
  * @param image the imagefile that the disk is stored in.
- * @param verbose if this is true, print the partition table's contents
  * @return void.
  */
-void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* image, bool verbose) { 
+void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* image) { 
   /* Seek to the correct location that the partition table resides. */
   fseek(image, addr, SEEK_SET);
 
@@ -265,13 +282,6 @@ void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* image, bool verbose)
     fprintf(stderr, "error with fread() on partition table: %d\n", errno);
     exit(EXIT_FAILURE);
   }
-
-  /* TODO: validation in here? */
-
-  /* Print the contents if you want to. */
-  if (verbose) {
-    print_part_table(stderr, pt);
-  }
 }
 
 /* Fills a superblock based ona minix filesystem (a image and an offset)
@@ -280,7 +290,7 @@ void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* image, bool verbose)
  * @param verbose if this is true, print the superblock's contents
  * @return void.
  */
-void load_superblock(min_fs* mfs, bool verbose) {
+void load_superblock(min_fs* mfs) {
   /* Seek to the start of the partition, and then go another SUPERBLOCK_OFFSET
      bytes. No matter the block size, this is where the superblock lives. */
   fseek(mfs->file, mfs->partition_start+SUPERBLOCK_OFFSET, SEEK_SET);
@@ -290,13 +300,6 @@ void load_superblock(min_fs* mfs, bool verbose) {
   if (fread(&mfs->sb, sizeof(min_superblock), 1, mfs->file) < 1) {
     fprintf(stderr, "error with fread() on superblock: %d\n", errno);
     exit(EXIT_FAILURE);
-  }
-
-  /* TODO: validation in here? */
-  
-  /* Print the contents if you want to. */
-  if (verbose) {
-    print_superblock(stderr, &mfs->sb);
   }
 }
 
