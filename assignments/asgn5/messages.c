@@ -85,9 +85,22 @@ void print_superblock(min_superblock* sb) {
  * @param pt a pointer to the inode struct
  * @return void. 
  */
-void print_superblock(min_inode* inode) {
-  fprintf(stderr, "\n\n=== SUPERBLOCK ===============\n\n");
+void print_inode(min_inode* inode) {
+  fprintf(stderr, "\n\n=== INODE ===============\n\n");
 
-  fprintf(stderr, "\n=== (end superblock info) ====\n\n");
+  fprintf(stderr, "mode: %u\n", inode->mode);
+  fprintf(stderr, "links: %u\n", inode->links);
+  fprintf(stderr, "uid: %u\n", inode->uid);
+  fprintf(stderr, "gid: %u\n", inode->gid);
+  fprintf(stderr, "size: %u\n", inode->size);
+  fprintf(stderr, "atime: %d\n", inode->atime);
+  fprintf(stderr, "mtime: %d\n", inode->mtime);
+  fprintf(stderr, "ctime: %d\n", inode->ctime);
+  fprintf(stderr, "zone addr: %p\n", inode->zone); /* TODO: check the formatting*/
+  fprintf(stderr, "indirect: %u\n", inode->indirect);
+  fprintf(stderr, "two_indirect: %u\n", inode->two_indirect);
+  fprintf(stderr, "unused: %u\n", inode->unused);
+
+  fprintf(stderr, "\n=== (end inode info) ====\n\n");
 }
 
