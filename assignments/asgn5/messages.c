@@ -41,7 +41,7 @@ void minget_usage(void) {
  * @param pt a pointer to the partition table struct
  * @return void. 
  */
-void print_part_table(part_tbl* pt) {
+void print_part_table(min_part_tbl* pt) {
   fprintf(stderr, "\n\n=== PARTITION TABLE ===============\n\n");
 
   fprintf(stderr, "bootind: 0x%04x\n", pt->bootind);
@@ -63,7 +63,7 @@ void print_part_table(part_tbl* pt) {
  * @param pt a pointer to the superblock struct
  * @return void. 
  */
-void print_superblock(superblock* sb) {
+void print_superblock(min_superblock* sb) {
   fprintf(stderr, "\n\n=== SUPERBLOCK ===============\n\n");
 
   fprintf(stderr, "ninodes: %u\n", sb->ninodes);
@@ -76,6 +76,17 @@ void print_superblock(superblock* sb) {
   fprintf(stderr, "magic: 0x%04x\n", sb->magic);
   fprintf(stderr, "blocksize: %u\n", sb->blocksize);
   fprintf(stderr, "subversion: %u\n", sb->subversion);
+
+  fprintf(stderr, "\n=== (end superblock info) ====\n\n");
+}
+
+
+/* Prints all of the information in a minix inode.
+ * @param pt a pointer to the inode struct
+ * @return void. 
+ */
+void print_superblock(min_inode* inode) {
+  fprintf(stderr, "\n\n=== SUPERBLOCK ===============\n\n");
 
   fprintf(stderr, "\n=== (end superblock info) ====\n\n");
 }

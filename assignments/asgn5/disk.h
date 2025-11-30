@@ -37,7 +37,7 @@
 /*==================*/
 
 /* The struct used as the partition table in a minix MBR filesystem. */
-typedef struct __attribute__ ((__packed__)) partition_table {
+typedef struct __attribute__ ((__packed__)) min_part_tbl {
   uint8_t bootind;    /* Boot magic number (0x80 if bootable). */
   uint8_t start_head; /* Start of partition in CHS. */
   uint8_t start_sec;
@@ -48,10 +48,10 @@ typedef struct __attribute__ ((__packed__)) partition_table {
   uint8_t end_cyl;
   uint32_t lFirst;     /* First sector (LBA addressing). */
   uint32_t size;       /* Size of partition (in sectors). */
-} part_tbl;
+} min_part_tbl;
 
 /* Superblock structure found in fs/super.h in minix 3.1.1. */
-typedef struct __attribute__ ((__packed__)) superblock {
+typedef struct __attribute__ ((__packed__)) min_superblock {
   uint32_t ninodes;       /* number of inodes in this filesystem */
   uint16_t pad1;          /* make things line up properly */
   int16_t i_blocks;       /* # of blocks used by inode bit map */
@@ -65,9 +65,9 @@ typedef struct __attribute__ ((__packed__)) superblock {
   int16_t pad3;           /* make things line up again */
   uint16_t blocksize;     /* block size in bytes */
   uint8_t subversion;     /* filesystem sub–version */
-} superblock;
+} min_superblock;
 
-typedef struct __attribute__ ((__packed__)) inode {
+typedef struct __attribute__ ((__packed__)) min_inode {
   uint16_t mode;    /* mode */
   uint16_t links;   /* number or links */
   uint16_t uid;
@@ -80,18 +80,18 @@ typedef struct __attribute__ ((__packed__)) inode {
   uint32_t indirect;
   uint32_t two_indirect;
   uint32_t unused;
-} inode;
+} min_inode;
 
 /* Essentially defines the beginning of the filesystem of an image. 
    It includes the open imagefile filedescriptor, and the offset of where the 
    actual files start. */
-typedef struct MinixFileSystem {
+typedef struct min_fs {
   FILE* file;             /* the file that the (minix) image is on */
   size_t partition_start; /* aka, the offset */
   
-  superblock sb;          /* The superblock and it's information for the fs. */
+  min_superblock sb;      /* The superblock and it's information for the fs. */
 
-  uint16_t zone_size;       /* The size of a zone in bytes */
+  uint16_t zone_size;     /* The size of a zone in bytes */
 } min_fs;
 
 
@@ -129,7 +129,7 @@ bool validate_signatures(FILE* image, long offset);
    is from minix. This function does not return anything.
    If the program does not exit after calling this function, then the partition
    table is valid. Otherwise, it will just exit and do nothing. */
-void validate_part_table(part_tbl* partition_table);
+void validate_part_table(min_part_tbl* partition_table);
 
 
 /*==============*/
@@ -140,13 +140,13 @@ void validate_part_table(part_tbl* partition_table);
    will start somewhere else) this function populates the given partition_table
    struct with the data read in the image. Whether the populated data is valid 
    is entirely up to the address variable. */
-void load_part_table(part_tbl* pt, long addr, FILE* image, bool verbose);
+void load_part_table(min_part_tbl* pt, long addr, FILE* image, bool verbose);
 
 /* Fills a superblock based ona minix filesystem (a image and an offset) */ 
 void load_superblock(min_fs* mfs, bool verbose);
 
 /* Calculates the zonesize based on a superblock using a bitshift. */
-uint16_t get_zone_size(superblock* sb);
+uint16_t get_zone_size(min_superblock* sb);
 
 
 /* ===== */

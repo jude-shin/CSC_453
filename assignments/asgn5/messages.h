@@ -15,9 +15,9 @@ void minget_usage(void);
 
 /* GENERAL */
 /* Prints all of the information in a partition table. */
-void print_part_table(part_tbl* pt);
+void print_part_table(min_part_tbl* pt);
 
 /* Prints all of the information in a superblock. */
-void print_superblock(superblock* sb);
+void print_superblock(min_superblock* sb);
 
 #endif

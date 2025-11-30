@@ -86,7 +86,7 @@ void open_mfs(
   long offset;
 
   /* The (sub)partition table that is read from the image. */
-  part_tbl pt, spt;
+  min_part_tbl pt, spt;
   
   /* The FILE that the image resides in. */
   FILE* imagefile;
@@ -191,7 +191,7 @@ void close_mfs(min_fs* mfs) {
  * @param partition_table the struct that holds all this information. 
  * @return void.
  */
-void validate_part_table(part_tbl* partition_table) {
+void validate_part_table(min_part_tbl* partition_table) {
   // /* Check that the image is bootable */
   // if (partition_table->bootind != BOOTABLE_MAGIC) {
   //   fprintf(stderr, "Bad magic number. (%#x)\n", partition_table->bootind);
@@ -252,7 +252,7 @@ bool validate_signatures(FILE* image, long offset) {
  * @param verbose if this is true, print the partition table's contents
  * @return void.
  */
-void load_part_table(part_tbl* pt, long addr, FILE* image, bool verbose) { 
+void load_part_table(min_part_tbl* pt, long addr, FILE* image, bool verbose) { 
   ssize_t bytes;
 
   /* Seek to the correct location that the partition table resides. */
@@ -260,7 +260,7 @@ void load_part_table(part_tbl* pt, long addr, FILE* image, bool verbose) {
 
   /* Read the partition table, storing its contents in the struct for us to 
      reference later on. */
-  bytes = fread(pt, sizeof(part_tbl), 1, image);
+  bytes = fread(pt, sizeof(min_part_tbl), 1, image);
   if (bytes < 1) {
     fprintf(stderr, "error with fread() on partition table: %d\n", errno);
     exit(EXIT_FAILURE);
@@ -287,7 +287,7 @@ void load_superblock(min_fs* mfs, bool verbose) {
 
   /* Read the superblock, storing its contents in the struct for us to 
      reference later on. */
-  bytes = fread(&mfs->sb, sizeof(superblock), 1, mfs->file);
+  bytes = fread(&mfs->sb, sizeof(min_superblock), 1, mfs->file);
   if (bytes < 1) {
     fprintf(stderr, "error with fread() on superblock: %d\n", errno);
     exit(EXIT_FAILURE);
@@ -303,7 +303,7 @@ void load_superblock(min_fs* mfs, bool verbose) {
  * @param sb a struct that holds information about the superblock.
  * @return uint16_t the size of a zone
  */
-uint16_t get_zone_size(superblock* sb) {
+uint16_t get_zone_size(min_superblock* sb) {
   uint16_t blocksize = sb->blocksize;
   int16_t log_zone_size = sb->blocksize;
   uint16_t zonesize = blocksize << log_zone_size;
