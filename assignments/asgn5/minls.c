@@ -3,14 +3,31 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "input.h"
 #include "messages.h"
 #include "disk.h"
 
 
-void print_file() {
+void print_file(min_fs* mfs) {
+  /* print the first inode (the root) */
+  min_inode inode;
+  
+  /* Bytes read. */
+  ssize_t bytes;
+  
+  /* Seek the read head to the first inode. */
+  fseek(mfs->file, mfs->b_inodes, SEEK_SET);
 
+  /* Read the value at that address. */
+  bytes = fread(&inode, sizeof(inode), 1, mfs->file);
+  if (bytes < 1) {
+    fprintf(stderr, "error reading signature 1: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+
+  print_inode(&inode);
 }
 
 void print_directory() {
@@ -73,8 +90,7 @@ int main (int argc, char *argv[]) {
   /* Open the minix filesystem, populating the values in the min_fs struct. */
   open_mfs(&mfs, imagefile_path, prim_part, sub_part, verbose);
   
-
-
+  print_file(&mfs);
 
   /* Close the minix filesystem. */
   close_mfs(&mfs);

@@ -42,7 +42,7 @@ void minget_usage(void) {
  * @return void. 
  */
 void print_part_table(min_part_tbl* pt) {
-  fprintf(stderr, "\n\n=== PARTITION TABLE ===============\n\n");
+  fprintf(stderr, "\n\n=== PARTITION TABLE ===============\n");
 
   fprintf(stderr, "bootind: 0x%04x\n", pt->bootind);
   fprintf(stderr, "start_head: 0x%04x\n", pt->start_head);
@@ -55,7 +55,7 @@ void print_part_table(min_part_tbl* pt) {
   fprintf(stderr, "lFirst: 0x%04x\n", pt->lFirst);
   fprintf(stderr, "size: %u\n", pt->size);
 
-  fprintf(stderr, "\n=== (end partition table info) ====\n\n");
+  fprintf(stderr, "=== (end partition table info) ====\n\n");
 }
 
 
@@ -64,7 +64,7 @@ void print_part_table(min_part_tbl* pt) {
  * @return void. 
  */
 void print_superblock(min_superblock* sb) {
-  fprintf(stderr, "\n\n=== SUPERBLOCK ===============\n\n");
+  fprintf(stderr, "\n\n=== SUPERBLOCK ===============\n");
 
   fprintf(stderr, "ninodes: %u\n", sb->ninodes);
   fprintf(stderr, "i_blocks: %d\n", sb->i_blocks);
@@ -77,7 +77,7 @@ void print_superblock(min_superblock* sb) {
   fprintf(stderr, "blocksize: %u\n", sb->blocksize);
   fprintf(stderr, "subversion: %u\n", sb->subversion);
 
-  fprintf(stderr, "\n=== (end superblock info) ====\n\n");
+  fprintf(stderr, "=== (end superblock info) ====\n\n");
 }
 
 
@@ -86,9 +86,9 @@ void print_superblock(min_superblock* sb) {
  * @return void. 
  */
 void print_inode(min_inode* inode) {
-  fprintf(stderr, "\n\n=== INODE ===============\n\n");
+  fprintf(stderr, "\n\n=== INODE ===============\n");
 
-  fprintf(stderr, "mode: %u\n", inode->mode);
+  fprintf(stderr, "mode: 0x%04x\n", inode->mode);
   fprintf(stderr, "links: %u\n", inode->links);
   fprintf(stderr, "uid: %u\n", inode->uid);
   fprintf(stderr, "gid: %u\n", inode->gid);
@@ -101,7 +101,7 @@ void print_inode(min_inode* inode) {
   fprintf(stderr, "two_indirect: %u\n", inode->two_indirect);
   fprintf(stderr, "unused: %u\n", inode->unused);
 
-  fprintf(stderr, "\n=== (end inode info) ====\n\n");
+  fprintf(stderr, "=== (end inode info) ====\n\n");
 }
 
 
@@ -110,11 +110,11 @@ void print_inode(min_inode* inode) {
  * @return void. 
  */
 void print_dir_entry(min_dir_entry* dir_entry) {
-  fprintf(stderr, "\n\n=== DIRECTORY ===============\n\n");
+  fprintf(stderr, "\n\n=== DIRECTORY ===============\n");
 
   fprintf(stderr, "inode: %u\n", dir_entry->inode);
   fprintf(stderr, "links: %*s\n", DIR_NAME_SIZE, dir_entry->name);
 
-  fprintf(stderr, "\n=== (end directory info) ====\n\n");
+  fprintf(stderr, "=== (end directory info) ====\n\n");
 }
 
