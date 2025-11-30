@@ -17,7 +17,7 @@
 /* ================= */
 
 /* The address where the partition table is. */
-#define PART_TABLE_ADDR 0x1BE 
+#define PART_TABLE_OFFSET 0x1BE 
 
 /* Where the superblock lies in relation to the beginning of the partition. */
 #define SUPERBLOCK_OFFSET 1024
@@ -88,7 +88,7 @@ void open_mfs(
     int sub_part,
     bool verbose) {
   /* How far from the beginning of the disk the filesystem resides. */
-  long offset;
+  uint32_t offset;
 
   /* The (sub)partition table that is read from the image. */
   min_part_tbl pt, spt;
@@ -109,7 +109,7 @@ void open_mfs(
   if (prim_part != -1) {
 
     /* Populate the partition table (pt) */
-    load_part_table(&pt, PART_TABLE_ADDR, imagefile, verbose);
+    load_part_table(&pt, PART_TABLE_OFFSET, imagefile, verbose);
 
     /* Check the signatures, system type, and if this is bootable. */
     validate_part_table(&pt);
@@ -120,17 +120,17 @@ void open_mfs(
       exit(EXIT_FAILURE);
     }
 
-    /* Calculate the offset (where the important partition resides) */
-    offset += (prim_part * (pt.size*SECTOR_SIZE));
+    /* Calculate where the important part of the partition is. */
+    offset = pt.lFirst*SECTOR_SIZE;
 
     /* Seek to the subpartition */
     if (sub_part != -1) { 
       /* Populate the subpartition table (spt). */
-      load_part_table(&spt, offset+PART_TABLE_ADDR, imagefile, verbose);
+      load_part_table(&spt, offset+PART_TABLE_OFFSET, imagefile, verbose);
 
       /* TODO: ask Ask ASK are there supposed to be signatures here as well? */
       // /* Validate the two signatures in the partition. */
-      // if (!validate_signatures(imagefile, offset+PART_TABLE_ADDR)) {
+      // if (!validate_signatures(imagefile, offset+PART_TABLE_OFFSET)) {
       //   fprintf(stderr, "subpartition table signatures are not valid\n");
       //   exit(EXIT_FAILURE);
       // }
@@ -138,16 +138,15 @@ void open_mfs(
       /* Check the signatures, system type, and if this is bootable. */
       validate_part_table(&spt);
 
-      /* If there is a subpartition, then this is the final address! */
-      offset = spt.lFirst;
+      /* Calculate where the important part of the partition is. */
+      offset = spt.lFirst*SECTOR_SIZE;
     }
-
   }
   /* if user says it is unpartitioned, but it is really partitioned, it should 
      error. */
   else { /* TODO: ask Ask ASK about this? do I need to check this? */
     /* Check to see if this image had a valid partition table. */
-    if (validate_signatures(imagefile, PART_TABLE_ADDR)) {
+    if (validate_signatures(imagefile, PART_TABLE_OFFSET)) {
       fprintf(stderr, "valid partition table is present! consider using -p\n");
       exit(EXIT_FAILURE);
     }
@@ -217,7 +216,6 @@ void validate_part_table(min_part_tbl* partition_table) {
     fprintf(stderr, "This is not a minix image.\n");
     exit(EXIT_FAILURE);
   }
-
 }
 
 /* Checks to see if an image has both signatures. If they do return true, else
@@ -226,7 +224,7 @@ void validate_part_table(min_part_tbl* partition_table) {
  * @return bool whether the disk (disk or secondary partition) has the signature
  *  indicating that there is a valid partition table present.
  */
-bool validate_signatures(FILE* image, long offset) {
+bool validate_signatures(FILE* image, uint32_t offset) {
   unsigned char sig510, sig511;
   
   /* Seek the read head to the address with the signature. */
@@ -263,7 +261,7 @@ bool validate_signatures(FILE* image, long offset) {
  * @param verbose if this is true, print the partition table's contents
  * @return void.
  */
-void load_part_table(min_part_tbl* pt, long addr, FILE* image, bool verbose) { 
+void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* image, bool verbose) { 
   /* Seek to the correct location that the partition table resides. */
   fseek(image, addr, SEEK_SET);
 
@@ -273,6 +271,8 @@ void load_part_table(min_part_tbl* pt, long addr, FILE* image, bool verbose) {
     fprintf(stderr, "error with fread() on partition table: %d\n", errno);
     exit(EXIT_FAILURE);
   }
+
+  /* TODO: validation in here? */
 
   /* Print the contents if you want to. */
   if (verbose) {
@@ -297,6 +297,8 @@ void load_superblock(min_fs* mfs, bool verbose) {
     fprintf(stderr, "error with fread() on superblock: %d\n", errno);
     exit(EXIT_FAILURE);
   }
+
+  /* TODO: validation in here? */
   
   /* Print the contents if you want to. */
   if (verbose) {
@@ -304,16 +306,14 @@ void load_superblock(min_fs* mfs, bool verbose) {
   }
 }
 
-
 bool search_direct_zones(
     min_fs* mfs, 
     min_inode* cur_inode,
     min_inode* next_inode, 
     char* name) {
-  int i;
 
   /* Linear search the direct zones. */
-  for(i = 0; i < DIRECT_ZONES; i++) {
+  for(int i = 0; i < DIRECT_ZONES; i++) {
     /* Search for the next inode who matches the name of the token. */
     uint32_t zone_num = cur_inode->zone[i];
  
@@ -343,6 +343,24 @@ bool search_direct_zones(
   return false;
 }
 
+bool search_indirect_zones(
+    min_fs* mfs, 
+    min_inode* cur_inode,
+    min_inode* next_inode, 
+    char* name) {
+
+  return false;
+}
+
+bool search_two_indirect_zones(
+    min_fs* mfs, 
+    min_inode* cur_inode,
+    min_inode* next_inode, 
+    char* name) {
+
+  return false;
+}
+
 /* Searches a chunk of memory for a directory entry with a given name. */
 bool search_chunk_for_dir_entry(
     min_fs* mfs, 
@@ -352,15 +370,19 @@ bool search_chunk_for_dir_entry(
     char* name) {
 
   /* Read all directory entries in this chunk. */
-  int num_entries = chunk_size / sizeof(min_dir_entry);
+  int num_entries = chunk_size / DIR_ENTRY_SIZE;
+
+  printf("chunk size: %d\n", chunk_size);
+  printf("num entries: %d\n", num_entries);
+
   for(int j = 0; j < num_entries; j++) {
     min_dir_entry entry;
 
     /* Seek to the directory entry */
-    fseek(mfs->file, start_addr + (j * sizeof(min_dir_entry)), SEEK_SET);
+    fseek(mfs->file, start_addr + (j * DIR_ENTRY_SIZE), SEEK_SET);
 
     /* Read the directory entry */
-    if(fread(&entry, sizeof(min_dir_entry), 1, mfs->file) < 1) {
+    if(fread(&entry, DIR_ENTRY_SIZE, 1, mfs->file) < 1) {
       fprintf(stderr, "error reading directory entry: %d\n", errno);
       exit(EXIT_FAILURE);
     }
@@ -373,10 +395,10 @@ bool search_chunk_for_dir_entry(
       /* Seek to the address that holds the inode that we are on. */
       fseek(
           mfs->file, 
-          mfs->b_inodes + ((entry.inode - 1) * sizeof(min_inode)),
+          mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE),
           SEEK_SET);
 
-      if(fread(next_inode, sizeof(min_inode), 1, mfs->file) < 1) {
+      if(fread(next_inode, INODE_SIZE, 1, mfs->file) < 1) {
         /* If there was an error writing to the inode, note it an exit. We 
            could try to limp along, but this is not that critical of an 
            application, so we'll just bail. */
@@ -407,6 +429,7 @@ uint16_t get_zone_size(min_superblock* sb) {
   int16_t log_zone_size = sb->blocksize;
   uint16_t zonesize = blocksize << log_zone_size;
 
+  printf("init_zone_size: %u\n", zonesize);
   return zonesize;
 }
 

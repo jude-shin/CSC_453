@@ -144,7 +144,7 @@ void close_mfs(min_fs* mfs);
 /* Checks to see if an image has both signatures in relation to the offset (This
    allows for subpartitions to be checked also). If they do, return true, else
    return false. */
-bool validate_signatures(FILE* image, long offset);
+bool validate_signatures(FILE* image, uint32_t offset);
 
 /* Check to see if the partition table holds useful information for this
    assignment. This includes whether an image is bootable, and if the partition
@@ -162,13 +162,27 @@ void validate_part_table(min_part_tbl* partition_table);
    will start somewhere else) this function populates the given partition_table
    struct with the data read in the image. Whether the populated data is valid 
    is entirely up to the address variable. */
-void load_part_table(min_part_tbl* pt, long addr, FILE* image, bool verbose);
+void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* image, bool verbose);
 
 /* Fills a superblock based ona minix filesystem (a image and an offset) */ 
 void load_superblock(min_fs* mfs, bool verbose);
 
+
+
 /* TODO: comments */
 bool search_direct_zones(
+    min_fs* mfs, 
+    min_inode* cur_inode,
+    min_inode* next_inode, 
+    char* name);
+
+bool search_indirect_zones(
+    min_fs* mfs, 
+    min_inode* cur_inode,
+    min_inode* next_inode, 
+    char* name);
+
+bool search_two_indirect_zones(
     min_fs* mfs, 
     min_inode* cur_inode,
     min_inode* next_inode, 

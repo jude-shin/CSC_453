@@ -92,8 +92,6 @@ int main (int argc, char *argv[]) {
   /* Parse all of the directories that the user gave by traversing through the
      directories till we are at the last inode. */
   while(token != NULL) {
-    printf("%s", token);
-
     print_inode(mfs.file, &inode);
 
     /* The current inode must be traversable (a directory) */
@@ -104,17 +102,39 @@ int main (int argc, char *argv[]) {
           token);
       exit(EXIT_FAILURE);
     }
-    
-
+   
+    /* The found inode that is populated if any of the search functions find
+       an inode with a matching name. */
     min_inode next_inode;
- 
+
+
+    printf("searching direct zones\n");
+
     /* Search the dierct zones for the current inode (directory) */
     if (search_direct_zones(&mfs, &inode, &next_inode, token)) {
       token = strtok(NULL, "/");
+      inode = next_inode;
       continue;
     }
 
-    printf("starting indirect zones\n");
+    printf("searching indirect zones\n");
+
+    /* Search the indierct zones for the current inode (directory) */
+    if (search_indirect_zones(&mfs, &inode, &next_inode, token)) {
+      token = strtok(NULL, "/");
+      inode = next_inode;
+      continue;
+    }
+
+    printf("searching two indirect zones\n");
+
+
+    /* Search the double indirect zones for the current inode (directory) */
+    if (search_two_indirect_zones(&mfs, &inode, &next_inode, token)) {
+      token = strtok(NULL, "/");
+      inode = next_inode;
+      continue;
+    }
 
     /* Search the indirect zones by looping though all of the inodes that fit
        on the current "indirect zone". For each of those inodes, search THEIR
