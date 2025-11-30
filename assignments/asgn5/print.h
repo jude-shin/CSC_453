@@ -16,6 +16,10 @@ void print_minls_usage(FILE* s);
    Group, User, and Other, it's size, and it's name. */
 void print_file(FILE* s, min_inode* inode, char* name);
 
+/* Prints every directory entry in a directory. */
+void print_directory(FILE* s, min_inode* inode, char* can_min_path);
+
+
 
 /* ====== */
 /* MINGET */

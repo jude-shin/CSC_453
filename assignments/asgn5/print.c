@@ -38,7 +38,12 @@ void print_minls_usage(FILE* s) {
 /* Prints some information about an inode including the rwx permissions for the
  * Group, User, and Other, it's size, and it's name.
  * @param s the stream that this message will be printed to.
-*/
+ * @param inode the inode of interest. 
+ * @param name the name of the file.
+ * @return void.
+ */
+
+/* TODO: do we have to check that this is null terminated at 60 characters? */
 void print_file(FILE* s, min_inode* inode, char* name) {
   /* prints whether this is a directory or not */
   print_mask(s, "d", inode->mode, DIR_FT);
@@ -59,6 +64,20 @@ void print_file(FILE* s, min_inode* inode, char* name) {
   print_mask(s, "x", inode->mode, OTHER_X_PEM);
   
   fprintf(s, "%*u %s\n", FILE_SIZE_LN, inode->size, name);
+}
+
+/* Prints every directory entry in a directory.
+ * @param s the stream that this message will be printed to.
+ * @param inode the inode of interest. 
+ * @param can_min_path the canonicalized path that we are going to list.
+ * @return void.
+ */
+void print_directory(FILE* s, min_inode* inode, char* can_min_path) {
+  /* print the full canonicalized minix path that we are listing. */
+  fprintf(s, "%s:", can_min_path);
+
+  /* traverse the directory. */
+  /* for every entry, print_file the inode. */
 }
 
 
@@ -131,6 +150,7 @@ void print_superblock(FILE* s, min_superblock* sb) {
 /* Prints all of the information in a minix inode.
  * @param s the stream that this message will be printed to.
  * @param pt a pointer to the inode struct
+ * @param inode the inode of interest. 
  * @return void. 
  */
 void print_inode(FILE* s, min_inode* inode) {

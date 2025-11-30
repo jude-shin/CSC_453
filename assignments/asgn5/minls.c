@@ -130,15 +130,11 @@ int main (int argc, char *argv[]) {
   }
 
 
-  /* TODO: print the canonicalized directory name? */
-  printf("helllooooo\n\n%s\n\nhelloooooo", canonicalized_minix_path);
-
-
-
   /* If we have fully traversed the path, but we ended up at a file, we cannot
      ls on that... we must ls on a directory. */
   if (inode.mode & DIR_FT) {
     fprintf(stderr, "ls directory not implemented yet\n");
+    print_directory(stderr, &inode, canonicalized_minix_path);
     exit(EXIT_FAILURE);
   }
   else if (inode.mode & REG_FT) {
