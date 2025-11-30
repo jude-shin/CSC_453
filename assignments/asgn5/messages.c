@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 
 #include "messages.h"
 #include "disk.h"
@@ -7,10 +8,8 @@
 #define LBL_LN 14
 /* The max length of a value */
 #define VLU_LN 12
-
 /* The lenfth of a hexadecimal value (the "0000" in "0x0000")*/
 #define HEX_LN 4
-
 /* The amount of padding needed for a hex value */
 #define HEX_PAD VLU_LN - HEX_LN
 
@@ -74,6 +73,7 @@ void print_part_table(FILE* s, min_part_tbl* pt) {
   fprintf(s,"\t%-*s %*s%04x\n",LBL_LN,"end_cyl",HEX_PAD,"0x",pt->end_cyl);
   fprintf(s,"\t%-*s %*s%04x\n",LBL_LN,"lFirst",HEX_PAD,"0x",pt->lFirst);
   fprintf(s,"\t%-*s %*u\n",LBL_LN,"size",VLU_LN,pt->size);
+  fprintf(s, "\n");
 }
 
 /* Prints all of the information in a superblock.
@@ -93,6 +93,7 @@ void print_superblock(FILE* s, min_superblock* sb) {
   fprintf(s,"\t%-*s %*s%04x\n", LBL_LN, "magic", HEX_PAD, "0x", sb->magic);
   fprintf(s,"\t%-*s %*u\n", LBL_LN, "blocksize", VLU_LN, sb->blocksize);
   fprintf(s,"\t%-*s %*u\n", LBL_LN, "subversion", VLU_LN, sb->subversion);
+  fprintf(s, "\n");
 }
 
 /* Prints all of the information in a minix inode.
@@ -102,7 +103,7 @@ void print_superblock(FILE* s, min_superblock* sb) {
  */
 void print_inode(FILE* s, min_inode* inode) {
   fprintf(s, "File inode:\n");
-  fprintf(s, "\t%-*s %*x\n", LBL_LN, "mode", VLU_LN, inode->mode);
+  fprintf(s,"\t%-*s %*s%04x\n", LBL_LN, "mode", HEX_PAD, "0x", inode->mode);
   fprintf(s, "\t%-*s %*u\n", LBL_LN, "links", VLU_LN, inode->links);
   fprintf(s, "\t%-*s %*u\n", LBL_LN, "uid", VLU_LN, inode->uid);
   fprintf(s, "\t%-*s %*u\n", LBL_LN, "gid", VLU_LN, inode->gid);
@@ -110,11 +111,9 @@ void print_inode(FILE* s, min_inode* inode) {
 
   fprintf(s, "\t%-*s %*d", LBL_LN, "atime", VLU_LN, inode->atime);
   print_time(s, inode->atime);
-  fprintf(s, "\n");
 
   fprintf(s, "\t%-*s %*d", LBL_LN, "mtime", VLU_LN, inode->mtime);
   print_time(s, inode->mtime);
-  fprintf(s, "\n");
 
   fprintf(s, "\t%-*s %*d", LBL_LN, "ctime", VLU_LN, inode->ctime);
   print_time(s, inode->ctime);
@@ -127,12 +126,8 @@ void print_inode(FILE* s, min_inode* inode) {
  * @return void. 
  */
 void print_dir_entry(FILE* s, min_dir_entry* dir_entry) {
-  fprintf(s, "\n\n=== DIRECTORY ===============\n");
-
   fprintf(s, "%-*s %*u\n", LBL_LN, "inode", VLU_LN, dir_entry->inode);
   fprintf(s, "%-*s %*s\n", LBL_LN, "links", DIR_NAME_SIZE, dir_entry->name); 
-
-  fprintf(s, "=== (end directory info) ====\n\n");
 }
 /* ======= */
 /* HELPERS */
@@ -143,6 +138,7 @@ void print_dir_entry(FILE* s, min_dir_entry* dir_entry) {
  * @param raw_time a number that represents a time and date. 
  */
 void print_time(FILE* s, uint32_t raw_time) {
-  fprintf(s, "not implemented yet! %d", raw_time);
+  time_t t = raw_time;
+  fprintf(s, " --- %s", ctime(&t));
 }
 
