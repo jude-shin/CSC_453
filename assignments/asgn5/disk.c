@@ -162,11 +162,9 @@ void open_mfs(
 
   /* Load the superblock. */
   load_superblock(mfs, verbose);
-  
 
   /* Update the mfs context to store the zone size of this filesystem. */
   mfs->zone_size = get_zone_size(&mfs->sb);
-
 
   /* Udpate the mfs context to store addresses like the imap, zmap and inodes */
 
@@ -178,9 +176,6 @@ void open_mfs(
 
   /* Add where the previous block is to the number of blocks in the zmap */
   mfs->b_inodes = mfs->b_zmap + (mfs->sb.z_blocks*mfs->sb.blocksize);
-
-  // /* Add where the previous block is to the number of blocks in the zmap */
-  // mfs->b_inodes = mfs->b_zmap + (mfs->sb.z_blocks*mfs->sb.blocksize);
 
   /* The mfs context is now populated with everything we need to know in order
      to traverse the minix filesystem. */
@@ -310,7 +305,7 @@ void load_superblock(min_fs* mfs, bool verbose) {
 }
 
 
-bool search_direct_zone(
+bool search_direct_zones(
     min_fs* mfs, 
     min_inode* cur_inode,
     min_inode* next_inode, 
@@ -328,14 +323,18 @@ bool search_direct_zone(
     }
 
     /* Search the direct zone for an entry, and set the next_inode's values 
-       to the inode that was found. */
-    bool found = search_chunk(
+       to the inode that was found. Start the search at the start of the
+       partition + the offset of zones. */
+    bool found = search_chunk_for_dir_entry(
         mfs, 
         mfs->partition_start + (zone_num * mfs->zone_size),
         mfs->zone_size, 
         next_inode, 
         name);
 
+    /* If found, then we know that search_chunk already wrote the dta to 
+       next_inode, so we can just exit. Else, the for loop will continue with
+       the search. */
     if (found) {
       return true;
     }
@@ -345,7 +344,7 @@ bool search_direct_zone(
 }
 
 /* Searches a chunk of memory for a directory entry with a given name. */
-bool search_chunk(
+bool search_chunk_for_dir_entry(
     min_fs* mfs, 
     uint32_t start_addr,
     uint32_t chunk_size,
@@ -381,7 +380,7 @@ bool search_chunk(
         /* If there was an error writing to the inode, note it an exit. We 
            could try to limp along, but this is not that critical of an 
            application, so we'll just bail. */
-        fprintf(stderr, "error copying found inode: %d \n", errno);
+        fprintf(stderr, "error copying the found inode: %d \n", errno);
         exit(EXIT_FAILURE);
       }
   
@@ -389,7 +388,7 @@ bool search_chunk(
     }
   }
 
-  /* There was no directory entry that this file had. */
+  /* There was no directory entry that had this filename. */
   return false;
 }
 

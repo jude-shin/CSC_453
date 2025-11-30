@@ -114,7 +114,6 @@ typedef struct min_fs {
   uint32_t b_imap;        /* "real" address of the inode bitmap */
   uint32_t b_zmap;        /* "real" address of the zone bitmap */
   uint32_t b_inodes;      /* "real" address of the actual inodes (first addr)*/
-  uint32_t b_zones;       /* "real" address of the actual zones (first addr)*/
 } min_fs;
 
 
@@ -169,14 +168,14 @@ void load_part_table(min_part_tbl* pt, long addr, FILE* image, bool verbose);
 void load_superblock(min_fs* mfs, bool verbose);
 
 /* TODO: comments */
-bool search_direct_zone(
+bool search_direct_zones(
     min_fs* mfs, 
     min_inode* cur_inode,
     min_inode* next_inode, 
     char* name);
 
 /* TODO: comments */
-bool search_chunk(
+bool search_chunk_for_dir_entry(
     min_fs* mfs, 
     uint32_t start_addr,
     uint32_t chunk_size,

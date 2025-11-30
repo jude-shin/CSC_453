@@ -109,7 +109,7 @@ int main (int argc, char *argv[]) {
     min_inode next_inode;
  
     /* Search the dierct zones for the current inode (directory) */
-    if (search_direct_zone(&mfs, &inode, &next_inode, token)) {
+    if (search_direct_zones(&mfs, &inode, &next_inode, token)) {
       token = strtok(NULL, "/");
       continue;
     }
