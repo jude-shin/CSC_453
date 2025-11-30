@@ -9,6 +9,8 @@
 /* How many zones there are in a minix inode. */
 #define DIRECT_ZONES 7
 
+#define DIR_NAME_SIZE 60
+
 /* TODO: change "disk.*" to "filesystem.*"*/
 
 
@@ -85,8 +87,8 @@ typedef struct __attribute__ ((__packed__)) min_inode {
 
 /* A directoy entry in minix. */
 typedef struct __attribute__ ((__packed__)) min_dir {
-  uint32_t inode;         /* Inode Number */
-  unsigned char name[60]; /* filename string */
+  uint32_t inode;                     /* Inode Number */
+  unsigned char name[DIR_NAME_SIZE];  /* filename string */
 } min_dir;
 
 /* Essentially defines the beginning of the filesystem of an image. 

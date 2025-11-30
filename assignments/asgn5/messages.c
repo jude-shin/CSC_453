@@ -113,7 +113,7 @@ void print_dir(min_dir* dir) {
   fprintf(stderr, "\n\n=== DIRECTORY ===============\n\n");
 
   fprintf(stderr, "inode: %u\n", dir->inode);
-  fprintf(stderr, "links: %s\n", dir->name);
+  fprintf(stderr, "links: %*s\n", DIR_NAME_SIZE, dir->name);
 
   fprintf(stderr, "\n=== (end directory info) ====\n\n");
 }
