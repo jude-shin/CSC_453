@@ -54,13 +54,6 @@ int main (int argc, char *argv[]) {
     minix_path = "/";
   }
 
-  printf("\n--- PARSED ITEMS ---\n");
-  printf("IMAGEFILE PATH: %s\n", imagefile_path);
-  printf("MINIX PATH: %s\n", minix_path);
-  printf("VERBOSE: %d\n", verbose);
-  printf("PRIM PART: %d\n", prim_part);
-  printf("SUB PART: %d\n\n", sub_part);
-
   /* ======================================================================== */
 
   /* Open the minix filesystem, populating the values in the mfs struct. */
