@@ -45,7 +45,6 @@ void print_minls_usage(FILE* s) {
  * @param name the name of the file.
  * @return void.
  */
-
 /* TODO: do we have to check that this is null terminated at 60 characters? */
 void print_file(FILE* s, min_inode* inode, unsigned char* name) {
   /* prints whether this is a directory or not */
@@ -169,7 +168,8 @@ void print_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
 }
 
 /* Given a double indirect zone, print all of the files that are on the zones 
-   that the indirect zone points to if they are valid (double indirect)
+ * that are on the zones that the indirect zone points to if they are valid
+ * (double indirect -> indirect -> zone -> file).
  * @param s the stream that this message will be printed to.
  * @param mfs a struct that holds an open file descriptor, and the offset (the
  *  offset from the beginning of the image which indicates the beginning of the
