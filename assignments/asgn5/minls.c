@@ -129,10 +129,9 @@ int main (int argc, char *argv[]) {
     strcpy(can_minix_path, DELIMITER);
   }
 
-
   /* Print inode information when the file is found. */
   if (verbose) {
-    print_inode(mfs.file, &inode);
+    print_inode(stderr, &inode);
   }
 
   /* If we have fully traversed the path, but we ended up at a file, we cannot
