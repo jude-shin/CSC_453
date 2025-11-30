@@ -50,6 +50,6 @@ void print_dir_entry(FILE* s, min_dir_entry* dir_entry);
 void print_time(FILE* s, uint32_t raw_time);
 
 /* Prints c upon a successful bitmask against mode and mask to a stream s. */
-void print_permission(FILE* s, const char* c, uint16_t mode, uint16_t mask);
+void print_mask(FILE* s, const char* c, uint16_t mode, uint16_t mask);
 
 #endif

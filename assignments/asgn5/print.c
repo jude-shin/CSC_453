@@ -13,6 +13,9 @@
 /* The amount of padding needed for a hex value */
 #define HEX_PAD VLU_LN - HEX_LN
 
+/* The specs when ls'ing a file's information */
+#define FILE_SIZE_LN 9
+
 /* ===== */
 /* MINLS */
 /* ===== */
@@ -37,22 +40,25 @@ void print_minls_usage(FILE* s) {
  * @param s the stream that this message will be printed to.
 */
 void print_file(FILE* s, min_inode* inode, char* name) {
+  /* prints whether this is a directory or not */
+  print_mask(s, "d", inode->mode, DIR_FT);
+
   /* Print the owner permissions. */
-  print_permission(s, "r", inode->mode, OWNER_R_PEM);
-  print_permission(s, "w", inode->mode, OWNER_W_PEM);
-  print_permission(s, "x", inode->mode, OWNER_X_PEM);
+  print_mask(s, "r", inode->mode, OWNER_R_PEM);
+  print_mask(s, "w", inode->mode, OWNER_W_PEM);
+  print_mask(s, "x", inode->mode, OWNER_X_PEM);
 
-  /* Print the group permissions. */
-  print_permission(s, "r", inode->mode, GROUP_R_PEM);
-  print_permission(s, "w", inode->mode, GROUP_W_PEM);
-  print_permission(s, "x", inode->mode, GROUP_X_PEM);
+  /* Primaskup permissions. */
+  print_mask(s, "r", inode->mode, GROUP_R_PEM);
+  print_mask(s, "w", inode->mode, GROUP_W_PEM);
+  print_mask(s, "x", inode->mode, GROUP_X_PEM);
 
-  /* Print the other permissions. */
-  print_permission(s, "r", inode->mode, OTHER_R_PEM);
-  print_permission(s, "w", inode->mode, OTHER_W_PEM);
-  print_permission(s, "x", inode->mode, OTHER_X_PEM);
+  /* Primasker permissions. */
+  print_mask(s, "r", inode->mode, OTHER_R_PEM);
+  print_mask(s, "w", inode->mode, OTHER_W_PEM);
+  print_mask(s, "x", inode->mode, OTHER_X_PEM);
   
-  fprintf(s, "%*u %s\n", VLU_LN, inode->size, name);
+  fprintf(s, "%*u %s\n", FILE_SIZE_LN, inode->size, name);
 }
 
 
@@ -144,6 +150,9 @@ void print_inode(FILE* s, min_inode* inode) {
   fprintf(s, "\t%-*s %*d", LBL_LN, "ctime", VLU_LN, inode->ctime);
   print_time(s, inode->ctime);
   fprintf(s, "\n");
+
+
+  /* TODO: print the zone things*/
 }
 
 
@@ -179,7 +188,7 @@ void print_time(FILE* s, uint32_t raw_time) {
  * @param mask the macro we will be masking the mode with.
  * @return void.
  */
-void print_permission(FILE* s, const char* c, uint16_t mode, uint16_t mask) {
+void print_mask(FILE* s, const char* c, uint16_t mode, uint16_t mask) {
   if (mode & mask) {
     fprintf(s, "%s", c);
   }
