@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <fcntl.h>
+#include <string.h>
 #include <errno.h>
 
 #include "input.h"
@@ -10,29 +11,13 @@
 #include "disk.h"
 
 
-void print_file(min_fs* mfs) {
-  /* print the first inode (the root) */
-  min_inode inode;
-  
-  /* Bytes read. */
-  ssize_t bytes;
-  
-  /* Seek the read head to the first inode. */
-  fseek(mfs->file, mfs->b_inodes, SEEK_SET);
-
-  /* Read the value at that address. */
-  bytes = fread(&inode, sizeof(inode), 1, mfs->file);
-  if (bytes < 1) {
-    fprintf(stderr, "error reading signature 1: %d\n", errno);
-    exit(EXIT_FAILURE);
-  }
-
-  print_inode(stderr, &inode);
+void print_file() {
 }
 
 void print_directory() {
 
 }
+
 
 int main (int argc, char *argv[]) {
   /* Verbosity. If set, print the partition table(s) superblock, and inode of 
@@ -75,7 +60,7 @@ int main (int argc, char *argv[]) {
 
   if (minix_path == NULL) {
     /* Set the default path to the root directory '/' */
-    minix_path = "/";
+    minix_path = "/foo";
   }
 
   printf("\n--- PARSED ITEMS ---\n");
@@ -87,14 +72,83 @@ int main (int argc, char *argv[]) {
 
   /* ======================================================================== */
 
-  /* Open the minix filesystem, populating the values in the min_fs struct. */
+  /* Open the minix filesystem, populating the values in the mfs struct. */
   open_mfs(&mfs, imagefile_path, prim_part, sub_part, verbose);
   
-  print_file(&mfs);
+  /* Navigate to the root of the filesystem */
+  min_inode inode;
+  
+  /* Seek the read head to the first inode. */
+  fseek(mfs.file, mfs.b_inodes, SEEK_SET);
+
+  /* Read the value at that address into the root inode struct. */
+  if (fread(&inode, sizeof(min_inode), 1, mfs.file) < 1) {
+    fprintf(stderr, "error reading the root inode: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+
+  char* token = strtok(minix_path, "/");
+  
+  /* Parse all of the directories that the user gave by traversing through the
+     directories till we are at the last inode. */
+  while(token != NULL) {
+    printf("%s", token);
+
+    print_inode(mfs.file, &inode);
+
+    /* The current inode must be traversable (a directory) */
+    if (!(inode.mode & DIR_FT)) {
+      fprintf(
+          stderr, 
+          "error traversing the path. %s is not a directory!\n", 
+          token);
+      exit(EXIT_FAILURE);
+    }
+    
+
+    min_inode next_inode;
+ 
+    /* Search the dierct zones for the current inode (directory) */
+    if (search_direct_zone(&mfs, &inode, &next_inode, token)) {
+      token = strtok(NULL, "/");
+      continue;
+    }
+
+    printf("starting indirect zones\n");
+
+    /* Search the indirect zones by looping though all of the inodes that fit
+       on the current "indirect zone". For each of those inodes, search THEIR
+       direct zone.*/
+
+    /* Go to the first block of the indirect zones */
+
+    /* From that block*/
+    /* TODO: Linear serach the double indirect zones. */
+
+    fprintf(stderr, "error traversing the path: directory not found!\n");
+    exit(EXIT_FAILURE);
+  }
+
+  /* If we have fully traversed the path, but we ended up at a file, we cannot
+     ls on that... we must ls on a directory. */
+  if (!(inode.mode & DIR_FT)) {
+    fprintf(stderr, "error: the given path is not a directory!\n");
+    exit(EXIT_FAILURE);
+  }
+
+  /* Print all the entries information in the inode directory. */
+
+
+
+
+
+  
+
+
+
 
   /* Close the minix filesystem. */
   close_mfs(&mfs);
-
 
   exit(EXIT_SUCCESS);
 }

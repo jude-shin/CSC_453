@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <errno.h>
+#include <string.h>
 
 #include "disk.h"
 #include "messages.h"
@@ -59,6 +60,7 @@
 /* The expected values for particular signatures in a minix (sub)partition. */
 #define SIG510_EXPECTED 0x55 
 #define SIG511_EXPECTED 0xAA
+
 
 /*==========*/
 /* BASIC IO */
@@ -171,11 +173,14 @@ void open_mfs(
   /* Add the partition start address to the block number * blocksize */
   mfs->b_imap = mfs->partition_start + (IMAP_BLOCK_NUMBER*mfs->sb.blocksize);
 
-  /* Add where the previous block to the number of blocks in the imap */
+  /* Add where the previous block is to the number of blocks in the imap */
   mfs->b_zmap = mfs->b_imap + (mfs->sb.i_blocks*mfs->sb.blocksize);
 
-  /* Add where the previous block to the number of blocks in the zmap */
+  /* Add where the previous block is to the number of blocks in the zmap */
   mfs->b_inodes = mfs->b_zmap + (mfs->sb.z_blocks*mfs->sb.blocksize);
+
+  // /* Add where the previous block is to the number of blocks in the zmap */
+  // mfs->b_inodes = mfs->b_zmap + (mfs->sb.z_blocks*mfs->sb.blocksize);
 
   /* The mfs context is now populated with everything we need to know in order
      to traverse the minix filesystem. */
@@ -227,14 +232,12 @@ void validate_part_table(min_part_tbl* partition_table) {
  *  indicating that there is a valid partition table present.
  */
 bool validate_signatures(FILE* image, long offset) {
-  ssize_t bytes;
   unsigned char sig510, sig511;
   
   /* Seek the read head to the address with the signature. */
   fseek(image, offset+SIG510_OFFSET, SEEK_SET);
   /* Read the value at that address. */
-  bytes = fread(&sig510, sizeof(unsigned char), 1, image);
-  if (bytes < 1) {
+  if (fread(&sig510, sizeof(unsigned char), 1, image) < 1) {
     fprintf(stderr, "error reading signature 1: %d\n", errno);
     exit(EXIT_FAILURE);
   }
@@ -242,8 +245,7 @@ bool validate_signatures(FILE* image, long offset) {
   /* Seek the read head to the address with the signature. */
   fseek(image, offset+SIG511_OFFSET, SEEK_SET);
   /* Read the value at that address. */
-  bytes = fread(&sig511, sizeof(unsigned char), 1, image);
-  if (bytes < 1) {
+  if (fread(&sig511, sizeof(unsigned char), 1, image) < 1) {
     fprintf(stderr, "error reading signature 2: %d\n", errno);
     exit(EXIT_FAILURE);
   }
@@ -267,15 +269,12 @@ bool validate_signatures(FILE* image, long offset) {
  * @return void.
  */
 void load_part_table(min_part_tbl* pt, long addr, FILE* image, bool verbose) { 
-  ssize_t bytes;
-
   /* Seek to the correct location that the partition table resides. */
   fseek(image, addr, SEEK_SET);
 
   /* Read the partition table, storing its contents in the struct for us to 
      reference later on. */
-  bytes = fread(pt, sizeof(min_part_tbl), 1, image);
-  if (bytes < 1) {
+  if (fread(pt, sizeof(min_part_tbl), 1, image) < 1) {
     fprintf(stderr, "error with fread() on partition table: %d\n", errno);
     exit(EXIT_FAILURE);
   }
@@ -293,16 +292,13 @@ void load_part_table(min_part_tbl* pt, long addr, FILE* image, bool verbose) {
  * @return void.
  */
 void load_superblock(min_fs* mfs, bool verbose) {
-  ssize_t bytes;
-  
   /* Seek to the start of the partition, and then go another SUPERBLOCK_OFFSET
      bytes. No matter the block size, this is where the superblock lives. */
   fseek(mfs->file, mfs->partition_start+SUPERBLOCK_OFFSET, SEEK_SET);
 
   /* Read the superblock, storing its contents in the struct for us to 
      reference later on. */
-  bytes = fread(&mfs->sb, sizeof(min_superblock), 1, mfs->file);
-  if (bytes < 1) {
+  if (fread(&mfs->sb, sizeof(min_superblock), 1, mfs->file) < 1) {
     fprintf(stderr, "error with fread() on superblock: %d\n", errno);
     exit(EXIT_FAILURE);
   }
@@ -312,6 +308,96 @@ void load_superblock(min_fs* mfs, bool verbose) {
     print_superblock(stderr, &mfs->sb);
   }
 }
+
+
+bool search_direct_zone(
+    min_fs* mfs, 
+    min_inode* cur_inode,
+    min_inode* next_inode, 
+    char* name) {
+  int i;
+
+  /* Linear search the direct zones. */
+  for(i = 0; i < DIRECT_ZONES; i++) {
+    /* Search for the next inode who matches the name of the token. */
+    uint32_t zone_num = cur_inode->zone[i];
+ 
+    /* Continue looking because this zone is unallocated. */
+    if (zone_num == 0) {
+      continue;
+    }
+
+    /* Search the direct zone for an entry, and set the next_inode's values 
+       to the inode that was found. */
+    bool found = search_chunk(
+        mfs, 
+        mfs->partition_start + (zone_num * mfs->zone_size),
+        mfs->zone_size, 
+        next_inode, 
+        name);
+
+    if (found) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/* Searches a chunk of memory for a directory entry with a given name. */
+bool search_chunk(
+    min_fs* mfs, 
+    uint32_t start_addr,
+    uint32_t chunk_size,
+    min_inode* next_inode, 
+    char* name) {
+
+  /* Read all directory entries in this chunk. */
+  int num_entries = chunk_size / sizeof(min_dir_entry);
+  for(int j = 0; j < num_entries; j++) {
+    min_dir_entry entry;
+
+    /* Seek to the directory entry */
+    fseek(mfs->file, start_addr + (j * sizeof(min_dir_entry)), SEEK_SET);
+
+    /* Read the directory entry */
+    if(fread(&entry, sizeof(min_dir_entry), 1, mfs->file) < 1) {
+      fprintf(stderr, "error reading directory entry: %d\n", errno);
+      exit(EXIT_FAILURE);
+    }
+
+    /* TODO: get rid of this. */
+    print_dir_entry(stderr, &entry);
+
+    /* Check if entry is valid (inode != 0) and name matches */
+    if(entry.inode != 0 && strcmp((char*)entry.name, name) == 0) {
+      /* Seek to the address that holds the inode that we are on. */
+      fseek(
+          mfs->file, 
+          mfs->b_inodes + ((entry.inode - 1) * sizeof(min_inode)),
+          SEEK_SET);
+
+      if(fread(next_inode, sizeof(min_inode), 1, mfs->file) < 1) {
+        /* If there was an error writing to the inode, note it an exit. We 
+           could try to limp along, but this is not that critical of an 
+           application, so we'll just bail. */
+        fprintf(stderr, "error copying found inode: %d \n", errno);
+        exit(EXIT_FAILURE);
+      }
+  
+      return true;
+    }
+  }
+
+  /* There was no directory entry that this file had. */
+  return false;
+}
+
+
+
+/* ========== */
+/* ARITHMETIC */
+/* ========== */
 
 /* Calculates the zonesize based on a minix filesystem context using a bitshift.
  * @param sb a struct that holds information about the superblock.

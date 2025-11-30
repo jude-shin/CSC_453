@@ -6,9 +6,18 @@
 #include <stdint.h>
 #include <stdio.h>
 
+/* ============== */
+/* FILETYPE MASKS */
+/* ============== */
+#define DIR_FT 0040000
+#define REG_FT 0100000
+
+/* ===================== */
+/* MINIX ARBITRARY SIZES */
+/* ===================== */
 /* How many zones there are in a minix inode. */
 #define DIRECT_ZONES 7
-
+/* The max size of a directoy entry name. */
 #define DIR_NAME_SIZE 60
 
 /* TODO: change "disk.*" to "filesystem.*"*/
@@ -96,15 +105,16 @@ typedef struct __attribute__ ((__packed__)) min_dir_entry {
    actual files start. */
 typedef struct min_fs {
   FILE* file;             /* the file that the (minix) image is on */
-  size_t partition_start; /* the offset (the address in relation to the 
+  uint32_t partition_start; /* the offset (the address in relation to the 
                              beginning of the image file. aka "real" address)*/
   min_superblock sb;      /* The superblock and it's information for the fs */
 
   uint16_t zone_size;     /* The size of a zone in bytes */
 
-  size_t b_imap;          /* "real" address of the inode bitmap */
-  size_t b_zmap;          /* "real" address of the zone bitmap */
-  size_t b_inodes;        /* "real" address of the actual inodes */
+  uint32_t b_imap;        /* "real" address of the inode bitmap */
+  uint32_t b_zmap;        /* "real" address of the zone bitmap */
+  uint32_t b_inodes;      /* "real" address of the actual inodes (first addr)*/
+  uint32_t b_zones;       /* "real" address of the actual zones (first addr)*/
 } min_fs;
 
 
@@ -157,6 +167,26 @@ void load_part_table(min_part_tbl* pt, long addr, FILE* image, bool verbose);
 
 /* Fills a superblock based ona minix filesystem (a image and an offset) */ 
 void load_superblock(min_fs* mfs, bool verbose);
+
+/* TODO: comments */
+bool search_direct_zone(
+    min_fs* mfs, 
+    min_inode* cur_inode,
+    min_inode* next_inode, 
+    char* name);
+
+/* TODO: comments */
+bool search_chunk(
+    min_fs* mfs, 
+    uint32_t start_addr,
+    uint32_t chunk_size,
+    min_inode* next_inode, 
+    char* name);
+
+
+/* ========== */
+/* ARITHMETIC */
+/* ========== */
 
 /* Calculates the zonesize based on a superblock using a bitshift. */
 uint16_t get_zone_size(min_superblock* sb);

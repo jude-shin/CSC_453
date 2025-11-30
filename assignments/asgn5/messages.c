@@ -126,8 +126,10 @@ void print_inode(FILE* s, min_inode* inode) {
  * @return void. 
  */
 void print_dir_entry(FILE* s, min_dir_entry* dir_entry) {
-  fprintf(s, "%-*s %*u\n", LBL_LN, "inode", VLU_LN, dir_entry->inode);
-  fprintf(s, "%-*s %*s\n", LBL_LN, "links", DIR_NAME_SIZE, dir_entry->name); 
+  fprintf(s, "Directory Entry:\n");
+  fprintf(s, "\t%-*s %*u\n", LBL_LN, "inode", VLU_LN, dir_entry->inode);
+  fprintf(s, "\t%-*s %*s\n", LBL_LN, "links", VLU_LN, dir_entry->name); 
+  fprintf(s, "\n");
 }
 /* ======= */
 /* HELPERS */
