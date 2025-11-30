@@ -18,7 +18,7 @@
 /* ===== */
 
 /* Prints an error that shows the flags that can be used with minls.
- * @param void. 
+ * @param s the stream that this message will be printed to.
  * @return void.
  */
 void print_minls_usage(FILE* s) {
@@ -32,13 +32,37 @@ void print_minls_usage(FILE* s) {
       );
 }
 
+/* Prints some information about an inode including the rwx permissions for the
+ * Group, User, and Other, it's size, and it's name.
+ * @param s the stream that this message will be printed to.
+*/
+void print_file(FILE* s, min_inode* inode, char* name) {
+  /* Print the owner permissions. */
+  print_permission(s, "r", inode->mode, OWNER_R_PEM);
+  print_permission(s, "w", inode->mode, OWNER_W_PEM);
+  print_permission(s, "x", inode->mode, OWNER_X_PEM);
+
+  /* Print the group permissions. */
+  print_permission(s, "r", inode->mode, GROUP_R_PEM);
+  print_permission(s, "w", inode->mode, GROUP_W_PEM);
+  print_permission(s, "x", inode->mode, GROUP_X_PEM);
+
+  /* Print the other permissions. */
+  print_permission(s, "r", inode->mode, OTHER_R_PEM);
+  print_permission(s, "w", inode->mode, OTHER_W_PEM);
+  print_permission(s, "x", inode->mode, OTHER_X_PEM);
+  
+  fprintf(s, "%*u %s\n", VLU_LN, inode->size, name);
+}
+
+
 
 /* ====== */
 /* MINGET */
 /* ====== */
 
 /* Prints an error that shows the flags that can be used with minget.
- * @param void. 
+ * @param s the stream that this message will be printed to.
  * @return void.
  */
 void print_minget_usage(FILE* s) {
@@ -58,6 +82,7 @@ void print_minget_usage(FILE* s) {
 /* ======= */
 
 /* Prints all of the information in a partition table. 
+ * @param s the stream that this message will be printed to.
  * @param pt a pointer to the partition table struct
  * @return void. 
  */
@@ -77,6 +102,7 @@ void print_part_table(FILE* s, min_part_tbl* pt) {
 }
 
 /* Prints all of the information in a superblock.
+ * @param s the stream that this message will be printed to.
  * @param pt a pointer to the superblock struct
  * @return void. 
  */
@@ -97,7 +123,7 @@ void print_superblock(FILE* s, min_superblock* sb) {
 }
 
 /* Prints all of the information in a minix inode.
- * @param s the FILE that describes the place this will be printed.
+ * @param s the stream that this message will be printed to.
  * @param pt a pointer to the inode struct
  * @return void. 
  */
@@ -122,6 +148,7 @@ void print_inode(FILE* s, min_inode* inode) {
 
 
 /* Prints all of the information in a directory entry.
+ * @param s the stream that this message will be printed to.
  * @param dir_entry a pointer to the dir entry struct
  * @return void. 
  */
@@ -136,11 +163,27 @@ void print_dir_entry(FILE* s, min_dir_entry* dir_entry) {
 /* ======= */
 
 /* Pretty Prints an atime, mtime, or ctime nicely to a FILE*.
- * @param s the FILE that describes the place this will be printed.
+ * @param s the stream that this message will be printed to.
  * @param raw_time a number that represents a time and date. 
  * @return void.
  */
 void print_time(FILE* s, uint32_t raw_time) {
   time_t t = raw_time;
   fprintf(s, " --- %s", ctime(&t));
+}
+
+/* Prints c upon a successful bitmask against mode and mask to a stream s.
+ * @param s
+ * @param c the string that will be printed if we have a successful mask
+ * @param mode (the inode->mode) that we will be checking
+ * @param mask the macro we will be masking the mode with.
+ * @return void.
+ */
+void print_permission(FILE* s, const char* c, uint16_t mode, uint16_t mask) {
+  if (mode & mask) {
+    fprintf(s, "%s", c);
+  }
+  else {
+    fprintf(s, "-");
+  }
 }

@@ -10,15 +10,6 @@
 #include "print.h"
 #include "disk.h"
 
-
-void print_file() {
-}
-
-void print_directory() {
-
-}
-
-
 int main (int argc, char *argv[]) {
   /* Verbosity. If set, print the partition table(s) superblock, and inode of 
      source file/directory to stderr. */
@@ -87,12 +78,26 @@ int main (int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  /* The tokenized next directory entry name that we are looking for. */
   char* token = strtok(minix_path, "/");
+
+  /* The current name that was just processed. */
+  char curr_name[DIR_NAME_SIZE+1] = "/";
+ 
+  /* Allocate enough space for the canonicalized interpretation of the given 
+     minix path. */
+  char* canonicalized_minix_path = malloc(sizeof(char)*strlen(minix_path));
   
   /* Parse all of the directories that the user gave by traversing through the
      directories till we are at the last inode. */
   while(token != NULL) {
-    print_inode(mfs.file, &inode);
+    /* copy the string name to curr_name so we can keep track of the last
+       processed name. */
+    strcpy(curr_name, token);
+
+    /* Add the token to the built canonicalized minix path. */
+    strcat(canonicalized_minix_path, "/");
+    strcat(canonicalized_minix_path, token);
 
     /* The current inode must be traversable (a directory) */
     if (!(inode.mode & DIR_FT)) {
@@ -119,10 +124,29 @@ int main (int argc, char *argv[]) {
     }
   }
 
+  /* Print the inode information. */
+  if (verbose) {
+    print_inode(mfs.file, &inode);
+  }
+
+
+  /* TODO: print the canonicalized directory name? */
+  printf("helllooooo\n\n%s\n\nhelloooooo", canonicalized_minix_path);
+
+
+
   /* If we have fully traversed the path, but we ended up at a file, we cannot
      ls on that... we must ls on a directory. */
-  if (!(inode.mode & DIR_FT)) {
-    fprintf(stderr, "error: the found path is not a directory!\n");
+  if (inode.mode & DIR_FT) {
+    fprintf(stderr, "ls directory not implemented yet\n");
+    exit(EXIT_FAILURE);
+  }
+  else if (inode.mode & REG_FT) {
+    print_file(stderr, &inode, curr_name);
+    exit(EXIT_FAILURE);
+  }
+  else {
+    fprintf(stderr, "file selected is not a regular file or directory!\n");
     exit(EXIT_FAILURE);
   }
 
@@ -143,22 +167,9 @@ int main (int argc, char *argv[]) {
   /* Close the minix filesystem. */
   close_mfs(&mfs);
 
+  /* Free the one thing we malloced. */
+  free(canonicalized_minix_path);
+
   exit(EXIT_SUCCESS);
 }
-
-/* ======= */
-/* HELPERS */
-/* ======= */
-/* TODO: move the print_file and print_directotry to this section and add the
-   header file after you have mucked around. */
-
-void print_file_metadata() {
-  
-}
-
-void print_dir_files() {
-  /* for each of the directory entries, print it's metadata */
-}
-
-
 

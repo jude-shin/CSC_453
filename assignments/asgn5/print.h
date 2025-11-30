@@ -12,6 +12,10 @@
 /* Prints an error that shows the flags that can be used with minls. */
 void print_minls_usage(FILE* s);
 
+/* Prints some information about an inode including the rwx permissions for the
+   Group, User, and Other, it's size, and it's name. */
+void print_file(FILE* s, min_inode* inode, char* name);
+
 
 /* ====== */
 /* MINGET */
@@ -44,5 +48,8 @@ void print_dir_entry(FILE* s, min_dir_entry* dir_entry);
 
 /* Pretty Prints an atime, mtime, or ctime nicely to a FILE*. */
 void print_time(FILE* s, uint32_t raw_time);
+
+/* Prints c upon a successful bitmask against mode and mask to a stream s. */
+void print_permission(FILE* s, const char* c, uint16_t mode, uint16_t mask);
 
 #endif

@@ -12,6 +12,23 @@
 #define DIR_FT 0040000
 #define REG_FT 0100000
 
+
+/* ================ */
+/* PERMISSION MASKS */
+/* ================ */
+#define OWNER_R_PEM 0000400
+#define OWNER_W_PEM 0000200
+#define OWNER_X_PEM 0000100
+
+#define GROUP_R_PEM 0000040
+#define GROUP_W_PEM 0000020
+#define GROUP_X_PEM 0000010
+
+#define OTHER_R_PEM 0000004
+#define OTHER_W_PEM 0000002
+#define OTHER_X_PEM 0000001
+
+
 /* ===================== */
 /* MINIX ARBITRARY SIZES */
 /* ===================== */
