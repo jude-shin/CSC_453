@@ -170,7 +170,18 @@ void load_superblock(min_fs* mfs, bool verbose);
 
 
 /* TODO: comments */
-bool search_direct_zones(
+
+/* ========= */
+/* SEARCHING */
+/* ========= */
+
+bool search_all_zones(
+    min_fs* mfs, 
+    min_inode* cur_inode,
+    min_inode* next_inode, 
+    char* name);
+
+bool search_all_direct_zones(
     min_fs* mfs, 
     min_inode* cur_inode,
     min_inode* next_inode, 
@@ -188,11 +199,9 @@ bool search_two_indirect_zones(
     min_inode* next_inode, 
     char* name);
 
-/* TODO: comments */
-bool search_chunk_for_dir_entry(
+bool search_zone(
     min_fs* mfs, 
-    uint32_t start_addr,
-    uint32_t chunk_size,
+    uint32_t zone_addr,
     min_inode* next_inode, 
     char* name);
 

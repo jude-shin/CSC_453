@@ -107,45 +107,14 @@ int main (int argc, char *argv[]) {
        an inode with a matching name. */
     min_inode next_inode;
 
-    printf("searching direct zones\n");
-
-    /* Search the dierct zones for the current inode (directory) */
-    if (search_direct_zones(&mfs, &inode, &next_inode, token)) {
+    if (search_all_zones(&mfs, &inode, &next_inode, token)) {
       token = strtok(NULL, "/");
       inode = next_inode;
-      continue;
     }
-
-    printf("searching indirect zones\n");
-
-    /* Search the indierct zones for the current inode (directory) */
-    if (search_indirect_zones(&mfs, &inode, &next_inode, token)) {
-      token = strtok(NULL, "/");
-      inode = next_inode;
-      continue;
+    else {
+      fprintf(stderr, "error traversing the path: directory not found!\n");
+      exit(EXIT_FAILURE);
     }
-
-    printf("searching two indirect zones\n");
-
-
-    /* Search the double indirect zones for the current inode (directory) */
-    if (search_two_indirect_zones(&mfs, &inode, &next_inode, token)) {
-      token = strtok(NULL, "/");
-      inode = next_inode;
-      continue;
-    }
-
-    /* Search the indirect zones by looping though all of the inodes that fit
-       on the current "indirect zone". For each of those inodes, search THEIR
-       direct zone.*/
-
-    /* Go to the first block of the indirect zones */
-
-    /* From that block*/
-    /* TODO: Linear serach the double indirect zones. */
-
-    fprintf(stderr, "error traversing the path: directory not found!\n");
-    exit(EXIT_FAILURE);
   }
 
   /* If we have fully traversed the path, but we ended up at a file, we cannot
