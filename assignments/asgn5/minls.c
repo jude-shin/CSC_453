@@ -30,6 +30,8 @@ int main (int argc, char *argv[]) {
   /* A struct that represents the minix filesystem. */
   min_fs mfs;
 
+  
+
 
   /* Parses the flags passed into this function, setting the verbosity, primary
      partition, subpartition numbers, and returning the number of flags
@@ -51,7 +53,7 @@ int main (int argc, char *argv[]) {
 
   if (minix_path == NULL) {
     /* Set the default path to the root directory '/' */
-    minix_path = "/";
+    minix_path = DELIMITER;
   }
 
   /* ======================================================================== */
@@ -72,14 +74,16 @@ int main (int argc, char *argv[]) {
   }
 
   /* The tokenized next directory entry name that we are looking for. */
-  char* token = strtok(minix_path, "/");
+  char* token = strtok(minix_path, DELIMITER);
 
   /* The current name that was just processed. */
-  unsigned char curr_name[DIR_NAME_SIZE] = "/";
- 
+  unsigned char curr_name[DIR_NAME_SIZE] = "";
+
   /* Allocate enough space for the canonicalized interpretation of the given 
      minix path. */
-  char* canonicalized_minix_path = malloc(sizeof(char)*strlen(minix_path));
+  char* can_minix_path = malloc(sizeof(char)*strlen(minix_path)+1);
+  /* By default, set the string to be the root. */
+  strcpy(can_minix_path, DELIMITER);
   
   /* Parse all of the directories that the user gave by traversing through the
      directories till we are at the last inode. */
@@ -89,8 +93,8 @@ int main (int argc, char *argv[]) {
     memcpy(curr_name, token, sizeof(char)*DIR_NAME_SIZE);
 
     /* Add the token to the built canonicalized minix path. */
-    strcat(canonicalized_minix_path, "/");
-    strcat(canonicalized_minix_path, token);
+    strcat(can_minix_path, DELIMITER);
+    strcat(can_minix_path, token);
 
     /* The current inode must be traversable (a directory) */
     if (!(inode.mode & DIR_FT)) {
@@ -108,7 +112,7 @@ int main (int argc, char *argv[]) {
     /* Search through the direct, indirect, and double indirect zones for a 
        directory entry with a matching name. */
     if (search_all_zones(&mfs, &inode, &next_inode, token)) {
-      token = strtok(NULL, "/");
+      token = strtok(NULL, DELIMITER);
       inode = next_inode;
     }
     else {
@@ -125,7 +129,7 @@ int main (int argc, char *argv[]) {
   /* If we have fully traversed the path, but we ended up at a file, we cannot
      ls on that... we must ls on a directory. */
   if (inode.mode & DIR_FT) {
-    print_directory(stderr, &mfs, &inode, canonicalized_minix_path);
+    print_directory(stderr, &mfs, &inode, can_minix_path);
     exit(EXIT_FAILURE);
   }
   else if (inode.mode & REG_FT) {
@@ -142,7 +146,7 @@ int main (int argc, char *argv[]) {
   close_mfs(&mfs);
 
   /* Free the malloc'ed canonicalized path string. */
-  free(canonicalized_minix_path);
+  free(can_minix_path);
 
   exit(EXIT_SUCCESS);
 }

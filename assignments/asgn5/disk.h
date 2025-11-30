@@ -44,6 +44,13 @@
 /* The directory entry size for a minix fs in bytes. */
 #define DIR_ENTRY_SIZE 64
 
+/* ==== */
+/* MISC */
+/* ==== */
+
+/* The delimiter when listing directories. */
+#define DELIMITER "/"
+
 
 
 /* TODO: change "disk.*" to "filesystem.*"*/
