@@ -124,6 +124,93 @@ void print_files_in_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
   }
 }
 
+
+/* Given an indirect zone, print all of the files that are on the zones that
+ * the indirect zone points to if they are valid.
+ * @param s the stream that this message will be printed to.
+ * @param mfs a struct that holds an open file descriptor, and the offset (the
+ *  offset from the beginning of the image which indicates the beginning of the
+ *  partition that holds the filesystem.
+ * @param zone_num the indirect zone number of interest
+ * @return void.
+ */
+void print_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
+  /* Skip over the indirect zone if it is not used. */
+  if (zone_num != 0) {
+    /* Start reading the first block in that indirect zone. */
+    fseek(
+        mfs->file, 
+        mfs->partition_start + (zone_num*mfs->zone_size), 
+        SEEK_SET);
+
+    /* How many zone numbers we are going to read (how many fit in the first 
+       block of the indirect zone) */
+    int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+
+    /* For every zone number in that first indirect inode block. */
+    for(int i = 0; i < total_indirect_inodes; i++) {
+      /* The zone number that holds directory entries. */
+      uint32_t indirect_zone_number;
+
+      /* Read the number that holds the zone number. */
+      if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
+        fprintf(stderr, "error reading indirect zone: %d\n", errno);
+        exit(EXIT_FAILURE);
+      }
+
+      /* Print all of the valid files that are in the zones pointed to in
+         the indirect zone. */
+      print_files_in_zone(s, mfs, indirect_zone_number);
+
+      /* Seek to the next indirect zone number to keep searching. */
+      fseek(mfs->file, sizeof(uint32_t), SEEK_CUR);
+    }
+  }
+}
+
+/* Given a double indirect zone, print all of the files that are on the zones 
+   that the indirect zone points to if they are valid (double indirect)
+ * @param s the stream that this message will be printed to.
+ * @param mfs a struct that holds an open file descriptor, and the offset (the
+ *  offset from the beginning of the image which indicates the beginning of the
+ *  partition that holds the filesystem.
+ * @param zone_num the double indirect zone number of interest
+ * @return void.
+ */
+void print_files_in_two_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
+  /* Skip over the indirect zone if it is not used. */
+  if (zone_num != 0) {
+
+    /* Start reading the first block in the double indirect zone. */
+    fseek(
+        mfs->file, 
+        mfs->partition_start + (zone_num*mfs->zone_size),
+        SEEK_SET);
+
+    /* How many zone numbers we are going to read (how many fit in the first 
+       block of the indirect zone) */
+    int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+
+    /* For every zone number in that first double indirect inode block. */
+    for(int i = 0; i < total_indirect_inodes; i++) {
+      /* The zone number that holds the indierct zone numbers. */
+      uint32_t two_indirect_zone_number;
+
+      /* Read the number that holds the zone number. */
+      if(fread(&two_indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
+        fprintf(stderr, "error reading indirect zone number: %d\n", errno);
+        exit(EXIT_FAILURE);
+      }
+
+      /* Print the files in that indirect zone. */
+      print_files_in_indirect_zone(s, mfs, two_indirect_zone_number);
+
+      /* Seek to the next two indirect zone number to keep searching. */
+      fseek(mfs->file, sizeof(uint32_t), SEEK_CUR);
+    }
+  }
+}
+
 /* Prints every directory entry in a directory.
  * @param s the stream that this message will be printed to.
  * @param mfs a struct that holds an open file descriptor, and the offset (the
@@ -139,47 +226,15 @@ void print_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path) {
 
   /* DIRECT ZONES */
   for(int i = 0; i < DIRECT_ZONES; i++) {
-    /* Search for the next inode who matches the name of the token. */
-    uint32_t zone_num = inode->zone[i];
-
     /* Print all of the valid files that are in that zone. */
-    print_files_in_zone(s, mfs, zone_num);
+    print_files_in_zone(s, mfs, inode->zone[i]);
   }
 
   /* INDIRECT ZONES */
-  /* Skip over the indirect zone if it is not used. */
-  if (inode->indirect != 0) {
-    /* Start reading the first block in that indirect zone. */
-    fseek(
-        mfs->file, 
-        mfs->partition_start + (inode->indirect*mfs->zone_size), 
-        SEEK_SET);
+  print_files_in_indirect_zone(s, mfs, inode->indirect);
 
-    /* How many zone numbers we are going to read (how many fit in the first 
-       block of the indirect zone) */
-    int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
-
-    /* For every zone number in that first indirect inode block. */
-    for(int i = 0; i < total_indirect_inodes; i++) {
-      /* The zone number that holds directory entries. */
-      uint32_t indirect_zone_number;
-
-      /* Read the number that holds the zone number. */
-      if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
-        fprintf(stderr, "error reading indirect zone number: %d\n", errno);
-        exit(EXIT_FAILURE);
-      }
-
-      /* Print all of the valid files that are in the zones pointed to in
-         the indirect zone. */
-      print_files_in_zone(s, mfs, indirect_zone_number);
-
-      /* Seek to the next indirect zone number to keep searching. */
-      fseek(mfs->file, sizeof(uint32_t), SEEK_CUR);
-    }
-  }
-
-  /* TODO: DOUBLE INDIRECT ZONES */
+  /* DOUBLE INDIRECT ZONES */
+  print_files_in_two_indirect_zone(s, mfs, inode->two_indirect);
 }
 
 
