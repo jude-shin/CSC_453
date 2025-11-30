@@ -24,6 +24,6 @@ void print_superblock(min_superblock* sb);
 void print_inode(min_inode* inode);
 
 /* Prints all of the information in a directory entry. */
-void print_dir(min_dir* dir);
+void print_dir_entry(min_dir_entry* dir_entry);
 
 #endif

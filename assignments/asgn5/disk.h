@@ -86,10 +86,10 @@ typedef struct __attribute__ ((__packed__)) min_inode {
 } min_inode;
 
 /* A directoy entry in minix. */
-typedef struct __attribute__ ((__packed__)) min_dir {
+typedef struct __attribute__ ((__packed__)) min_dir_entry {
   uint32_t inode;                     /* Inode Number */
   unsigned char name[DIR_NAME_SIZE];  /* filename string */
-} min_dir;
+} min_dir_entry;
 
 /* Essentially defines the beginning of the filesystem of an image. 
    It includes the open imagefile filedescriptor, and the offset of where the 

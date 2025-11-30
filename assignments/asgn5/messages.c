@@ -106,14 +106,14 @@ void print_inode(min_inode* inode) {
 
 
 /* Prints all of the information in a directory entry.
- * @param pt a pointer to the dir entry struct
+ * @param dir_entry a pointer to the dir entry struct
  * @return void. 
  */
-void print_dir(min_dir* dir) {
+void print_dir_entry(min_dir_entry* dir_entry) {
   fprintf(stderr, "\n\n=== DIRECTORY ===============\n\n");
 
-  fprintf(stderr, "inode: %u\n", dir->inode);
-  fprintf(stderr, "links: %*s\n", DIR_NAME_SIZE, dir->name);
+  fprintf(stderr, "inode: %u\n", dir_entry->inode);
+  fprintf(stderr, "links: %*s\n", DIR_NAME_SIZE, dir_entry->name);
 
   fprintf(stderr, "\n=== (end directory info) ====\n\n");
 }
