@@ -3,11 +3,19 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <fcntl.h>
-#include <errno.h>
 
 #include "input.h"
 #include "messages.h"
 #include "disk.h"
+
+
+void print_file() {
+
+}
+
+void print_directory() {
+
+}
 
 int main (int argc, char *argv[]) {
   /* Verbosity. If set, print the partition table(s) superblock, and inode of 
@@ -28,6 +36,7 @@ int main (int argc, char *argv[]) {
   
   /* A struct that represents the minix filesystem. */
   min_fs mfs;
+
 
   /* Parses the flags passed into this function, setting the verbosity, primary
      partition, subpartition numbers, and returning the number of flags
@@ -63,8 +72,9 @@ int main (int argc, char *argv[]) {
 
   /* Open the minix filesystem, populating the values in the min_fs struct. */
   open_mfs(&mfs, imagefile_path, prim_part, sub_part, verbose);
+  
 
-  /* TODO: do your ls thing. */
+
 
   /* Close the minix filesystem. */
   close_mfs(&mfs);
@@ -72,4 +82,12 @@ int main (int argc, char *argv[]) {
 
   exit(EXIT_SUCCESS);
 }
+
+/* ======= */
+/* HELPERS */
+/* ======= */
+/* TODO: move the print_file and print_directotry to this section and add the
+   header file after you have mucked around. */
+
+
 

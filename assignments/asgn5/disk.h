@@ -96,11 +96,15 @@ typedef struct __attribute__ ((__packed__)) min_dir_entry {
    actual files start. */
 typedef struct min_fs {
   FILE* file;             /* the file that the (minix) image is on */
-  size_t partition_start; /* aka, the offset */
-  
-  min_superblock sb;      /* The superblock and it's information for the fs. */
+  size_t partition_start; /* the offset (the address in relation to the 
+                             beginning of the image file. aka "real" address)*/
+  min_superblock sb;      /* The superblock and it's information for the fs */
 
   uint16_t zone_size;     /* The size of a zone in bytes */
+
+  size_t b_imap;          /* "real" address of the inode bitmap */
+  size_t b_zmap;          /* "real" address of the zone bitmap */
+  size_t b_inodes;        /* "real" address of the actual inodes */
 } min_fs;
 
 

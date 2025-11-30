@@ -39,6 +39,9 @@
 /* The directory entry size for a minix fs in bytes. */
 #define DIR_ENTRY_SIZE 64
 
+/* The block number for the imap block in a minix fs. */
+#define IMAP_BLOCK_NUMBER 2
+
 
 /* ================ */
 /* MAGIC VALIDATION */
@@ -162,6 +165,18 @@ void open_mfs(
 
   /* Update the mfs context to store the zone size of this filesystem. */
   mfs->zone_size = get_zone_size(&mfs->sb);
+
+
+  /* Udpate the mfs context to store addresses like the imap, zmap and inodes */
+
+  /* Add the partition start address to the block number * blocksize */
+  mfs->b_imap = mfs->partition_start + (IMAP_BLOCK_NUMBER * mfs->sb.blocksize);
+
+  /* Add where the previous block to the number of blocks in the imap */
+  mfs->b_zmap = mfs->b_imap + mfs->sb.i_blocks;
+
+  /* Add where the previous block to the number of blocks in the zmap */
+  mfs->b_inodes = mfs->b_zmap + mfs->sb.z_blocks;
 
   /* The mfs context is now populated with everything we need to know in order
      to traverse the minix filesystem. */

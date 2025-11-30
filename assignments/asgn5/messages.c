@@ -96,7 +96,7 @@ void print_inode(min_inode* inode) {
   fprintf(stderr, "atime: %d\n", inode->atime);
   fprintf(stderr, "mtime: %d\n", inode->mtime);
   fprintf(stderr, "ctime: %d\n", inode->ctime);
-  fprintf(stderr, "zone addr: %p\n", inode->zone); /* TODO: check formatting */
+  fprintf(stderr, "zone addr: %p\n", (void*)inode->zone); /* TODO: check formatting */
   fprintf(stderr, "indirect: %u\n", inode->indirect);
   fprintf(stderr, "two_indirect: %u\n", inode->two_indirect);
   fprintf(stderr, "unused: %u\n", inode->unused);
