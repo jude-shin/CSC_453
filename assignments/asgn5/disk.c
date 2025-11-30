@@ -7,24 +7,53 @@
 
 #include "disk.h"
 #include "messages.h"
+/* Constants for disk/(sub)partition calculation and validation */
 
-#define SECTOR_SIZE 512 /* the sector size for a minix fs is 512 bytes. */
+/* ================= */
+/* ADDRESS CONSTANTS */
+/* ================= */
 
-/* the address where the partition table is. */
+/* The address where the partition table is. */
 #define PART_TABLE_ADDR 0x1BE 
-/* the partition type that indicates this is a minix system */
-#define MINIX_PARTITION_TYPE 0x81
-/* bootind will be equal to this macro if the partition is bootable */
-#define BOOTABLE_MAGIC 0x80
-
-/* byte addresses & the expected values for verifying a partition signature. */
-#define SIG510_OFFSET 510 
-#define SIG510_EXPECTED 0x55 
-#define SIG511_OFFSET 511
-#define SIG511_EXPECTED 0xAA
 
 /* Where the superblock lies in relation to the beginning of the partition. */
 #define SUPERBLOCK_OFFSET 1024
+
+/* Addresses for particular signatures in a minix (sub)partition. */
+#define SIG510_OFFSET 510 
+#define SIG511_OFFSET 511
+
+
+/* ============== */
+/* SIZE CONSTANTS */
+/* ============== */
+
+/* The sector size for a minix fs in bytes. */
+#define SECTOR_SIZE 512 
+
+/* The inode size for a minix fs in bytes. */
+#define INODE_SIZE 64
+
+/* The directory entry size for a minix fs in bytes. */
+#define DIR_ENTRY_SIZE 64
+
+
+/* ================ */
+/* MAGIC VALIDATION */
+/* ================ */
+
+/* Bootind will be equal to this macro if the partition is bootable */
+#define BOOTABLE_MAGIC 0x80
+
+/* The partition type that indicates this is a minix partition */
+#define MINIX_PARTITION_TYPE 0x81
+
+/* Magic value will be in the superblock, indicating that this is a minix fs. */
+#define MINIX_MAGIC_NUMBER 0x4D5A
+
+/* The expected values for particular signatures in a minix (sub)partition. */
+#define SIG510_EXPECTED 0x55 
+#define SIG511_EXPECTED 0xAA
 
 /*==========*/
 /* BASIC IO */
@@ -124,7 +153,7 @@ void open_mfs(
 
   /* ======================================================================== */
 
-  /* Load the superblock */
+  /* Load the superblock. */
   load_superblock(mfs, verbose);
 
 }
