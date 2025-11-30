@@ -82,9 +82,10 @@ int main (int argc, char *argv[]) {
   /* Allocate enough space for the canonicalized interpretation of the given 
      minix path. */
   char* can_minix_path = malloc(sizeof(char)*strlen(minix_path)+1);
-  /* By default, set the string to be the root. */
-  strcpy(can_minix_path, DELIMITER);
-  
+
+  /* By default, set the string to be null. */
+  *can_minix_path = '\0';
+
   /* Parse all of the directories that the user gave by traversing through the
      directories till we are at the last inode. */
   while(token != NULL) {
@@ -120,6 +121,14 @@ int main (int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     }
   }
+
+  /* If the canonical path is still null, then we did'nt add anything to it, 
+     so it must be a variant of "/" or "//////" or some other form of the root.
+     For looks, set the canonical path to the DELIMITER. */
+  if (*can_minix_path == '\0') {
+    strcpy(can_minix_path, DELIMITER);
+  }
+
 
   /* Print inode information when the file is found. */
   if (verbose) {
