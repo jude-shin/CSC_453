@@ -7,7 +7,9 @@
 
 #include "disk.h"
 #include "messages.h"
-/* Constants for disk/(sub)partition calculation and validation */
+
+/* TODO: in the helpers, don't pass in the entire context, just pass in the 
+   variables that are needed. */
 
 /* ================= */
 /* ADDRESS CONSTANTS */
@@ -151,10 +153,17 @@ void open_mfs(
   mfs->file = imagefile;
   mfs->partition_start = offset;
 
-  /* ======================================================================== */
+  /* At this point we have enough information to update the superblock that is 
+     stored in the mfs context! */
 
   /* Load the superblock. */
   load_superblock(mfs, verbose);
+  
+
+  /* Update the mfs context to store the zone size of this filesystem. */
+  mfs->zone_size = get_zone_size(&mfs->sb);
+
+  /* ======================================================================== */
 
 }
 
@@ -289,3 +298,26 @@ void load_superblock(min_fs* mfs, bool verbose) {
     print_superblock(&mfs->sb);
   }
 }
+
+/* Calculates the zonesize based on a minix filesystem context using a bitshift.
+ * @param sb a struct that holds information about the superblock.
+ * @return uint16_t the size of a zone
+ */
+uint16_t get_zone_size(superblock* sb) {
+  uint16_t blocksize = sb->blocksize;
+  int16_t log_zone_size = sb->blocksize;
+  uint16_t zonesize = blocksize << log_zone_size;
+
+  return zonesize;
+}
+
+/* ===== */
+/* FILES */
+/* ===== */
+
+
+
+/* =========== */
+/* DIRECTORIES */
+/* =========== */
+

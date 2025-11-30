@@ -73,9 +73,7 @@ typedef struct MinixFileSystem {
   
   superblock sb;          /* The superblock and it's information for the fs. */
 
-  size_t sector_size;
-  size_t block_size;
-  size_t zone_size;
+  uint16_t zone_size;       /* The size of a zone in bytes */
 } min_fs;
 
 
@@ -128,5 +126,20 @@ void load_part_table(part_tbl* pt, long addr, FILE* image, bool verbose);
 
 /* Fills a superblock based ona minix filesystem (a image and an offset) */ 
 void load_superblock(min_fs* mfs, bool verbose);
+
+/* Calculates the zonesize based on a superblock using a bitshift. */
+uint16_t get_zone_size(superblock* sb);
+
+
+/* ===== */
+/* FILES */
+/* ===== */
+
+
+
+/* =========== */
+/* DIRECTORIES */
+/* =========== */
+
 
 #endif
