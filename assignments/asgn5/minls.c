@@ -7,7 +7,7 @@
 #include <errno.h>
 
 #include "input.h"
-#include "messages.h"
+#include "print.h"
 #include "disk.h"
 
 

@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "disk.h"
-#include "messages.h"
+#include "print.h"
 
 /* TODO: in the helpers, don't pass in the entire context, just pass in the 
    variables that are needed. */

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "messages.h"
+#include "print.h"
 #include "disk.h"
 
 /* The max length of a label */
