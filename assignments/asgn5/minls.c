@@ -54,7 +54,7 @@ int main (int argc, char *argv[]) {
 
   /* Catch errors by printing the general usage statement and exiting. */
   if (pd_flags == -1 || pd_args == -1) {
-    minls_usage(stderr);
+    print_minls_usage(stderr);
     exit(EXIT_FAILURE);
   }
 
@@ -107,6 +107,8 @@ int main (int argc, char *argv[]) {
        an inode with a matching name. */
     min_inode next_inode;
 
+    /* Search through the direct, indirect, and double indirect zones for a 
+       directory entry with a matching name. */
     if (search_all_zones(&mfs, &inode, &next_inode, token)) {
       token = strtok(NULL, "/");
       inode = next_inode;
@@ -149,6 +151,14 @@ int main (int argc, char *argv[]) {
 /* ======= */
 /* TODO: move the print_file and print_directotry to this section and add the
    header file after you have mucked around. */
+
+void print_file_metadata() {
+  
+}
+
+void print_dir_files() {
+  /* for each of the directory entries, print it's metadata */
+}
 
 
 

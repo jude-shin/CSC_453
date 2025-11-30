@@ -21,7 +21,7 @@
  * @param void. 
  * @return void.
  */
-void minls_usage(FILE* s) {
+void print_minls_usage(FILE* s) {
   fprintf(
       s,
       "usage: minls [-v] [-p num [-s num]] imagefile [path]\n"
@@ -41,7 +41,7 @@ void minls_usage(FILE* s) {
  * @param void. 
  * @return void.
  */
-void minget_usage(FILE* s) {
+void print_minget_usage(FILE* s) {
   fprintf(
       s,
       "usage: minget [-v] [-p num [-s num]] imagefile srcpath [dstpath]\n"

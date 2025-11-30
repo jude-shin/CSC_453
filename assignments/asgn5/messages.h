@@ -10,7 +10,7 @@
 /* ===== */
 
 /* Prints an error that shows the flags that can be used with minls. */
-void minls_usage(FILE* s);
+void print_minls_usage(FILE* s);
 
 
 /* ====== */
@@ -18,7 +18,7 @@ void minls_usage(FILE* s);
 /* ====== */
 
 /* Prints an error that shows the flags that can be used with minls. */
-void minget_usage(FILE* s);
+void print_minget_usage(FILE* s);
 
 
 /* ======= */
