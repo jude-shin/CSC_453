@@ -187,21 +187,21 @@ bool search_all_direct_zones(
     min_inode* next_inode, 
     char* name);
 
-bool search_indirect_zones(
+bool search_indirect_zone(
     min_fs* mfs, 
-    min_inode* cur_inode,
+    uint32_t zone_num,
     min_inode* next_inode, 
     char* name);
 
-bool search_two_indirect_zones(
+bool search_two_indirect_zone(
     min_fs* mfs, 
-    min_inode* cur_inode,
+    uint32_t zone_num,
     min_inode* next_inode, 
     char* name);
 
 bool search_zone(
     min_fs* mfs, 
-    uint32_t zone_addr,
+    uint32_t zone_num,
     min_inode* next_inode, 
     char* name);
 
