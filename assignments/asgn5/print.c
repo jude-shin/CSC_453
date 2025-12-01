@@ -117,9 +117,6 @@ void print_files_in_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
           exit(EXIT_FAILURE);
         }
 
-        // print_dir_entry(s, &entry);
-        // print_inode(s, &next_inode);
-
         print_file(s, &next_inode, entry.name);
       }
     }

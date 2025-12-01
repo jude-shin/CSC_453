@@ -529,9 +529,6 @@ bool search_zone(
       exit(EXIT_FAILURE);
     }
 
-    // /* TODO: remove */
-    print_dir_entry(stderr, &entry);
-
     /* Check if entry is valid (inode != 0) and name matches */
     if(entry.inode != 0 && strcmp((char*)entry.name, name) == 0) {
       /* Seek to the address that holds the inode that we are on. */
