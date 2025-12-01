@@ -58,8 +58,8 @@ int main (int argc, char *argv[]) {
   /* Open the minix filesystem, populating the values in the mfs struct. */
   open_mfs(&mfs, imagefile_path, prim_part, sub_part, verbose);
   
-  /* The inode that will be populated if the path is found. */
-  min_inode inode;
+  /* The address of the inode that will be populated if the path is found. */
+  uint32_t inode_addr;
 
   /* The current name that was just processed. After the last item in the path
      was processed, this will be set to the last file/directory name.*/
@@ -77,7 +77,7 @@ int main (int argc, char *argv[]) {
 
   /* Try to find the path. The inode will be updated if the inode was found; 
      can_minix_path, and cur_name will be updated as the search progresses. */
-  if (!find_inode(&mfs, &inode, minix_path, can_minix_path, cur_name)) {
+  if (!find_inode(&mfs, &inode_addr, minix_path, can_minix_path, cur_name)) {
     fprintf(stderr, "The path [%s] was not found!\n", minix_path);
     exit(EXIT_FAILURE);
   }
@@ -88,6 +88,10 @@ int main (int argc, char *argv[]) {
   if (*can_minix_path == '\0') {
     strcpy(can_minix_path, DELIMITER);
   }
+
+  /* Make a copy of the inode so I don't have to keep reading from the image. */
+  min_inode inode;
+  duplicate_inode(&mfs, inode_addr, &inode);
 
   /* Print inode information when the file is found. */
   if (verbose) {

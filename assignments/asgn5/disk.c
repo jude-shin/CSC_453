@@ -322,6 +322,26 @@ void load_superblock(min_fs* mfs) {
   }
 }
 
+/* Makes a copy of an inode based on an arbitrary address. 
+ * @param mfs
+ * @param inode_addr the address of the real inode on the image
+ * @param inode a ponter to a struct in my program that will hold the copy
+ * @return void.
+*/
+void duplicate_inode(min_fs* mfs, uint32_t inode_addr, min_inode* inode) {
+  /* Seek to the inode's address */ 
+  if (fseek(mfs->file, inode_addr, SEEK_SET) == -1) {
+    fprintf(stderr, "error seeking to the found inode: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+  /* Read the value at that address into the root inode struct. */
+  if (fread(inode, sizeof(min_inode), 1, mfs->file) < 1) {
+    fprintf(stderr, "error copying found inode: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+}
+
+
 /* Populates inode with the given inode's information and returns true if it was
  * found. Otherwise, return false. The canonicalized path that was traversed is
  * also built as this function progresses, as well as the cur_name being updated
@@ -336,11 +356,11 @@ void load_superblock(min_fs* mfs) {
  *  path is built. 
  * @param cur_name the current name that is being processed. If this is set to
  * NULL, the name is not updated. 
- * @return bool true if we found a valid inode, false otherwise.
+ * @return the address to the located inode. If not found, return 0;
    */
-bool find_inode(
+uint32_t find_inode(
     min_fs* mfs, 
-    min_inode* inode,
+    uint32_t* inode_addr,
     char* path,
     char* can_minix_path,
     unsigned char* cur_name) {
@@ -348,6 +368,12 @@ bool find_inode(
   /* The tokenized next directory entry name that we are looking for. */
   /* TODO: try strtok_r?*/
   char* token = strtok(path, DELIMITER);
+ 
+  /* Set the default address to the root inode's address. */
+  *inode_addr = mfs->b_inodes;
+
+  /* The current inode we are processing. */
+  min_inode inode;
 
   /* Seek the read head to the first inode. */
   if (fseek(mfs->file, mfs->b_inodes, SEEK_SET) == -1) {
@@ -356,7 +382,7 @@ bool find_inode(
   }
 
   /* Read the value at that address into the root inode struct. */
-  if (fread(inode, sizeof(min_inode), 1, mfs->file) < 1) {
+  if (fread(&inode, sizeof(min_inode), 1, mfs->file) < 1) {
     fprintf(stderr, "error reading the root inode: %d\n", errno);
     exit(EXIT_FAILURE);
   }
@@ -382,7 +408,7 @@ bool find_inode(
     }
 
     /* The current inode must be traversable (a directory) */
-    if (!(inode->mode & DIR_FT)) {
+    if (!(inode.mode & DIR_FT)) {
       fprintf(
           stderr, 
           "error traversing the path. %s is not a directory!\n", 
@@ -390,14 +416,11 @@ bool find_inode(
       return false;
     }
    
-    /* The found inode that is populated if any of the search functions find
-       an inode with a matching name. */
-    min_inode next_inode;
-
     /* Search through the direct, indirect, and double indirect zones for a 
        directory entry with a matching name. */
-    if (search_all_zones(mfs, inode, &next_inode, token)) {
-      memcpy(inode, &next_inode, sizeof(min_inode));
+    if (search_all_zones(mfs, &inode, inode_addr, token)) {
+      /* Overwrite the inode with the contents in the image at inode_addr. */
+      duplicate_inode(mfs, *inode_addr, &inode);
       token = strtok(NULL, DELIMITER);
     }
     else {
@@ -419,8 +442,8 @@ bool find_inode(
  * @param mfs MinixFileSystem struct that holds the current filesystem and some
  *  useful information.
  * @param cur_inode the inode (which is a directory) that we are searching in.
- * @param next_inode a pointer to the inode that we are going to populate if we
- *  do end up finding the inode.
+ * @param inode_addr a poninter to a variable that holds the address of the real
+ *  inode on the image. 
  * @param name the name of the directory entry we are looking for in the current
  *  inode.
  * @return bool true if we found a valid directory entry, false otherwise.
@@ -428,29 +451,33 @@ bool find_inode(
 bool search_all_zones(
     min_fs* mfs, 
     min_inode* cur_inode,
-    min_inode* next_inode, 
+    uint32_t* inode_addr, 
     char* name) {
 
   /* Linear search the direct zones. */
   for(int i = 0; i < DIRECT_ZONES; i++) {
-    /* Search the direct zone for an entry, and set the next_inode's values 
-       to the inode that was found. If found, then we know that search_chunk 
-       already wrote the dta to next_inode, so we can just exit.*/
-    if (search_zone(mfs, cur_inode->zone[i], next_inode, name)) {
+    /* Search the direct zone for an entry. If found, then we know that 
+       search_chunk already wrote the data to inode_addr, so we can just exit.
+       Otherwise, the for loop will continue with the search. */
+    if (search_zone(mfs, cur_inode->zone[i], inode_addr, name)) {
       return true;
     }
   }
 
-  /* Search the indierct zones for the current inode (directory) */
-  if (search_indirect_zone(mfs, cur_inode->indirect, next_inode, name)) {
+  /* Search the indirect zone for an entry. If found, then we know that 
+     search_chunk already wrote the data to inode_addr, so we can just exit.
+     Otherwise, the for loop will continue with the search. */
+  if (search_indirect_zone(mfs, cur_inode->indirect, inode_addr, name)) {
     return true;
   }
 
-  /* Search the double indirect zones for the current inode (directory) */
+  /* Search the double indirect zone for an entry. If found, then we know that 
+     search_chunk already wrote the data to inode_addr, so we can just exit.
+     Otherwise, the for loop will continue with the search. */
   if (search_two_indirect_zone(
         mfs, 
         cur_inode->two_indirect, 
-        next_inode, 
+        inode_addr, 
         name)){
     return true;
   }
@@ -458,15 +485,71 @@ bool search_all_zones(
   return false;
 }
 
-/* Searches the zones that the indirect zone holds for an entry with a 
- * corresponding name. If a name is found (and it is not deleted) 
- * populate the next_inode with the contents of the found inode, and return
- * true. Otherwise, return false.
+/* Searches a zone for a directory entry with a given name, and updates an inode
+ * address with the address of the inode that corresponds to that name. 
  * @param mfs MinixFileSystem struct that holds the current filesystem and some
  *  useful information.
  * @param zone_num the zone number to search.
- * @param next_inode a pointer to the inode that we are going to populate if we
- *  do end up finding the inode.
+ * @param inode_addr a poninter to a variable that holds the address of the real
+ *  inode on the image. 
+ * @param name the name of the directory entry we are looking for in the current
+ *  inode.
+ * @return bool true if we found a valid directory entry, false otherwise.
+ */
+bool search_zone(
+    min_fs* mfs, 
+    uint32_t zone_num,
+    uint32_t* inode_addr, 
+    char* name) {
+
+  /* Skip over the indirect zone if it is not used. */
+  if (zone_num == 0) {
+    return false;
+  }
+
+  /* The actual address of the zone. */
+  uint32_t zone_addr = mfs->partition_start + (zone_num * mfs->zone_size);
+
+  /* Read all directory entries in this chunk. */
+  int num_entries = mfs->zone_size / DIR_ENTRY_SIZE;
+
+  for(int j = 0; j < num_entries; j++) {
+    min_dir_entry entry;
+
+    /* Seek to the directory entry */
+    if (fseek(mfs->file, zone_addr + (j * DIR_ENTRY_SIZE), SEEK_SET) == -1) {
+      fprintf(stderr, "error seeking to directory entry: %d\n", errno);
+      exit(EXIT_FAILURE);
+    }
+
+    /* Read the directory entry */
+    if(fread(&entry, DIR_ENTRY_SIZE, 1, mfs->file) < 1) {
+      fprintf(stderr, "error reading directory entry: %d\n", errno);
+      exit(EXIT_FAILURE);
+    }
+
+    /* Check if entry is valid (inode != 0) and name matches */
+    if(entry.inode != 0 && strcmp((char*)entry.name, name) == 0) {
+      /* Get the address of the inode address that we found. (Go back one inode
+         size because we just read it). */
+      *inode_addr = mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE);
+      return true;
+    }
+  }
+
+  /* There was no directory entry that had this filename. */
+  return false;
+}
+
+/* Searches the zones that the indirect zone holds for an entry with a 
+ * corresponding name. If a name is found (and it is not deleted) 
+ * populate the inode_addr with the "real" address of the found inode, and 
+ * return true. Otherwise, return false.
+ * @param mfs MinixFileSystem struct that holds the current filesystem and some
+ *  useful information.
+ * @param zone_num the zone number to search.
+ * @param inode_addr a poninter to a variable that holds the address of the real
+ *  inode on the image. 
  * @param name the name of the directory entry we are looking for in the current
  *  inode.
  * @return bool true if we found a valid directory entry, false otherwise.
@@ -474,7 +557,7 @@ bool search_all_zones(
 bool search_indirect_zone(
     min_fs* mfs, 
     uint32_t zone_num,
-    min_inode* next_inode, 
+    uint32_t* inode_addr, 
     char* name) {
 
   /* Skip over the indirect zone if it is not used. */
@@ -507,9 +590,9 @@ bool search_indirect_zone(
     }
 
     /* Search the direct zone for an entry. If found, then we know that 
-       search_chunk already wrote the data to next_inode, so we can just exit.
+       search_chunk already wrote the data to inode_addr, so we can just exit.
        Otherwise, the for loop will continue with the search. */
-    if (search_zone(mfs, indirect_zone_number, next_inode, name)) {
+    if (search_zone(mfs, indirect_zone_number, inode_addr, name)) {
       return true;
     }
   }
@@ -519,13 +602,13 @@ bool search_indirect_zone(
 
 /* Searches the zones that the double indirect zone holds for an entry with a 
  * corresponding name. If a name is found (and it is not deleted) 
- * populate the next_inode with the contents of the found inode, and return
- * true. Otherwise, return false.
+ * populate the inode_addr with the "real" address of the found inode, and 
+ * return true. Otherwise, return false.
  * @param mfs MinixFileSystem struct that holds the current filesystem and some
  *  useful information.
  * @param zone_num the zone number to search.
- * @param next_inode a pointer to the inode that we are going to populate if we
- *  do end up finding the inode.
+ * @param inode_addr a poninter to a variable that holds the address of the real
+ *  inode on the image. 
  * @param name the name of the directory entry we are looking for in the current
  *  inode.
  * @return bool true if we found a valid directory entry, false otherwise.
@@ -533,7 +616,7 @@ bool search_indirect_zone(
 bool search_two_indirect_zone(
     min_fs* mfs, 
     uint32_t zone_num,
-    min_inode* next_inode, 
+    uint32_t* inode_addr, 
     char* name) {
 
   /* Skip over the indirect zone if it is not used. */
@@ -566,82 +649,13 @@ bool search_two_indirect_zone(
     }
 
     /* Search the indirect zone for an entry. If found, then we know that 
-       search_chunk already wrote the data to next_inode, so we can just exit.
+       search_chunk already wrote the data to inode_addr, so we can just exit.
        Otherwise, the for loop will continue with the search. */
-    if (search_indirect_zone(mfs, two_indirect_zone_number, next_inode, name)) {
+    if (search_indirect_zone(mfs, two_indirect_zone_number, inode_addr, name)) {
       return true;
     }
   }
 
-  return false;
-}
-
-/* Searches a zone for a directory entry with a given name. 
- * @param mfs MinixFileSystem struct that holds the current filesystem and some
- *  useful information.
- * @param zone_num the zone number to search.
- * @param next_inode a pointer to the inode that we are going to populate if we
- *  do end up finding the inode.
- * @param name the name of the directory entry we are looking for in the current
- *  inode.
- * @return bool true if we found a valid directory entry, false otherwise.
- */
-bool search_zone(
-    min_fs* mfs, 
-    uint32_t zone_num,
-    min_inode* next_inode, 
-    char* name) {
-
-  /* Skip over the indirect zone if it is not used. */
-  if (zone_num == 0) {
-    return false;
-  }
-
-  /* The actual address of the zone. */
-  uint32_t zone_addr = mfs->partition_start + (zone_num * mfs->zone_size);
-
-  /* Read all directory entries in this chunk. */
-  int num_entries = mfs->zone_size / DIR_ENTRY_SIZE;
-
-  for(int j = 0; j < num_entries; j++) {
-    min_dir_entry entry;
-
-    /* Seek to the directory entry */
-    if (fseek(mfs->file, zone_addr + (j * DIR_ENTRY_SIZE), SEEK_SET) == -1) {
-      fprintf(stderr, "error seeking to directory entry: %d\n", errno);
-      exit(EXIT_FAILURE);
-    }
-
-    /* Read the directory entry */
-    if(fread(&entry, DIR_ENTRY_SIZE, 1, mfs->file) < 1) {
-      fprintf(stderr, "error reading directory entry: %d\n", errno);
-      exit(EXIT_FAILURE);
-    }
-
-    /* Check if entry is valid (inode != 0) and name matches */
-    if(entry.inode != 0 && strcmp((char*)entry.name, name) == 0) {
-      /* Seek to the address that holds the inode that we are on. */
-      if (fseek(
-            mfs->file, 
-            mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE),
-            SEEK_SET) == -1) {
-        fprintf(stderr, "error seeking to inode: %d\n", errno);
-        exit(EXIT_FAILURE);
-      }
-
-      if(fread(next_inode, INODE_SIZE, 1, mfs->file) < 1) {
-        /* If there was an error writing to the inode, note it an exit. We 
-           could try to limp along, but this is not that critical of an 
-           application, so we'll just bail. */
-        fprintf(stderr, "error copying the found inode: %d \n", errno);
-        exit(EXIT_FAILURE);
-      }
-  
-      return true;
-    }
-  }
-
-  /* There was no directory entry that had this filename. */
   return false;
 }
 

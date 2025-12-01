@@ -67,12 +67,16 @@ int main (int argc, char *argv[]) {
   /* ======================================================================== */
 
   /* The inode that will be populated if the source path is found. */
-  min_inode src_inode;
+  uint32_t src_inode_addr;
 
-  if (!find_inode(&mfs, &src_inode, minix_src_path, NULL, NULL)) {
+  if (!find_inode(&mfs, &src_inode_addr, minix_src_path, NULL, NULL)) {
     fprintf(stderr, "The path [%s] was not found!\n", minix_src_path);
     exit(EXIT_FAILURE);
   }
+
+  /* Make a copy of the inode so I don't have to keep reading from the image. */
+  min_inode src_inode;
+  duplicate_inode(&mfs, src_inode_addr, &src_inode);
 
   if (!(src_inode.mode & REG_FT)) {
     fprintf(stderr, "The path [%s] is not a regular file!\n", minix_src_path);
@@ -90,12 +94,16 @@ int main (int argc, char *argv[]) {
   }
   else {
     /* The inode that will be populated if the destination path is found. */
-    min_inode dst_inode;
+    uint32_t dst_inode_addr;
 
-    if (!find_inode(&mfs, &dst_inode, minix_dst_path, NULL, NULL)) {
+    if (!find_inode(&mfs, &dst_inode_addr, minix_dst_path, NULL, NULL)) {
       fprintf(stderr, "The path [%s] was not found!\n", minix_dst_path);
       exit(EXIT_FAILURE);
     }
+
+    /* Make a copy of the inode so I don't have to keep reading from the image. */
+    min_inode dst_inode;
+    duplicate_inode(&mfs, src_inode_addr, &dst_inode);
 
     if (!(dst_inode.mode & REG_FT)) {
       fprintf(stderr, "The path [%s] is not a regular file!\n", minix_dst_path);

@@ -200,13 +200,16 @@ void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* image);
 /* Fills a superblock based ona minix filesystem (a image and an offset) */ 
 void load_superblock(min_fs* mfs);
 
-/* Populates inode with the given inode's information and returns true if it was
-   found. Otherwise, return false. The canonicalized path that was traversed is
-   also built as this function progresses, as well as the cur_name being updated
-   . */
-bool find_inode(
+/* Makes a copy of an inode based on an arbitrary address.*/
+void duplicate_inode(min_fs* mfs, uint32_t inode_addr, min_inode* inode);
+
+/* Populates inode_addr with the given inode's address and returns true if it 
+   was found. Otherwise, return false. The canonicalized path that was traversed
+   is also built as this function progresses, as well as the cur_name being 
+   updated. */
+uint32_t find_inode(
     min_fs* mfs, 
-    min_inode* inode,
+    uint32_t* inode_addr,
     char* path,
     char* can_minix_path,
     unsigned char* cur_name);
@@ -223,34 +226,35 @@ bool find_inode(
 bool search_all_zones(
     min_fs* mfs, 
     min_inode* cur_inode,
-    min_inode* next_inode, 
+    uint32_t* inode_addr, 
+    char* name);
+
+/* Searches a zone for a directory entry with a given name, and updates an inode
+   address with the address of the inode that corresponds to that name. */
+bool search_zone(
+    min_fs* mfs, 
+    uint32_t zone_num,
+    uint32_t* inode_addr, 
     char* name);
 
 /* Searches the zones that the indirect zone holds for an entry with a 
    corresponding name. If a name is found (and it is not deleted) 
-   populate the next_inode with the contents of the found inode, and return
-   true. Otherwise, return false. */
+   populate the inode_addr with the "real" address of teh found inode, and 
+   return true. Otherwise, return false. */
 bool search_indirect_zone(
     min_fs* mfs, 
     uint32_t zone_num,
-    min_inode* next_inode, 
+    uint32_t* inode_addr, 
     char* name);
 
 /* Searches the zones that the double indirect zone holds for an entry with a 
    corresponding name. If a name is found (and it is not deleted) 
-   populate the next_inode with the contents of the found inode, and return
-   true. Otherwise, return false. */
+   populate the inode_addr with the "real" address of the found inode, and 
+   return true. Otherwise, return false. */
 bool search_two_indirect_zone(
     min_fs* mfs, 
     uint32_t zone_num,
-    min_inode* next_inode, 
-    char* name);
-
-/* Searches a zone for a directory entry with a given name. */
-bool search_zone(
-    min_fs* mfs, 
-    uint32_t zone_num,
-    min_inode* next_inode, 
+    uint32_t* inode_addr, 
     char* name);
 
 
