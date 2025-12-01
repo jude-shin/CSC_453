@@ -332,6 +332,9 @@ bool find_inode(
     char* can_minix_path,
     unsigned char* cur_name) {
 
+  /* The tokenized next directory entry name that we are looking for. */
+  char* token = strtok(path, DELIMITER);
+
   /* Seek the read head to the first inode. */
   fseek(mfs->file, mfs->b_inodes, SEEK_SET);
 
@@ -341,16 +344,18 @@ bool find_inode(
     exit(EXIT_FAILURE);
   }
 
-  /* The tokenized next directory entry name that we are looking for. */
-  char* token = strtok(path, DELIMITER);
-
   /* Parse all of the directories that the user gave by traversing through the
      directories till we are at the last inode. */
   while(token != NULL) {
     /* copy the string name to cur_name so we can keep track of the last
        processed name. */
     if (cur_name != NULL) {
-      memcpy(cur_name, token, sizeof(char)*DIR_NAME_SIZE);
+      size_t len = strlen(token);
+      if (len >= DIR_NAME_SIZE) {
+        len = DIR_NAME_SIZE - 1;
+      }
+      memcpy(cur_name, token, len);
+      cur_name[len] = '\0';
     }
 
     /* Add the token to the built canonicalized minix path. */
@@ -375,9 +380,8 @@ bool find_inode(
     /* Search through the direct, indirect, and double indirect zones for a 
        directory entry with a matching name. */
     if (search_all_zones(mfs, inode, &next_inode, token)) {
-      token = strtok(NULL, DELIMITER);
       memcpy(inode, &next_inode, sizeof(min_inode));
-      return true;
+      token = strtok(NULL, DELIMITER);
     }
     else {
       fprintf(stderr, "error traversing the path: directory not found!\n");
@@ -620,7 +624,7 @@ bool search_zone(
  */
 uint16_t get_zone_size(min_superblock* sb) {
   uint16_t blocksize = sb->blocksize;
-  int16_t log_zone_size = sb->blocksize;
+  int16_t log_zone_size = sb->blocksize; /* log_zone_size? */
   uint16_t zonesize = blocksize << log_zone_size;
 
   return zonesize;

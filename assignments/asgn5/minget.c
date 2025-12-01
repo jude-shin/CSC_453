@@ -73,12 +73,12 @@ int main (int argc, char *argv[]) {
   min_inode src_inode;
 
   if (!find_inode(&mfs, &src_inode, minix_src_path, NULL, NULL)) {
-    fprintf(stderr, "The path [%s] was not found!", minix_src_path);
+    fprintf(stderr, "The path [%s] was not found!\n", minix_src_path);
     exit(EXIT_FAILURE);
   }
 
   if (!(src_inode.mode & REG_FT)) {
-    fprintf(stderr, "The path [%s] is not a regular file!", minix_src_path);
+    fprintf(stderr, "The path [%s] is not a regular file!\n", minix_src_path);
     exit(EXIT_FAILURE);
   }
 
@@ -96,12 +96,12 @@ int main (int argc, char *argv[]) {
     min_inode dst_inode;
 
     if (!find_inode(&mfs, &dst_inode, minix_dst_path, NULL, NULL)) {
-      fprintf(stderr, "The path [%s] was not found!", minix_dst_path);
+      fprintf(stderr, "The path [%s] was not found!\n", minix_dst_path);
       exit(EXIT_FAILURE);
     }
 
     if (!(dst_inode.mode & REG_FT)) {
-      fprintf(stderr, "The path [%s] is not a regular file!", minix_dst_path);
+      fprintf(stderr, "The path [%s] is not a regular file!\n", minix_dst_path);
       exit(EXIT_FAILURE);
     }
 
