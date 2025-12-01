@@ -131,12 +131,11 @@ void open_mfs(
           offset+(sub_part*sizeof(min_part_tbl))+PART_TABLE_OFFSET, 
           imagefile);
 
-      /* TODO: ask Ask ASK are there supposed to be signatures here as well? */
-      // /* Validate the two signatures in the partition. */
-      // if (!validate_signatures(imagefile, offset+PART_TABLE_OFFSET)) {
-      //   fprintf(stderr, "subpartition table signatures are not valid\n");
-      //   exit(EXIT_FAILURE);
-      // }
+      /* Validate the two signatures in the partition. */
+      if (!validate_signatures(imagefile, offset)) {
+        fprintf(stderr, "subpartition table signatures are not valid\n");
+        exit(EXIT_FAILURE);
+      }
 
       /* Check the signatures, system type, and if this is bootable. */
       validate_part_table(&spt);
@@ -162,7 +161,11 @@ void open_mfs(
   /* Load the superblock. */
   load_superblock(mfs);
 
-  /* TODO: validate the superblock? */
+  /* Validate the superblock (make sure that the magic minix number is there )*/
+  if (mfs->sb.magic != MINIX_MAGIC_NUMBER) {
+    fprintf(stderr, "bad superblock (not a minix filesystem)\n");
+    exit(EXIT_FAILURE);
+  }
 
   /* Print the contents if you want to. */
   if (verbose) {
@@ -214,12 +217,6 @@ void close_mfs(min_fs* mfs) {
  * @return void.
  */
 void validate_part_table(min_part_tbl* partition_table) {
-  // /* Check that the image is bootable */
-  // if (partition_table->bootind != BOOTABLE_MAGIC) {
-  //   fprintf(stderr, "Bad magic number. (%#x)\n", partition_table->bootind);
-  //   exit(EXIT_FAILURE);
-  // }
-
   /* Check that the partition type is of minix. */
   if (partition_table->type != MINIX_PARTITION_TYPE) {
     fprintf(stderr, "This is not a minix image.\n");
