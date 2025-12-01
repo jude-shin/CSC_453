@@ -10,6 +10,8 @@
 #include "print.h"
 #include "disk.h"
 
+/* TODO: for all files, check that there are. */
+
 int main (int argc, char *argv[]) {
   /* Verbosity. If set, print the partition table(s) superblock, and inode of 
      source file/directory to stderr. */
@@ -84,7 +86,7 @@ int main (int argc, char *argv[]) {
 
   /* If the user did not give a destination path. */
   if (minix_dst_path == NULL) {
-    /* TODO: Print to stdout. */
+    print_file_contents(stderr, &mfs, &src_inode);
   }
   else {
     /* The inode that will be populated if the destination path is found. */

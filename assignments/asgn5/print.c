@@ -93,7 +93,10 @@ void print_files_in_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
       min_dir_entry entry;
 
       /* Seek to the directory entry */
-      fseek(mfs->file, zone_addr + (j * DIR_ENTRY_SIZE), SEEK_SET);
+      if (fseek(mfs->file, zone_addr + (j * DIR_ENTRY_SIZE), SEEK_SET)) {
+        fprintf(stderr, "error seeking to directory entry: %d\n", errno);
+        exit(EXIT_FAILURE);
+      }
 
       /* Read the directory entry */
       if(fread(&entry, DIR_ENTRY_SIZE, 1, mfs->file) < 1) {
@@ -106,10 +109,13 @@ void print_files_in_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
         min_inode next_inode;
 
         /* Seek to the address that holds the inode that we are on. */
-        fseek(
-            mfs->file, 
-            mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE),
-            SEEK_SET);
+        if (fseek(
+              mfs->file, 
+              mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE),
+              SEEK_SET) == -1) {
+          fprintf(stderr, "error seeking to inode: %d\n", errno);
+          exit(EXIT_FAILURE);
+        }
 
         /* Fill the next_inode with the found informatio. */
         if(fread(&next_inode, INODE_SIZE, 1, mfs->file) < 1) {
@@ -139,10 +145,13 @@ void print_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
   /* Skip over the indirect zone if it is not used. */
   if (zone_num != 0) {
     /* Start reading the first block in that indirect zone. */
-    fseek(
-        mfs->file, 
-        mfs->partition_start + (zone_num*mfs->zone_size), 
-        SEEK_SET);
+    if (fseek(
+          mfs->file, 
+          mfs->partition_start + (zone_num*mfs->zone_size), 
+          SEEK_SET) == -1) {
+      fprintf(stderr, "error seeking to indirect zone: %d\n", errno);
+      exit(EXIT_FAILURE);
+    }
 
     /* How many zone numbers we are going to read (how many fit in the first 
        block of the indirect zone) */
@@ -163,8 +172,8 @@ void print_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
          the indirect zone. */
       print_files_in_zone(s, mfs, indirect_zone_number);
 
-      /* Seek to the next indirect zone number to keep searching. */
-      fseek(mfs->file, sizeof(uint32_t), SEEK_CUR);
+      // /* Seek to the next indirect zone number to keep searching. */
+      // fseek(mfs->file, sizeof(uint32_t), SEEK_CUR);
     }
   }
 }
@@ -184,10 +193,13 @@ void print_files_in_two_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
   if (zone_num != 0) {
 
     /* Start reading the first block in the double indirect zone. */
-    fseek(
+    if (fseek(
         mfs->file, 
         mfs->partition_start + (zone_num*mfs->zone_size),
-        SEEK_SET);
+        SEEK_SET) == -1) {
+      fprintf(stderr, "error seeking to double indirect zone: %d\n", errno);
+      exit(EXIT_FAILURE);
+    }
 
     /* How many zone numbers we are going to read (how many fit in the first 
        block of the indirect zone) */
@@ -207,8 +219,8 @@ void print_files_in_two_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
       /* Print the files in that indirect zone. */
       print_files_in_indirect_zone(s, mfs, two_indirect_zone_number);
 
-      /* Seek to the next two indirect zone number to keep searching. */
-      fseek(mfs->file, sizeof(uint32_t), SEEK_CUR);
+      // /* Seek to the next two indirect zone number to keep searching. */
+      // fseek(mfs->file, sizeof(uint32_t), SEEK_CUR);
     }
   }
 }
@@ -257,6 +269,168 @@ void print_minget_usage(FILE* s) {
       "-s sub     --- select subpartition for filesystem (default: none)\n"
       "-v verbose --- increase verbosity level\n"
       );
+}
+
+/* Prints the contents of a regular file to the stream s given an inode. 
+ * @param s the stream that this message will be printed to.
+ * @param inode the inode of interest. 
+ * @return void.
+*/
+void print_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
+  uint32_t bytes_read = 0;
+
+  /* Go through all of the direct zones sequentially. */
+  for (int i = 0; i < DIRECT_ZONES; i++) {
+    uint32_t zone_num = inode->zone[i];
+    print_zone_contents(s, mfs, inode, zone_num, &bytes_read);
+  }
+
+  /* Go through all of the indirect zones sequentially. */
+  print_two_indirect_zone_contents(
+      s, 
+      mfs, 
+      inode, 
+      inode->indirect, 
+      &bytes_read);
+
+  /* Go through all of the double indirect zones sequentially. */
+  print_two_indirect_zone_contents(
+      s, 
+      mfs, 
+      inode, 
+      inode->two_indirect, 
+      &bytes_read);
+
+  /* If we reach here, we have a stupid big file... */
+  fprintf(s, "\n");
+  fprintf(
+      stderr, 
+      "File is too large to print. Exausted direct, indirect, and double "
+      "indirect zones. Size: (%u)\n",
+      inode->size);
+}
+
+/* Prints the contents of a zone to a stream s.  
+ * @param s the stream that this message will be printed to.
+ * @param inode the inode of interest. 
+ * @param zone_num the zone of interest.  
+ * @param how many bytes we have read so far.  
+ * @return void.
+ */
+void print_zone_contents(
+    FILE* s, 
+    min_fs* mfs, 
+    min_inode* inode, 
+    uint32_t zone_num, 
+    uint32_t* bytes_read) {
+
+  /* We still have bytes to read! This is a problem... */
+  if (zone_num == 0) {
+    fprintf(stderr, "we reached a hole wtihout finishing reading the file. ");
+    exit(EXIT_FAILURE);
+  }
+
+  /* Seek to the beginning of the zone. */
+  if (fseek(
+        mfs->file, 
+        mfs->partition_start + (zone_num*mfs->zone_size), 
+        SEEK_SET) == -1) {
+    fprintf(stderr, "error seeking to directory entry: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+
+  /* Read a single character at a time so we don't have to bother with large
+     varying sized buffers. */
+  for (int j = 0; j < mfs->zone_size; j++) {
+    char c;
+    /* Read the next character (byte sized). */
+    if (fread(&c, sizeof(char), 1, mfs->file) < 1) {
+      fprintf(stderr, "error reading character in zone: %d\n", errno);
+      exit(EXIT_FAILURE);
+    }
+
+    /* print this to the console. */
+    fprintf(s, "%c", c);
+
+    /* Note that we read another byte. If we have read all of them, then we
+       are done reading, so finish with a new line and return. */
+    *bytes_read = *bytes_read + 1;
+
+    if (*bytes_read >= inode->size) {
+      fprintf(s, "\n");
+      return;
+    }
+  }
+}
+
+/* Prints the contents of an indirect zone to a stream s.  
+ * @param s the stream that this message will be printed to.
+ * @param inode the inode of interest. 
+ * @param zone_num the zone of interest.  
+ * @param how many bytes we have read so far.  
+ * @return void.
+ */
+void print_indirect_zone_contents(
+    FILE* s, 
+    min_fs* mfs, 
+    min_inode* inode, 
+    uint32_t zone_num, 
+    uint32_t* bytes_read) {
+
+  /* We still have bytes to read! This is a problem... */
+  if (zone_num == 0) {
+    fprintf(stderr, "we reached a hole wtihout finishing reading the file. ");
+    exit(EXIT_FAILURE);
+  }
+
+  /* Start reading the first block in that indirect zone. */
+  if (fseek(
+        mfs->file, 
+        mfs->partition_start+(zone_num*mfs->zone_size), 
+        SEEK_SET) == -1) {
+    fprintf(stderr, "error seeking to indirect zone.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  /* How many zone numbers we are going to read (how many fit in the first block
+     of the indirect zone) */
+  int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+
+  /* For every zone number in that first indirect inode block. */
+  for(int i = 0; i < total_indirect_inodes; i++) {
+    /* The zone number that holds directory entries. */
+    uint32_t indirect_zone_number;
+   
+    /* Read the number that holds the zone number. */
+    if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
+      fprintf(stderr, "error reading indirect zone: %d\n", errno);
+      exit(EXIT_FAILURE);
+    }
+
+    /* Print all of the contents inside that indirect zone*/
+    print_zone_contents(s, mfs, inode, indirect_zone_number, bytes_read);
+  }
+}
+
+/* Prints the contents of a double indirect zone to a stream s.  
+ * @param s the stream that this message will be printed to.
+ * @param inode the inode of interest. 
+ * @param zone_num the zone of interest.  
+ * @param how many bytes we have read so far.  
+ * @return void.
+ */
+void print_two_indirect_zone_contents(
+    FILE* s, 
+    min_fs* mfs, 
+    min_inode* inode, 
+    uint32_t zone_num, 
+    uint32_t* bytes_read) {
+
+  /* We still have bytes to read! This is a problem... */
+  if (zone_num == 0) {
+    fprintf(stderr, "we reached a hole wtihout finishing reading the file. ");
+    exit(EXIT_FAILURE);
+  }
 }
 
 

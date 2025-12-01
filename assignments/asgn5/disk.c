@@ -497,8 +497,6 @@ bool search_indirect_zone(
      of the indirect zone) */
   int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
-  fprintf(stderr, "COUNT OF INDIRECT NODES: %d\n", total_indirect_inodes);
-
   /* For every zone number in that first indirect inode block. */
   for(int i = 0; i < total_indirect_inodes; i++) {
     /* The zone number that holds directory entries. */
