@@ -384,7 +384,7 @@ bool find_inode(
       return false;
     }
   }
-  return false;
+  return true;
 }
 
 /* ========= */
