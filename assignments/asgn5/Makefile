@@ -1,7 +1,7 @@
 CC=/bin/gcc
-CFLAGS = -Wall -g -pedantic
+CFLAGS = -Wall -g
 LD = /bin/gcc
-LDFLAGS = -Wall -g -pedantic
+LDFLAGS = -Wall -g
 
 ALL_PROGS = minls minget
 OBJS = minls.o minget.o 

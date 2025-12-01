@@ -440,9 +440,10 @@ bool search_all_zones(
     min_inode* cur_inode,
     uint32_t* inode_addr, 
     char* name) {
+  int i;
 
   /* Linear search the direct zones. */
-  for(int i = 0; i < DIRECT_ZONES; i++) {
+  for(i = 0; i < DIRECT_ZONES; i++) {
     /* Search the direct zone for an entry. If found, then we know that 
        search_chunk already wrote the data to inode_addr, so we can just exit.
        Otherwise, the for loop will continue with the search. */
@@ -488,6 +489,7 @@ bool search_zone(
     uint32_t zone_num,
     uint32_t* inode_addr, 
     char* name) {
+  int i;
 
   /* Skip over the indirect zone if it is not used. */
   if (zone_num == 0) {
@@ -500,11 +502,11 @@ bool search_zone(
   /* Read all directory entries in this chunk. */
   int num_entries = mfs->zone_size / DIR_ENTRY_SIZE;
 
-  for(int j = 0; j < num_entries; j++) {
+  for(i = 0; i < num_entries; i++) {
     min_dir_entry entry;
 
     /* Seek to the directory entry */
-    if (fseek(mfs->file, zone_addr + (j * DIR_ENTRY_SIZE), SEEK_SET) == -1) {
+    if (fseek(mfs->file, zone_addr + (i * DIR_ENTRY_SIZE), SEEK_SET) == -1) {
       fprintf(stderr, "error seeking to directory entry: %d\n", errno);
       exit(EXIT_FAILURE);
     }
@@ -546,6 +548,7 @@ bool search_indirect_zone(
     uint32_t zone_num,
     uint32_t* inode_addr, 
     char* name) {
+  int i;
 
   /* Skip over the indirect zone if it is not used. */
   if (zone_num == 0) {
@@ -566,7 +569,7 @@ bool search_indirect_zone(
   int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
   /* For every zone number in that first indirect inode block. */
-  for(int i = 0; i < total_indirect_inodes; i++) {
+  for(i = 0; i < total_indirect_inodes; i++) {
     /* The zone number that holds directory entries. */
     uint32_t indirect_zone_number;
    
@@ -605,6 +608,7 @@ bool search_two_indirect_zone(
     uint32_t zone_num,
     uint32_t* inode_addr, 
     char* name) {
+  int i;
 
   /* Skip over the indirect zone if it is not used. */
   if (zone_num == 0) {
@@ -625,7 +629,7 @@ bool search_two_indirect_zone(
   int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
   /* For every zone number in that first double indirect inode block. */
-  for(int i = 0; i < total_indirect_inodes; i++) {
+  for(i = 0; i < total_indirect_inodes; i++) {
     /* The zone number that holds the indierct zone numbers. */
     uint32_t two_indirect_zone_number;
    
