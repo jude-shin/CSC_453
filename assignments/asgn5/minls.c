@@ -58,24 +58,13 @@ int main (int argc, char *argv[]) {
   /* Open the minix filesystem, populating the values in the mfs struct. */
   open_mfs(&mfs, imagefile_path, prim_part, sub_part, verbose);
   
-  /* Navigate to the root of the filesystem */
+  /* The inode that will be populated if the path is found. */
   min_inode inode;
+
+  /* The current name that was just processed. After the last item in the path
+     was processed, this will be set to the last file/directory name.*/
+  unsigned char cur_name[DIR_NAME_SIZE] = "";
   
-  /* Seek the read head to the first inode. */
-  fseek(mfs.file, mfs.b_inodes, SEEK_SET);
-
-  /* Read the value at that address into the root inode struct. */
-  if (fread(&inode, sizeof(min_inode), 1, mfs.file) < 1) {
-    fprintf(stderr, "error reading the root inode: %d\n", errno);
-    exit(EXIT_FAILURE);
-  }
-
-  /* The tokenized next directory entry name that we are looking for. */
-  char* token = strtok(minix_path, DELIMITER);
-
-  /* The current name that was just processed. */
-  unsigned char curr_name[DIR_NAME_SIZE] = "";
-
   /* Allocate enough space for the canonicalized interpretation of the given 
      minix path. */
   char* can_minix_path = malloc(sizeof(char)*strlen(minix_path)+1);
@@ -83,40 +72,11 @@ int main (int argc, char *argv[]) {
   /* By default, set the string to be null. */
   *can_minix_path = '\0';
 
-  /* Parse all of the directories that the user gave by traversing through the
-     directories till we are at the last inode. */
-  while(token != NULL) {
-    /* copy the string name to curr_name so we can keep track of the last
-       processed name. */
-    memcpy(curr_name, token, sizeof(char)*DIR_NAME_SIZE);
-
-    /* Add the token to the built canonicalized minix path. */
-    strcat(can_minix_path, DELIMITER);
-    strcat(can_minix_path, token);
-
-    /* The current inode must be traversable (a directory) */
-    if (!(inode.mode & DIR_FT)) {
-      fprintf(
-          stderr, 
-          "error traversing the path. %s is not a directory!\n", 
-          token);
-      exit(EXIT_FAILURE);
-    }
-   
-    /* The found inode that is populated if any of the search functions find
-       an inode with a matching name. */
-    min_inode next_inode;
-
-    /* Search through the direct, indirect, and double indirect zones for a 
-       directory entry with a matching name. */
-    if (search_all_zones(&mfs, &inode, &next_inode, token)) {
-      token = strtok(NULL, DELIMITER);
-      inode = next_inode;
-    }
-    else {
-      fprintf(stderr, "error traversing the path: directory not found!\n");
-      exit(EXIT_FAILURE);
-    }
+  /* Try to find the path. The inode will be updated if the inode was found; 
+     can_minix_path, and cur_name will be updated as the search progresses. */
+  if (!find_inode(&mfs, &inode, minix_path, can_minix_path, cur_name)) {
+    fprintf(stderr, "The inode [%s] was not found!", minix_path);
+    exit(EXIT_FAILURE);
   }
 
   /* If the canonical path is still null, then we did'nt add anything to it, 
@@ -138,7 +98,7 @@ int main (int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
   else {
-    print_file(stderr, &inode, curr_name);
+    print_file(stderr, &inode, cur_name);
     exit(EXIT_FAILURE);
   }
 

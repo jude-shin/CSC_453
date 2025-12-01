@@ -72,7 +72,7 @@ int main (int argc, char *argv[]) {
   /* The inode that will be populated if the source path is found. */
   min_inode src_inode;
 
-  if (!find_inode(&mfs, &src_inode, minix_src_path, NULL)) {
+  if (!find_inode(&mfs, &src_inode, minix_src_path, NULL, NULL)) {
     /* TODO: no src path found */
     /* exit here */
   }
@@ -92,7 +92,7 @@ int main (int argc, char *argv[]) {
     /* The inode that will be populated if the destination path is found. */
     min_inode dst_inode;
 
-    if (!find_inode(&mfs, &dst_inode, minix_dst_path, NULL)) {
+    if (!find_inode(&mfs, &dst_inode, minix_dst_path, NULL, NULL)) {
       /* TODO: no dst path found */
       /* exit here */
     }

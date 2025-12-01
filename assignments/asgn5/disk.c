@@ -311,7 +311,8 @@ void load_superblock(min_fs* mfs) {
 
 /* Populates inode with the given inode's information and returns true if it was
  * found. Otherwise, return false. The canonicalized path that was traversed is
- * also built as this function progresses. If 
+ * also built as this function progresses, as well as the cur_name being updated
+ * .
  * @param mfs MinixFileSystem struct that holds the current filesystem and some
  *  useful information.
  * @param inode the inode that will be filled once the file is found.
@@ -320,13 +321,16 @@ void load_superblock(min_fs* mfs) {
  *  the search progresses. Note that if the file is the root, then 
  *  can_minix_path does not change. If this is set to NULL, no canonicalized
  *  path is built. 
+ * @param cur_name the current name that is being processed. If this is set to
+ * NULL, the name is not updated. 
  * @return bool true if we found a valid inode, false otherwise.
    */
 bool find_inode(
     min_fs* mfs, 
     min_inode* inode,
     char* path,
-    char* can_minix_path) {
+    char* can_minix_path,
+    unsigned char* cur_name) {
 
   /* Seek the read head to the first inode. */
   fseek(mfs->file, mfs->b_inodes, SEEK_SET);
@@ -340,15 +344,14 @@ bool find_inode(
   /* The tokenized next directory entry name that we are looking for. */
   char* token = strtok(path, DELIMITER);
 
-  /* The current name that was just processed. */
-  unsigned char curr_name[DIR_NAME_SIZE] = "";
-
   /* Parse all of the directories that the user gave by traversing through the
      directories till we are at the last inode. */
   while(token != NULL) {
-    /* copy the string name to curr_name so we can keep track of the last
+    /* copy the string name to cur_name so we can keep track of the last
        processed name. */
-    memcpy(curr_name, token, sizeof(char)*DIR_NAME_SIZE);
+    if (cur_name != NULL) {
+      memcpy(cur_name, token, sizeof(char)*DIR_NAME_SIZE);
+    }
 
     /* Add the token to the built canonicalized minix path. */
     if (can_minix_path != NULL) {

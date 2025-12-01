@@ -202,12 +202,14 @@ void load_superblock(min_fs* mfs);
 
 /* Populates inode with the given inode's information and returns true if it was
    found. Otherwise, return false. The canonicalized path that was traversed is
-   also built as this function progresses. */
+   also built as this function progresses, as well as the cur_name being updated
+   . */
 bool find_inode(
     min_fs* mfs, 
     min_inode* inode,
     char* path,
-    char* can_minix_path);
+    char* can_minix_path,
+    unsigned char* cur_name);
 
 
 /* ========= */
