@@ -214,14 +214,6 @@ uint32_t find_inode(
     char* can_minix_path,
     unsigned char* cur_name);
 
-/* Reads zone number src and copies it's data to a buffer, and then writes that
-   buffer to zone number dst. */
-void copy_zone(
-    min_fs* mfs,
-    uint32_t src_zone_number, 
-    uint32_t dst_zone_number);
-
-
 
 /* ========= */
 /* SEARCHING */

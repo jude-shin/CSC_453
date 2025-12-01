@@ -341,59 +341,6 @@ void duplicate_inode(min_fs* mfs, uint32_t inode_addr, min_inode* inode) {
   }
 }
 
-/* Reads zone number src and copies it's data to a buffer, and then writes that
- * buffer to zone number dst. 
- * @param mfs MinixFileSystem struct that holds the current filesystem. 
- * @param src_zone_number the zone number that will be copied from.
- * @param dst_zone_number the zone number that will be copied to.
- * @return void. 
- */
-void copy_zone(
-    min_fs* mfs,
-    uint32_t src_zone_number, 
-    uint32_t dst_zone_number) {
-
-  /* TODO: get rid of this. */
-  printf("copying zone (%d) to (%d)\n", src_zone_number, dst_zone_number);
-
-  /* TODO: do we need to check for holes and fill in manually? */
-
-  /* Malloc space for a buffer. We will read the src zone contents into this
-     buffer. */
-  void* zone_buffer = malloc(sizeof(char)*mfs->zone_size);
-  if (zone_buffer == NULL) {
-    fprintf(stderr, "error malloc'ing space for zone buffer: %d\n", errno);
-    exit(EXIT_FAILURE);
-  }
-
-  /* Seek to that zone on the minix image. */
-  if (fseek(
-        mfs->file, 
-        mfs->partition_start+(src_zone_number*mfs->zone_size),
-        SEEK_SET) == -1) {
-    fprintf(stderr, "error seeking to zone: %d\n", errno);
-    free(zone_buffer);
-    exit(EXIT_FAILURE);
-  }
-
-  /* Read the src contents into the buffer, */
-  if (fread(zone_buffer, mfs->zone_size, 1, mfs->file) < 1) {
-    fprintf(stderr, "error reading to zone: %d\n", errno);
-    free(zone_buffer);
-    exit(EXIT_FAILURE);
-  }
-
-  /* Write the zone buffer contents to the dest zone. */
-  if (fwrite(zone_buffer, mfs->zone_size, 1, mfs->file) < 1) {
-    fprintf(stderr, "error writing to zone: %d\n", errno);
-    free(zone_buffer);
-    exit(EXIT_FAILURE);
-  }
-
-  free(zone_buffer);
-}
-
-
 /* Populates inode with the given inode's information and returns true if it was
  * found. Otherwise, return false. The canonicalized path that was traversed is
  * also built as this function progresses, as well as the cur_name being updated

@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <fcntl.h>
-#include <string.h>
+#include <sys/stat.h>
 #include <errno.h>
 
 #include "input.h"
@@ -88,54 +88,36 @@ int main (int argc, char *argv[]) {
     print_inode(stderr, &src_inode);
   }
 
-  FILE* output = stderr;
 
-  /* If the user did not give a destination path. */
+  /* If there was no dst file, just print it to stderr. */
   if (minix_dst_path == NULL) {
-
+    print_file_contents(stderr, &mfs, &src_inode);
   }
+  /* If there was a dst file, try to write it there. */
   else {
-    /* The inode that will be populated if the destination path is found. */
-    uint32_t dst_inode_addr;
-
-    if (!find_inode(&mfs, &dst_inode_addr, minix_dst_path, NULL, NULL)) {
-      fprintf(stderr, "The path [%s] was not found!\n", minix_dst_path);
+    /* Get the stats of the file on the file. */
+    struct stat sb;
+    if (stat(minix_dst_path, &sb) == -1) {
+      fprintf(stderr, "error getting stat on dst path: %d\n", errno);
       exit(EXIT_FAILURE);
     }
 
-    /* Make a copy of the inode so I don't have to keep reading from the image. */
-    min_inode dst_inode;
-    duplicate_inode(&mfs, src_inode_addr, &dst_inode);
-
-    if (!(dst_inode.mode & REG_FT)) {
-      fprintf(stderr, "The path [%s] is not a regular file!\n", minix_dst_path);
+    /* Mask the mode to see if the file is regular. */
+    if (!S_ISREG(sb.st_mode)) {
+      fprintf(stderr, "dst is not a regular file: %d\n", errno);
       exit(EXIT_FAILURE);
     }
 
-    /* Print inode information when the file is found. */
-    if (verbose) {
-      print_inode(stderr, &dst_inode);
+    /* Open the file for writing. */
+    FILE* output = fopen(minix_dst_path, "wb");
+    if (output == 0) {
+      fprintf(stderr, "error opening %s: %d\n", minix_dst_path, errno);
+      exit(EXIT_FAILURE);
     }
 
-    /* ====================================================================== */
-
-    /* Overwrite all direct zone numbers from src to dest. */
-    for (int i = 0; i < DIRECT_ZONES; i++) {
-      /* Copy the direct zones in the mfs. */
-      fprintf();
-      copy_zone(&mfs, src_inode.zone[i], dst_inode.zone[i]);
-    }
-
-    /* Copy the indirect zones in the mfs. */
-    copy_zone(&mfs, src_inode.indirect, dst_inode.indirect);
-
-    /* Copy the double indirect zones in the mfs. */
-    copy_zone(&mfs, src_inode.two_indirect, dst_inode.two_indirect);
-
-    /* ====================================================================== */
+    print_file_contents(output, &mfs, &src_inode);
+    fclose(output);
   }
-
-  print_file_contents(stderr, &mfs, &src_inode);
 
   /* Close the minix filesystem. */
   close_mfs(&mfs);
