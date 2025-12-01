@@ -151,15 +151,6 @@ void open_mfs(
       offset = spt.lFirst*SECTOR_SIZE;
     }
   }
-  /* if user says it is unpartitioned, but it is really partitioned, it should 
-     error. */
-  else { /* TODO: ask Ask ASK about this? do I need to check this? */
-    /* Check to see if this image had a valid partition table. */
-    if (validate_signatures(imagefile, PART_TABLE_OFFSET)) {
-      fprintf(stderr, "valid partition table is present! consider using -p\n");
-      exit(EXIT_FAILURE);
-    }
-  }
 
   /* Update the struct to reflect the file descriptor and offset found. */
   mfs->file = imagefile;
