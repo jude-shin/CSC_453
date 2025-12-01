@@ -109,6 +109,22 @@ int main (int argc, char *argv[]) {
 
     /* TODO: do the copying here! */
 
+
+    /* Seek to the direct zones. */
+    if (fseek(mfs.file, mfs.partition_start, SEEK_SET) == -1) {
+      fprintf(stderr, "error seeking to zone entry: %d\n", errno);
+      exit(EXIT_FAILURE);
+    }
+
+    /* Overwrite all direct zone numbers from src to dest. */
+    for (int i = 0; i < DIRECT_ZONES; i++) {
+      dst_inode.zone[i] = src_inode.zone[i];
+    }
+
+    dst_inode.indirect = src_inode.indirect;
+
+    dst_inode.two_indirect = src_inode.two_indirect;
+
   }
 
   /* Close the minix filesystem. */
