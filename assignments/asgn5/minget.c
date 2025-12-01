@@ -89,9 +89,9 @@ int main (int argc, char *argv[]) {
   }
 
 
-  /* If there was no dst file, just print it to stderr. */
+  /* If there was no dst file, just print it to stdout. */
   if (minix_dst_path == NULL) {
-    print_file_contents(stderr, &mfs, &src_inode);
+    print_file_contents(stdout, &mfs, &src_inode);
   }
   /* If there was a dst file, try to write it there. */
   else {

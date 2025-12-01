@@ -106,13 +106,12 @@ int main (int argc, char *argv[]) {
   /* If we have fully traversed the path and landed on a directory, list all 
      elements in that directory. */
   if (inode.mode & DIR_FT) {
-    print_directory(stderr, &mfs, &inode, can_minix_path);
+    print_directory(stdout, &mfs, &inode, can_minix_path);
   }
   /* Otherwise, just list the single file we landed on. */
   else {
-    print_file(stderr, &inode, cur_name);
+    print_file(stdout, &inode, cur_name);
   }
-
 
   /* Close the minix filesystem. */
   close_mfs(&mfs);

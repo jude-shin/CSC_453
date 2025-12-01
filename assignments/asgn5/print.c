@@ -17,7 +17,7 @@
 #define HEX_PAD VLU_LN - HEX_LN
 
 /* The specs when ls'ing a file's information */
-#define FILE_SIZE_LN 9
+#define FILE_SIZE_LN 10
 
 /* The spacing spec for the weird space before the zone. */
 #define ZONE_LBL_LEN 9
@@ -173,9 +173,6 @@ void print_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
       /* Print all of the valid files that are in the zones pointed to in
          the indirect zone. */
       print_files_in_zone(s, mfs, indirect_zone_number);
-
-      // /* Seek to the next indirect zone number to keep searching. */
-      // fseek(mfs->file, sizeof(uint32_t), SEEK_CUR);
     }
   }
 }
@@ -221,9 +218,6 @@ void print_files_in_two_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
 
       /* Print the files in that indirect zone. */
       print_files_in_indirect_zone(s, mfs, two_indirect_zone_number);
-
-      // /* Seek to the next two indirect zone number to keep searching. */
-      // fseek(mfs->file, sizeof(uint32_t), SEEK_CUR);
     }
   }
 }
