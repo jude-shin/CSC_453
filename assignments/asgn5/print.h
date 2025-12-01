@@ -16,10 +16,18 @@ void print_minls_usage(FILE* s);
    Group, User, and Other, it's size, and it's name. */
 void print_file(FILE* s, min_inode* inode, unsigned char* name);
 
-
 /* Given a zone, print all of the files that are on that zone if they are
    valid. */
 void print_files_in_zone(FILE* s, min_fs* mfs, uint32_t zone_num);
+
+/* Given an indirect zone, print all of the files that are on the zones that
+   the indirect zone points to if they are valid. */
+void print_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num);
+
+/* Given a double indirect zone, print all of the files that are on the zones 
+   that are on the zones that the indirect zone points to if they are valid
+   (double indirect -> indirect -> zone -> file). */
+void print_files_in_two_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num);
 
 /* Prints every directory entry in a directory. */
 void print_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path);

@@ -126,7 +126,6 @@ void print_files_in_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
   }
 }
 
-
 /* Given an indirect zone, print all of the files that are on the zones that
  * the indirect zone points to if they are valid.
  * @param s the stream that this message will be printed to.
@@ -241,7 +240,6 @@ void print_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path) {
 }
 
 
-
 /* ====== */
 /* MINGET */
 /* ====== */
@@ -343,7 +341,6 @@ void print_inode(FILE* s, min_inode* inode) {
   fprintf(s, "\n");
 }
 
-
 /* Prints all of the information in a directory entry.
  * @param s the stream that this message will be printed to.
  * @param dir_entry a pointer to the dir entry struct
@@ -355,6 +352,8 @@ void print_dir_entry(FILE* s, min_dir_entry* dir_entry) {
   fprintf(s, "  %-*s %*s\n", LBL_LN, "links", VLU_LN, dir_entry->name); 
   fprintf(s, "\n");
 }
+
+
 /* ======= */
 /* HELPERS */
 /* ======= */
