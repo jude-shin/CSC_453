@@ -174,17 +174,17 @@ void close_mfs(min_fs* mfs);
 /* VALIDATION */
 /*============*/
 
-/* Checks to see if an image has both signatures in relation to the offset (This
-   allows for subpartitions to be checked also). If they do, return true, else
-   return false. */
-bool validate_signatures(FILE* image, uint32_t offset);
-
 /* Check to see if the partition table holds useful information for this
    assignment. This includes whether an image is bootable, and if the partition
    is from minix. This function does not return anything.
    If the program does not exit after calling this function, then the partition
    table is valid. Otherwise, it will just exit and do nothing. */
 void validate_part_table(min_part_tbl* partition_table);
+
+/* Checks to see if an image has both signatures in relation to the offset (This
+   allows for subpartitions to be checked also). If they do, return true, else
+   return false. */
+bool validate_signatures(FILE* image, uint32_t offset);
 
 
 /*==============*/
@@ -208,30 +208,47 @@ void load_superblock(min_fs* mfs);
 /* SEARCHING */
 /* ========= */
 
+/* Searches the direct, indirect, and double indirect zones of an indode 
+   (which is a directory), and looks for an entry with a corresponding name. 
+   If a name is found (and it is not deleted) populate the next_inode with the
+   contents of the found inode, and return true, otherwise, return false. */
 bool search_all_zones(
     min_fs* mfs, 
     min_inode* cur_inode,
     min_inode* next_inode, 
     char* name);
 
+/* Searches the direct zones of an indode (which is a directory), and looks for
+   an entry with a corresponding name. If a name is found (and it is not deleted
+   ) populate the next_inode with the contents of the found inode, and return
+   true. Otherwise, return false. */
 bool search_all_direct_zones(
     min_fs* mfs, 
     min_inode* cur_inode,
     min_inode* next_inode, 
     char* name);
 
+/* Searches the zones that the indirect zone holds for an entry with a 
+   corresponding name. If a name is found (and it is not deleted) 
+   populate the next_inode with the contents of the found inode, and return
+   true. Otherwise, return false. */
 bool search_indirect_zone(
     min_fs* mfs, 
     uint32_t zone_num,
     min_inode* next_inode, 
     char* name);
 
+/* Searches the zones that the double indirect zone holds for an entry with a 
+   corresponding name. If a name is found (and it is not deleted) 
+   populate the next_inode with the contents of the found inode, and return
+   true. Otherwise, return false. */
 bool search_two_indirect_zone(
     min_fs* mfs, 
     uint32_t zone_num,
     min_inode* next_inode, 
     char* name);
 
+/* Searches a zone for a directory entry with a given name. */
 bool search_zone(
     min_fs* mfs, 
     uint32_t zone_num,

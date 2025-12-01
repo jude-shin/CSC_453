@@ -313,6 +313,19 @@ void load_superblock(min_fs* mfs) {
 /* SEARCHING */
 /* ========= */
 
+/* Searches the direct, indirect, and double indirect zones of an indode 
+ * (which is a directory), and looks for an entry with a corresponding name. 
+ * If a name is found (and it is not deleted) populate the next_inode with the
+ * contents of the found inode, and return true, otherwise, return false. 
+ * @param mfs MinixFileSystem struct that holds the current filesystem and some
+ *  useful information.
+ * @param cur_inode the inode (which is a directory) that we are searching in.
+ * @param next_inode a pointer to the inode that we are going to populate if we
+ *  do end up finding the inode.
+ * @param name the name of the directory entry we are looking for in the current
+ *  inode.
+ * @return bool true if we found a valid directory entry, false otherwise.
+ */
 bool search_all_zones(
     min_fs* mfs, 
     min_inode* cur_inode,
