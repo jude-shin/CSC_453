@@ -19,6 +19,9 @@
 /* The specs when ls'ing a file's information */
 #define FILE_SIZE_LN 9
 
+/* The spacing spec for the weird space before the zone. */
+#define ZONE_LBL_LEN 9
+
 /* ===== */
 /* MINLS */
 /* ===== */
@@ -270,16 +273,16 @@ void print_minget_usage(FILE* s) {
  */
 void print_part_table(FILE* s, min_part_tbl* pt) {
   fprintf(s,"Partition Table Contents:\n");
-  fprintf(s,"\t%-*s %*s%04x\n",LBL_LN,"bootind",HEX_PAD,"0x",pt->bootind);
-  fprintf(s,"\t%-*s %*s%04x\n",LBL_LN,"start_head",HEX_PAD,"0x",pt->start_head);
-  fprintf(s,"\t%-*s %*s%04x\n",LBL_LN,"start_sec",HEX_PAD,"0x",pt->start_sec);
-  fprintf(s,"\t%-*s %*s%04x\n",LBL_LN,"start_cyl",HEX_PAD,"0x",pt->start_cyl);
-  fprintf(s,"\t%-*s %*s%04x\n",LBL_LN,"type",HEX_PAD,"0x",pt->type);
-  fprintf(s,"\t%-*s %*s%04x\n",LBL_LN,"end_head",HEX_PAD,"0x",pt->end_head);
-  fprintf(s,"\t%-*s %*s%04x\n",LBL_LN,"end_sec",HEX_PAD,"0x",pt->end_sec);
-  fprintf(s,"\t%-*s %*s%04x\n",LBL_LN,"end_cyl",HEX_PAD,"0x",pt->end_cyl);
-  fprintf(s,"\t%-*s %*s%04x\n",LBL_LN,"lFirst",HEX_PAD,"0x",pt->lFirst);
-  fprintf(s,"\t%-*s %*u\n",LBL_LN,"size",VLU_LN,pt->size);
+  fprintf(s,"  %-*s %*s%04x\n",LBL_LN,"bootind",HEX_PAD,"0x",pt->bootind);
+  fprintf(s,"  %-*s %*s%04x\n",LBL_LN,"start_head",HEX_PAD,"0x",pt->start_head);
+  fprintf(s,"  %-*s %*s%04x\n",LBL_LN,"start_sec",HEX_PAD,"0x",pt->start_sec);
+  fprintf(s,"  %-*s %*s%04x\n",LBL_LN,"start_cyl",HEX_PAD,"0x",pt->start_cyl);
+  fprintf(s,"  %-*s %*s%04x\n",LBL_LN,"type",HEX_PAD,"0x",pt->type);
+  fprintf(s,"  %-*s %*s%04x\n",LBL_LN,"end_head",HEX_PAD,"0x",pt->end_head);
+  fprintf(s,"  %-*s %*s%04x\n",LBL_LN,"end_sec",HEX_PAD,"0x",pt->end_sec);
+  fprintf(s,"  %-*s %*s%04x\n",LBL_LN,"end_cyl",HEX_PAD,"0x",pt->end_cyl);
+  fprintf(s,"  %-*s %*s%04x\n",LBL_LN,"lFirst",HEX_PAD,"0x",pt->lFirst);
+  fprintf(s,"  %-*s %*u\n",LBL_LN,"size",VLU_LN,pt->size);
   fprintf(s, "\n");
 }
 
@@ -291,16 +294,16 @@ void print_part_table(FILE* s, min_part_tbl* pt) {
 void print_superblock(FILE* s, min_superblock* sb) {
   fprintf(s,"Superblock Contents:\n");
   fprintf(s,"Stored Fields:\n");
-  fprintf(s,"\t%-*s %*u\n", LBL_LN, "ninodes", VLU_LN, sb->ninodes);
-  fprintf(s,"\t%-*s %*d\n", LBL_LN, "i_blocks", VLU_LN, sb->i_blocks);
-  fprintf(s,"\t%-*s %*d\n", LBL_LN, "z_blocks", VLU_LN, sb->z_blocks);
-  fprintf(s,"\t%-*s %*u\n", LBL_LN, "firstdata", VLU_LN, sb->firstdata);
-  fprintf(s,"\t%-*s %*d\n", LBL_LN, "log_zone_size", VLU_LN, sb->log_zone_size);
-  fprintf(s,"\t%-*s %*u\n", LBL_LN, "max_file", VLU_LN, sb->max_file);
-  fprintf(s,"\t%-*s %*u\n", LBL_LN, "zones", VLU_LN, sb->zones);
-  fprintf(s,"\t%-*s %*s%04x\n", LBL_LN, "magic", HEX_PAD, "0x", sb->magic);
-  fprintf(s,"\t%-*s %*u\n", LBL_LN, "blocksize", VLU_LN, sb->blocksize);
-  fprintf(s,"\t%-*s %*u\n", LBL_LN, "subversion", VLU_LN, sb->subversion);
+  fprintf(s,"  %-*s %*u\n", LBL_LN, "ninodes", VLU_LN, sb->ninodes);
+  fprintf(s,"  %-*s %*d\n", LBL_LN, "i_blocks", VLU_LN, sb->i_blocks);
+  fprintf(s,"  %-*s %*d\n", LBL_LN, "z_blocks", VLU_LN, sb->z_blocks);
+  fprintf(s,"  %-*s %*u\n", LBL_LN, "firstdata", VLU_LN, sb->firstdata);
+  fprintf(s,"  %-*s %*d\n", LBL_LN, "log_zone_size", VLU_LN, sb->log_zone_size);
+  fprintf(s,"  %-*s %*u\n", LBL_LN, "max_file", VLU_LN, sb->max_file);
+  fprintf(s,"  %-*s %*u\n", LBL_LN, "zones", VLU_LN, sb->zones);
+  fprintf(s,"  %-*s %*s%04x\n", LBL_LN, "magic", HEX_PAD, "0x", sb->magic);
+  fprintf(s,"  %-*s %*u\n", LBL_LN, "blocksize", VLU_LN, sb->blocksize);
+  fprintf(s,"  %-*s %*u\n", LBL_LN, "subversion", VLU_LN, sb->subversion);
   fprintf(s, "\n");
 }
 
@@ -312,26 +315,30 @@ void print_superblock(FILE* s, min_superblock* sb) {
  */
 void print_inode(FILE* s, min_inode* inode) {
   fprintf(s, "File inode:\n");
-  fprintf(s,"\t%-*s %*s%04x\n", LBL_LN, "mode", HEX_PAD, "0x", inode->mode);
-  fprintf(s, "\t%-*s %*u\n", LBL_LN, "links", VLU_LN, inode->links);
-  fprintf(s, "\t%-*s %*u\n", LBL_LN, "uid", VLU_LN, inode->uid);
-  fprintf(s, "\t%-*s %*u\n", LBL_LN, "gid", VLU_LN, inode->gid);
-  fprintf(s, "\t%-*s %*u\n", LBL_LN, "size", VLU_LN, inode->size);
+  fprintf(s,"  %-*s %*s%04x\n", LBL_LN, "mode", HEX_PAD, "0x", inode->mode);
+  fprintf(s, "  %-*s %*u\n", LBL_LN, "links", VLU_LN, inode->links);
+  fprintf(s, "  %-*s %*u\n", LBL_LN, "uid", VLU_LN, inode->uid);
+  fprintf(s, "  %-*s %*u\n", LBL_LN, "gid", VLU_LN, inode->gid);
+  fprintf(s, "  %-*s %*u\n", LBL_LN, "size", VLU_LN, inode->size);
 
-  fprintf(s, "\t%-*s %*d", LBL_LN, "atime", VLU_LN, inode->atime);
+  fprintf(s, "  %-*s %*d", LBL_LN, "atime", VLU_LN, inode->atime);
   print_time(s, inode->atime);
 
-  fprintf(s, "\t%-*s %*d", LBL_LN, "mtime", VLU_LN, inode->mtime);
+  fprintf(s, "  %-*s %*d", LBL_LN, "mtime", VLU_LN, inode->mtime);
   print_time(s, inode->mtime);
 
-  fprintf(s, "\t%-*s %*d", LBL_LN, "ctime", VLU_LN, inode->ctime);
+  fprintf(s, "  %-*s %*d", LBL_LN, "ctime", VLU_LN, inode->ctime);
   print_time(s, inode->ctime);
   fprintf(s, "\n");
 
-  fprintf(s, "Direct Zones:\n");
+
+  fprintf(s, "  Direct Zones:\n");
   for (int i = 0; i < DIRECT_ZONES; i++) {
-    fprintf(s, "\tzone[%d] = %*d\n", i, VLU_LN, inode->zone[i]);
+    fprintf(s, "  %-*szone[%d]  =%*d\n", ZONE_LBL_LEN, "", i, VLU_LN, inode->zone[i]);
   }
+
+  fprintf(s, "  %-*sindirect  %*u\n", ZONE_LBL_LEN, "uint32_t", VLU_LN, inode->indirect);
+  fprintf(s, "  %-*sdouble    %*u\n", ZONE_LBL_LEN, "uint32_t", VLU_LN, inode->two_indirect);
 
   fprintf(s, "\n");
 }
@@ -344,8 +351,8 @@ void print_inode(FILE* s, min_inode* inode) {
  */
 void print_dir_entry(FILE* s, min_dir_entry* dir_entry) {
   fprintf(s, "Directory Entry:\n");
-  fprintf(s, "\t%-*s %*u\n", LBL_LN, "inode", VLU_LN, dir_entry->inode);
-  fprintf(s, "\t%-*s %*s\n", LBL_LN, "links", VLU_LN, dir_entry->name); 
+  fprintf(s, "  %-*s %*u\n", LBL_LN, "inode", VLU_LN, dir_entry->inode);
+  fprintf(s, "  %-*s %*s\n", LBL_LN, "links", VLU_LN, dir_entry->name); 
   fprintf(s, "\n");
 }
 /* ======= */
