@@ -218,16 +218,6 @@ bool search_all_zones(
     min_inode* next_inode, 
     char* name);
 
-/* Searches the direct zones of an indode (which is a directory), and looks for
-   an entry with a corresponding name. If a name is found (and it is not deleted
-   ) populate the next_inode with the contents of the found inode, and return
-   true. Otherwise, return false. */
-bool search_all_direct_zones(
-    min_fs* mfs, 
-    min_inode* cur_inode,
-    min_inode* next_inode, 
-    char* name);
-
 /* Searches the zones that the indirect zone holds for an entry with a 
    corresponding name. If a name is found (and it is not deleted) 
    populate the next_inode with the contents of the found inode, and return

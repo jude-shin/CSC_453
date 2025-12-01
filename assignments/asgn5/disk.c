@@ -332,9 +332,14 @@ bool search_all_zones(
     min_inode* next_inode, 
     char* name) {
 
-  /* Search the dierct zones for the current inode (directory) */
-  if (search_all_direct_zones(mfs, cur_inode, next_inode, name)) {
-    return true;
+  /* Linear search the direct zones. */
+  for(int i = 0; i < DIRECT_ZONES; i++) {
+    /* Search the direct zone for an entry, and set the next_inode's values 
+       to the inode that was found. If found, then we know that search_chunk 
+       already wrote the dta to next_inode, so we can just exit.*/
+    if (search_zone(mfs, cur_inode->zone[i], next_inode, name)) {
+      return true;
+    }
   }
 
   /* Search the indierct zones for the current inode (directory) */
@@ -349,47 +354,6 @@ bool search_all_zones(
         next_inode, 
         name)){
     return true;
-  }
-
-  return false;
-}
-
-/* Searches the direct zones of an indode (which is a directory), and looks for
- * an entry with a corresponding name. If a name is found (and it is not deleted
- * ) populate the next_inode with the contents of the found inode, and return
- * true. Otherwise, return false.
- * @param mfs MinixFileSystem struct that holds the current filesystem and some
- *  useful information.
- * @param cur_inode the inode (which is a directory) that we are searching in.
- * @param next_inode a pointer to the inode that we are going to populate if we
- *  do end up finding the inode.
- * @param name the name of the directory entry we are looking for in the current
- *  inode.
- * @return bool true if we found a valid directory entry, false otherwise.
- */
-/* TODO: you can probably get rid of this... */
-bool search_all_direct_zones(
-    min_fs* mfs, 
-    min_inode* cur_inode,
-    min_inode* next_inode, 
-    char* name) {
-
-  /* Linear search the direct zones. */
-  for(int i = 0; i < DIRECT_ZONES; i++) {
-    /* Search for the next inode who matches the name of the token. */
-    uint32_t zone_num = cur_inode->zone[i];
- 
-    /* Search the direct zone for an entry, and set the next_inode's values 
-       to the inode that was found. Start the search at the start of the
-       partition + the offset of zones. */
-    bool found = search_zone(mfs, zone_num, next_inode, name);
-
-    /* If found, then we know that search_chunk already wrote the dta to 
-       next_inode, so we can just exit. Else, the for loop will continue with
-       the search. */
-    if (found) {
-      return true;
-    }
   }
 
   return false;
