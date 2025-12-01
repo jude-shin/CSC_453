@@ -407,7 +407,7 @@ void print_indirect_zone_contents(
       exit(EXIT_FAILURE);
     }
 
-    /* Print all of the contents inside that indirect zone*/
+    /* Print all of the contents inside that zone*/
     print_zone_contents(s, mfs, inode, indirect_zone_number, bytes_read);
   }
 }
@@ -430,6 +430,34 @@ void print_two_indirect_zone_contents(
   if (zone_num == 0) {
     fprintf(stderr, "we reached a hole wtihout finishing reading the file. ");
     exit(EXIT_FAILURE);
+  }
+
+  /* Start reading the first block in the double indirect zone. */
+  if (fseek(
+        mfs->file, 
+        mfs->partition_start + (zone_num*mfs->zone_size), 
+        SEEK_SET) == -1) {
+    fprintf(stderr, "error seeking to double indirect zone.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  /* How many zone numbers we are going to read (how many fit in the first block
+     of the indirect zone) */
+  int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+
+  /* For every zone number in that first double indirect inode block. */
+  for(int i = 0; i < total_indirect_inodes; i++) {
+    /* The zone number that holds the indierct zone numbers. */
+    uint32_t two_indirect_zone_number;
+   
+    /* Read the number that holds the zone number. */
+    if(fread(&two_indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
+      fprintf(stderr, "error reading double indirect zone number: %d\n", errno);
+      exit(EXIT_FAILURE);
+    }
+
+    /* Print all of the contents inside that indirect zone*/
+    print_zone_contents(s, mfs, inode, two_indirect_zone_number, bytes_read);
   }
 }
 
