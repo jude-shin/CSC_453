@@ -44,7 +44,7 @@ void print_minget_usage(FILE* s);
 void print_file_contents(FILE* s, min_fs* mfs, min_inode* inode);
 
 /* Prints the contents of a zone to a stream s. */
-void print_zone_contents(
+bool print_zone_contents(
     FILE* s, 
     min_fs* mfs, 
     min_inode* inode, 
@@ -52,7 +52,7 @@ void print_zone_contents(
     uint32_t* bytes_read);
 
 /* Prints the contents of an indirect zone to a stream s. */
-void print_indirect_zone_contents(
+bool print_indirect_zone_contents(
     FILE* s, 
     min_fs* mfs, 
     min_inode* inode, 
@@ -60,7 +60,7 @@ void print_indirect_zone_contents(
     uint32_t* bytes_read);
 
 /* Prints the contents of a double indirect zone to a stream s. */
-void print_two_indirect_zone_contents(
+bool print_two_indirect_zone_contents(
     FILE* s, 
     min_fs* mfs, 
     min_inode* inode, 

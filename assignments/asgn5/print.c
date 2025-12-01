@@ -89,11 +89,11 @@ void print_files_in_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
     /* Read all directory entries in this chunk. */
     int num_entries = mfs->zone_size / DIR_ENTRY_SIZE;
 
-    for(int j = 0; j < num_entries; j++) {
+    for(int i = 0; i < num_entries; i++) {
       min_dir_entry entry;
 
       /* Seek to the directory entry */
-      if (fseek(mfs->file, zone_addr + (j * DIR_ENTRY_SIZE), SEEK_SET)) {
+      if (fseek(mfs->file, zone_addr + (i * DIR_ENTRY_SIZE), SEEK_SET)) {
         fprintf(stderr, "error seeking to directory entry: %d\n", errno);
         exit(EXIT_FAILURE);
       }
@@ -282,7 +282,9 @@ void print_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
   /* Go through all of the direct zones sequentially. */
   for (int i = 0; i < DIRECT_ZONES; i++) {
     uint32_t zone_num = inode->zone[i];
-    print_zone_contents(s, mfs, inode, zone_num, &bytes_read);
+    if (print_zone_contents(s, mfs, inode, zone_num, &bytes_read)) {
+      return;
+    }
   }
 
   /* Go through all of the indirect zones sequentially. */
@@ -301,7 +303,8 @@ void print_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
       inode->two_indirect, 
       &bytes_read);
 
-  /* If we reach here, we have a stupid big file... */
+  /* If we reach here, we have a stupid big file, and we have not read all of
+     the contents. */
   fprintf(s, "\n");
   fprintf(
       stderr, 
@@ -315,9 +318,9 @@ void print_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
  * @param inode the inode of interest. 
  * @param zone_num the zone of interest.  
  * @param how many bytes we have read so far.  
- * @return void.
+ * @return bool if we have finished writing everything.
  */
-void print_zone_contents(
+bool print_zone_contents(
     FILE* s, 
     min_fs* mfs, 
     min_inode* inode, 
@@ -356,11 +359,15 @@ void print_zone_contents(
        are done reading, so finish with a new line and return. */
     *bytes_read = *bytes_read + 1;
 
+    /* If we read everything, make note of it, and return with true. */
     if (*bytes_read >= inode->size) {
       fprintf(s, "\n");
-      return;
+      return true;
     }
   }
+  
+  /* We have not yet finished reading. */
+  return false;
 }
 
 /* Prints the contents of an indirect zone to a stream s.  
@@ -368,9 +375,9 @@ void print_zone_contents(
  * @param inode the inode of interest. 
  * @param zone_num the zone of interest.  
  * @param how many bytes we have read so far.  
- * @return void.
+ * @return bool if we have finished writing everything.
  */
-void print_indirect_zone_contents(
+bool print_indirect_zone_contents(
     FILE* s, 
     min_fs* mfs, 
     min_inode* inode, 
@@ -408,8 +415,15 @@ void print_indirect_zone_contents(
     }
 
     /* Print all of the contents inside that zone*/
-    print_zone_contents(s, mfs, inode, indirect_zone_number, bytes_read);
+    if (print_zone_contents(s, mfs, inode, indirect_zone_number, bytes_read)) {
+      /* If the printing finished somewhere in here, also make note of it by 
+         returning true!*/
+      return true;
+    }
   }
+
+  /* We have not yet finished reading. */
+  return false;
 }
 
 /* Prints the contents of a double indirect zone to a stream s.  
@@ -417,9 +431,9 @@ void print_indirect_zone_contents(
  * @param inode the inode of interest. 
  * @param zone_num the zone of interest.  
  * @param how many bytes we have read so far.  
- * @return void.
+ * @return bool if we have finished writing everything.
  */
-void print_two_indirect_zone_contents(
+bool print_two_indirect_zone_contents(
     FILE* s, 
     min_fs* mfs, 
     min_inode* inode, 
@@ -457,8 +471,20 @@ void print_two_indirect_zone_contents(
     }
 
     /* Print all of the contents inside that indirect zone*/
-    print_zone_contents(s, mfs, inode, two_indirect_zone_number, bytes_read);
+    if (print_zone_contents(
+          s, 
+          mfs, 
+          inode, 
+          two_indirect_zone_number, 
+          bytes_read)) {
+      /* If the printing finished somewhere in here, also make note of it by 
+         returning true!*/
+      return true;
+    }
   }
+
+  /* We have not yet finished reading. */
+  return false;
 }
 
 
