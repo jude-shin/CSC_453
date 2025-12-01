@@ -57,11 +57,6 @@ int main (int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  if (minix_dst_path == NULL) {
-    /* Set the default path to the root directory '/' */
-    minix_dst_path = DELIMITER;
-  }
-
   /* ======================================================================== */
 
   /* Open the minix filesystem, populating the values in the mfs struct. */
