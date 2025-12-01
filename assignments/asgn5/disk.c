@@ -624,7 +624,7 @@ bool search_zone(
  */
 uint16_t get_zone_size(min_superblock* sb) {
   uint16_t blocksize = sb->blocksize;
-  int16_t log_zone_size = sb->blocksize; /* log_zone_size? */
+  int16_t log_zone_size = sb->log_zone_size; /* log_zone_size? */
   uint16_t zonesize = blocksize << log_zone_size;
 
   return zonesize;
