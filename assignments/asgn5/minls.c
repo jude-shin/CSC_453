@@ -140,12 +140,8 @@ int main (int argc, char *argv[]) {
     print_directory(stderr, &mfs, &inode, can_minix_path);
     exit(EXIT_FAILURE);
   }
-  else if (inode.mode & REG_FT) {
-    print_file(stderr, &inode, curr_name);
-    exit(EXIT_FAILURE);
-  }
   else {
-    fprintf(stderr, "file selected is not a regular file or directory!\n");
+    print_file(stderr, &inode, curr_name);
     exit(EXIT_FAILURE);
   }
 

@@ -101,9 +101,11 @@ void open_mfs(
   /* Seek to the primary partition */
   /* Otherwise treat the image as unpartitioned. (offset of 0) */
   if (prim_part != -1) {
-
-    /* Populate the partition table (pt) */
-    load_part_table(&pt, PART_TABLE_OFFSET, imagefile);
+    /* Populate the partition table (pt) based on what partition was chosen. */
+    load_part_table(
+        &pt, 
+        (prim_part*sizeof(min_part_tbl)) + PART_TABLE_OFFSET, 
+        imagefile);
 
     /* Check the signatures, system type, and if this is bootable. */
     validate_part_table(&pt);
@@ -124,8 +126,12 @@ void open_mfs(
 
     /* Seek to the subpartition */
     if (sub_part != -1) { 
-      /* Populate the subpartition table (spt). */
-      load_part_table(&spt, offset+PART_TABLE_OFFSET, imagefile);
+    /* Populate the subpartition table (spt) based on what subpartition was 
+       chosen. */
+      load_part_table(
+          &spt, 
+          offset+(sub_part*sizeof(min_part_tbl))+PART_TABLE_OFFSET, 
+          imagefile);
 
       /* TODO: ask Ask ASK are there supposed to be signatures here as well? */
       // /* Validate the two signatures in the partition. */
@@ -348,6 +354,7 @@ bool search_all_zones(
  *  inode.
  * @return bool true if we found a valid directory entry, false otherwise.
  */
+/* TODO: you can probably get rid of this... */
 bool search_all_direct_zones(
     min_fs* mfs, 
     min_inode* cur_inode,
@@ -406,6 +413,8 @@ bool search_indirect_zone(
      of the indirect zone) */
   int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
+  fprintf(stderr, "COUNT OF INDIRECT NODES: %d\n", total_indirect_inodes);
+
   /* For every zone number in that first indirect inode block. */
   for(int i = 0; i < total_indirect_inodes; i++) {
     /* The zone number that holds directory entries. */
@@ -417,19 +426,12 @@ bool search_indirect_zone(
       exit(EXIT_FAILURE);
     }
 
-    // ===============================================================
-
     /* Search the direct zone for an entry. If found, then we know that 
        search_chunk already wrote the data to next_inode, so we can just exit.
        Otherwise, the for loop will continue with the search. */
     if (search_zone(mfs, indirect_zone_number, next_inode, name)) {
       return true;
     }
-
-    // ===============================================================
-
-    /* Seek to the next indirect zone number to keep searching. */
-    fseek(mfs->file, sizeof(uint32_t), SEEK_CUR);
   }
 
   return false;
@@ -477,19 +479,12 @@ bool search_two_indirect_zone(
       exit(EXIT_FAILURE);
     }
 
-    // ===============================================================
-
     /* Search the indirect zone for an entry. If found, then we know that 
        search_chunk already wrote the data to next_inode, so we can just exit.
        Otherwise, the for loop will continue with the search. */
     if (search_indirect_zone(mfs, two_indirect_zone_number, next_inode, name)) {
       return true;
     }
-
-    // ===============================================================
-
-    /* Seek to the next two indirect zone number to keep searching. */
-    fseek(mfs->file, sizeof(uint32_t), SEEK_CUR);
   }
 
   return false;
@@ -533,6 +528,9 @@ bool search_zone(
       fprintf(stderr, "error reading directory entry: %d\n", errno);
       exit(EXIT_FAILURE);
     }
+
+    // /* TODO: remove */
+    print_dir_entry(stderr, &entry);
 
     /* Check if entry is valid (inode != 0) and name matches */
     if(entry.inode != 0 && strcmp((char*)entry.name, name) == 0) {
