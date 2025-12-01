@@ -115,24 +115,33 @@ int main (int argc, char *argv[]) {
       print_inode(stderr, &dst_inode);
     }
 
-    /* TODO: do the copying here! */
-
-
-    /* Seek to the direct zones. */
-    if (fseek(mfs.file, mfs.partition_start, SEEK_SET) == -1) {
-      fprintf(stderr, "error seeking to zone entry: %d\n", errno);
+    if (fseek(
+        mfs.file, 
+        dst_inode_addr+sizeof(uint16_t)*4+sizeof(uint32_t)+sizeof(int32_t)*3, 
+        SEEK_SET) == -1) {
+      fprintf(stderr, "error seeking to dst_inode's direct zones: %d\n", errno);
       exit(EXIT_FAILURE);
     }
 
     /* Overwrite all direct zone numbers from src to dest. */
     for (int i = 0; i < DIRECT_ZONES; i++) {
-      dst_inode.zone[i] = src_inode.zone[i];
+      if (fwrite(&src_inode.zone[i], mfs.zone_size, 1, mfs.file) < 1) {
+        fprintf(stderr, "error writing direct zone[%d]: %d\n", i, errno);
+        exit(EXIT_FAILURE);
+      }
+    }
+    
+    /* Overwrite the indirect zone number. */
+    if (fwrite(&src_inode.indirect, mfs.zone_size, 1, mfs.file) < 1) {
+      fprintf(stderr, "error writing indirect zone: %d\n", errno);
+      exit(EXIT_FAILURE);
     }
 
-    dst_inode.indirect = src_inode.indirect;
-
-    dst_inode.two_indirect = src_inode.two_indirect;
-
+    /* Overwrite the double indirect zone number. */
+    if (fwrite(&src_inode.two_indirect, mfs.zone_size, 1, mfs.file)) {
+      fprintf(stderr, "error writing double indirect zone: %d\n", errno);
+      exit(EXIT_FAILURE);
+    }
   }
 
   /* Close the minix filesystem. */

@@ -90,7 +90,7 @@ void open_mfs(
   /* The FILE that the image resides in. */
   FILE* imagefile;
 
-  imagefile = fopen(imagefile_path, "rb");
+  imagefile = fopen(imagefile_path, "rwb");
   if (imagefile == 0) {
     fprintf(stderr, "error opening %s: %d\n", imagefile_path, errno);
     exit(EXIT_FAILURE);
