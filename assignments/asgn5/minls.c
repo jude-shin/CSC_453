@@ -63,13 +63,16 @@ int main (int argc, char *argv[]) {
 
   /* The current name that was just processed. After the last item in the path
      was processed, this will be set to the last file/directory name.*/
-  unsigned char cur_name[DIR_NAME_SIZE] = "";
+  /* TODO: test with the maxed out name size. */
+  unsigned char* cur_name = malloc(sizeof(char)*DIR_NAME_SIZE+1);
+  /* By default, set the string to be empty. */
+  *cur_name = '\0';
   
   /* Allocate enough space for the canonicalized interpretation of the given 
      minix path. */
   char* can_minix_path = malloc(sizeof(char)*strlen(minix_path)+1);
 
-  /* By default, set the string to be null. */
+  /* By default, set the string to be empty. */
   *can_minix_path = '\0';
 
   /* Try to find the path. The inode will be updated if the inode was found; 

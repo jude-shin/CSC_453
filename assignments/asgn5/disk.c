@@ -336,7 +336,7 @@ bool find_inode(
   fseek(mfs->file, mfs->b_inodes, SEEK_SET);
 
   /* Read the value at that address into the root inode struct. */
-  if (fread(&inode, sizeof(min_inode), 1, mfs->file) < 1) {
+  if (fread(inode, sizeof(min_inode), 1, mfs->file) < 1) {
     fprintf(stderr, "error reading the root inode: %d\n", errno);
     exit(EXIT_FAILURE);
   }
@@ -361,10 +361,10 @@ bool find_inode(
 
     /* The current inode must be traversable (a directory) */
     if (!(inode->mode & DIR_FT)) {
-      // fprintf(
-      //     stderr, 
-      //     "error traversing the path. %s is not a directory!\n", 
-      //     token);
+      fprintf(
+          stderr, 
+          "error traversing the path. %s is not a directory!\n", 
+          token);
       return false;
     }
    
@@ -376,11 +376,11 @@ bool find_inode(
        directory entry with a matching name. */
     if (search_all_zones(mfs, inode, &next_inode, token)) {
       token = strtok(NULL, DELIMITER);
-      *inode = next_inode;
+      memcpy(inode, &next_inode, sizeof(min_inode));
       return true;
     }
     else {
-      // fprintf(stderr, "error traversing the path: directory not found!\n");
+      fprintf(stderr, "error traversing the path: directory not found!\n");
       return false;
     }
   }
