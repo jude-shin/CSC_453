@@ -82,7 +82,7 @@ void open_mfs(
     int sub_part,
     bool verbose) {
   /* How far from the beginning of the disk the filesystem resides. */
-  uint32_t offset;
+  uint32_t offset = 0;
 
   /* The (sub)partition table that is read from the image. */
   min_part_tbl pt, spt;
@@ -95,8 +95,6 @@ void open_mfs(
     fprintf(stderr, "error opening %s: %d\n", imagefile_path, errno);
     exit(EXIT_FAILURE);
   }
-
-  offset = 0;
 
   /* Seek to the primary partition */
   /* Otherwise treat the image as unpartitioned. (offset of 0) */
