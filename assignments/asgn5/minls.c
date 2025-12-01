@@ -40,7 +40,12 @@ int main (int argc, char *argv[]) {
      strings in argv upon success. If something went wrong when parsing the 
      arguments, -1 is returned, and the error message is printed in that 
      function. */
-  int pd_args = parse_minls_input(argc, argv, &imagefile_path, &minix_path, pd_flags);
+  int pd_args = parse_minls_input(
+      argc, 
+      argv, 
+      &imagefile_path, 
+      &minix_path, 
+      pd_flags);
 
   /* Catch errors by printing the general usage statement and exiting. */
   if (pd_flags == -1 || pd_args == -1) {

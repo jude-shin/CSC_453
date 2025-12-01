@@ -560,11 +560,26 @@ void print_inode(FILE* s, min_inode* inode) {
 
   fprintf(s, "  Direct Zones:\n");
   for (int i = 0; i < DIRECT_ZONES; i++) {
-    fprintf(s, "  %-*szone[%d]  =%*d\n", ZONE_LBL_LEN, "", i, VLU_LN, inode->zone[i]);
+    fprintf(
+        s, "  %-*szone[%d]  =%*d\n", 
+        ZONE_LBL_LEN, 
+        "", i, 
+        VLU_LN, 
+        inode->zone[i]);
   }
 
-  fprintf(s, "  %-*sindirect  %*u\n", ZONE_LBL_LEN, "uint32_t", VLU_LN, inode->indirect);
-  fprintf(s, "  %-*sdouble    %*u\n", ZONE_LBL_LEN, "uint32_t", VLU_LN, inode->two_indirect);
+  fprintf(
+      s, "  %-*sindirect  %*u\n", 
+      ZONE_LBL_LEN, 
+      "uint32_t",
+      VLU_LN,
+      inode->indirect);
+  fprintf(
+      s, "  %-*sdouble    %*u\n", 
+      ZONE_LBL_LEN, 
+      "uint32_t", 
+      VLU_LN, 
+      inode->two_indirect);
 
   fprintf(s, "\n");
 }
