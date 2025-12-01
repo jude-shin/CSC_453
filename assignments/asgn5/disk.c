@@ -203,6 +203,8 @@ void open_mfs(
  * @return void.
  */
 void close_mfs(min_fs* mfs) {
+  /* TODO: put the malloced canonicalized string in here? then we can just
+     close everything, cleaning up the malloced thing? */
   if (fclose(mfs->file) == -1) {
     fprintf(stderr, "Error close(2)ing the imagefile: %d", errno);
     exit(EXIT_FAILURE);
@@ -246,7 +248,11 @@ bool validate_signatures(FILE* image, uint32_t offset) {
   unsigned char sig510, sig511;
   
   /* Seek the read head to the address with the signature. */
-  fseek(image, offset+SIG510_OFFSET, SEEK_SET);
+  if (fseek(image, offset+SIG510_OFFSET, SEEK_SET) == -1) {
+    fprintf(stderr, "error seeking to signature 1: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+
   /* Read the value at that address. */
   if (fread(&sig510, sizeof(unsigned char), 1, image) < 1) {
     fprintf(stderr, "error reading signature 1: %d\n", errno);
@@ -254,7 +260,10 @@ bool validate_signatures(FILE* image, uint32_t offset) {
   }
 
   /* Seek the read head to the address with the signature. */
-  fseek(image, offset+SIG511_OFFSET, SEEK_SET);
+  if (fseek(image, offset+SIG511_OFFSET, SEEK_SET) == -1) {
+    fprintf(stderr, "error seeking to signature 2: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
   /* Read the value at that address. */
   if (fread(&sig511, sizeof(unsigned char), 1, image) < 1) {
     fprintf(stderr, "error reading signature 2: %d\n", errno);
@@ -280,12 +289,15 @@ bool validate_signatures(FILE* image, uint32_t offset) {
  */
 void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* image) { 
   /* Seek to the correct location that the partition table resides. */
-  fseek(image, addr, SEEK_SET);
+  if (fseek(image, addr, SEEK_SET)) {
+    fprintf(stderr, "error seeking to partition table: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
 
   /* Read the partition table, storing its contents in the struct for us to 
      reference later on. */
   if (fread(pt, sizeof(min_part_tbl), 1, image) < 1) {
-    fprintf(stderr, "error with fread() on partition table: %d\n", errno);
+    fprintf(stderr, "error reading partition table: %d\n", errno);
     exit(EXIT_FAILURE);
   }
 }
@@ -299,12 +311,15 @@ void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* image) {
 void load_superblock(min_fs* mfs) {
   /* Seek to the start of the partition, and then go another SUPERBLOCK_OFFSET
      bytes. No matter the block size, this is where the superblock lives. */
-  fseek(mfs->file, mfs->partition_start+SUPERBLOCK_OFFSET, SEEK_SET);
+  if (fseek(mfs->file, mfs->partition_start+SUPERBLOCK_OFFSET, SEEK_SET) == -1){
+    fprintf(stderr, "error seeking to superblock: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
 
   /* Read the superblock, storing its contents in the struct for us to 
      reference later on. */
   if (fread(&mfs->sb, sizeof(min_superblock), 1, mfs->file) < 1) {
-    fprintf(stderr, "error with fread() on superblock: %d\n", errno);
+    fprintf(stderr, "error reading superblock: %d\n", errno);
     exit(EXIT_FAILURE);
   }
 }
@@ -333,10 +348,14 @@ bool find_inode(
     unsigned char* cur_name) {
 
   /* The tokenized next directory entry name that we are looking for. */
+  /* TODO: try strtok_r?*/
   char* token = strtok(path, DELIMITER);
 
   /* Seek the read head to the first inode. */
-  fseek(mfs->file, mfs->b_inodes, SEEK_SET);
+  if (fseek(mfs->file, mfs->b_inodes, SEEK_SET) == -1) {
+    fprintf(stderr, "error seeking to the root inode: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
 
   /* Read the value at that address into the root inode struct. */
   if (fread(inode, sizeof(min_inode), 1, mfs->file) < 1) {
@@ -466,7 +485,13 @@ bool search_indirect_zone(
   }
 
   /* Start reading the first block in that indirect zone. */
-  fseek(mfs->file, mfs->partition_start + (zone_num*mfs->zone_size), SEEK_SET);
+  if (fseek(
+        mfs->file, 
+        mfs->partition_start+(zone_num*mfs->zone_size), 
+        SEEK_SET) == -1) {
+    fprintf(stderr, "error seeking to indirect zone.\n");
+    exit(EXIT_FAILURE);
+  }
 
   /* How many zone numbers we are going to read (how many fit in the first block
      of the indirect zone) */
@@ -481,7 +506,7 @@ bool search_indirect_zone(
    
     /* Read the number that holds the zone number. */
     if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
-      fprintf(stderr, "error reading indirect zone number: %d\n", errno);
+      fprintf(stderr, "error reading indirect zone: %d\n", errno);
       exit(EXIT_FAILURE);
     }
 
@@ -521,7 +546,13 @@ bool search_two_indirect_zone(
   }
 
   /* Start reading the first block in the double indirect zone. */
-  fseek(mfs->file, mfs->partition_start + (zone_num*mfs->zone_size), SEEK_SET);
+  if (fseek(
+        mfs->file, 
+        mfs->partition_start + (zone_num*mfs->zone_size), 
+        SEEK_SET) == -1) {
+    fprintf(stderr, "error seeking to double indirect zone.\n");
+    exit(EXIT_FAILURE);
+  }
 
   /* How many zone numbers we are going to read (how many fit in the first block
      of the indirect zone) */
@@ -534,7 +565,7 @@ bool search_two_indirect_zone(
    
     /* Read the number that holds the zone number. */
     if(fread(&two_indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
-      fprintf(stderr, "error reading indirect zone number: %d\n", errno);
+      fprintf(stderr, "error reading double indirect zone number: %d\n", errno);
       exit(EXIT_FAILURE);
     }
 
@@ -580,7 +611,10 @@ bool search_zone(
     min_dir_entry entry;
 
     /* Seek to the directory entry */
-    fseek(mfs->file, zone_addr + (j * DIR_ENTRY_SIZE), SEEK_SET);
+    if (fseek(mfs->file, zone_addr + (j * DIR_ENTRY_SIZE), SEEK_SET) == -1) {
+      fprintf(stderr, "error seeking to directory entry: %d\n", errno);
+      exit(EXIT_FAILURE);
+    }
 
     /* Read the directory entry */
     if(fread(&entry, DIR_ENTRY_SIZE, 1, mfs->file) < 1) {
@@ -591,10 +625,13 @@ bool search_zone(
     /* Check if entry is valid (inode != 0) and name matches */
     if(entry.inode != 0 && strcmp((char*)entry.name, name) == 0) {
       /* Seek to the address that holds the inode that we are on. */
-      fseek(
-          mfs->file, 
-          mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE),
-          SEEK_SET);
+      if (fseek(
+            mfs->file, 
+            mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE),
+            SEEK_SET) == -1) {
+        fprintf(stderr, "error seeking to inode: %d\n", errno);
+        exit(EXIT_FAILURE);
+      }
 
       if(fread(next_inode, INODE_SIZE, 1, mfs->file) < 1) {
         /* If there was an error writing to the inode, note it an exit. We 
@@ -611,7 +648,6 @@ bool search_zone(
   /* There was no directory entry that had this filename. */
   return false;
 }
-
 
 
 /* ========== */
