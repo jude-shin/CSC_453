@@ -107,12 +107,10 @@ int main (int argc, char *argv[]) {
      elements in that directory. */
   if (inode.mode & DIR_FT) {
     print_directory(stderr, &mfs, &inode, can_minix_path);
-    exit(EXIT_FAILURE);
   }
   /* Otherwise, just list the single file we landed on. */
   else {
     print_file(stderr, &inode, cur_name);
-    exit(EXIT_FAILURE);
   }
 
 

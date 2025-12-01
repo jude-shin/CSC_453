@@ -89,7 +89,8 @@ void print_files_in_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
     /* Read all directory entries in this chunk. */
     int num_entries = mfs->zone_size / DIR_ENTRY_SIZE;
 
-    for(int i = 0; i < num_entries; i++) {
+    int i;
+    for(i = 0; i < num_entries; i++) {
       min_dir_entry entry;
 
       /* Seek to the directory entry */
@@ -158,7 +159,8 @@ void print_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
     int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
     /* For every zone number in that first indirect inode block. */
-    for(int i = 0; i < total_indirect_inodes; i++) {
+    int i;
+    for(i = 0; i < total_indirect_inodes; i++) {
       /* The zone number that holds directory entries. */
       uint32_t indirect_zone_number;
 
@@ -206,7 +208,8 @@ void print_files_in_two_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
     int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
     /* For every zone number in that first double indirect inode block. */
-    for(int i = 0; i < total_indirect_inodes; i++) {
+    int i;
+    for(i = 0; i < total_indirect_inodes; i++) {
       /* The zone number that holds the indierct zone numbers. */
       uint32_t two_indirect_zone_number;
 
@@ -239,7 +242,8 @@ void print_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path) {
   fprintf(s, "%s:\n", can_path);
 
   /* DIRECT ZONES */
-  for(int i = 0; i < DIRECT_ZONES; i++) {
+  int i;
+  for(i = 0; i < DIRECT_ZONES; i++) {
     /* Print all of the valid files that are in that zone. */
     print_files_in_zone(s, mfs, inode->zone[i]);
   }
@@ -280,7 +284,8 @@ void print_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
   uint32_t bytes_read = 0;
 
   /* Go through all of the direct zones sequentially. */
-  for (int i = 0; i < DIRECT_ZONES; i++) {
+  int i;
+  for (i = 0; i < DIRECT_ZONES; i++) {
     uint32_t zone_num = inode->zone[i];
     if (print_zone_contents(s, mfs, inode, zone_num, &bytes_read)) {
       return;
@@ -344,7 +349,8 @@ bool print_zone_contents(
 
   /* Read a single character at a time so we don't have to bother with large
      varying sized buffers. */
-  for (int j = 0; j < mfs->zone_size; j++) {
+  int i;
+  for (i = 0; i < mfs->zone_size; i++) {
     char c;
     /* Read the next character (byte sized). */
     if (fread(&c, sizeof(char), 1, mfs->file) < 1) {
@@ -404,7 +410,8 @@ bool print_indirect_zone_contents(
   int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
   /* For every zone number in that first indirect inode block. */
-  for(int i = 0; i < total_indirect_inodes; i++) {
+  int i;
+  for(i = 0; i < total_indirect_inodes; i++) {
     /* The zone number that holds directory entries. */
     uint32_t indirect_zone_number;
    
@@ -460,7 +467,8 @@ bool print_two_indirect_zone_contents(
   int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
   /* For every zone number in that first double indirect inode block. */
-  for(int i = 0; i < total_indirect_inodes; i++) {
+  int i;
+  for(i = 0; i < total_indirect_inodes; i++) {
     /* The zone number that holds the indierct zone numbers. */
     uint32_t two_indirect_zone_number;
    
@@ -559,7 +567,8 @@ void print_inode(FILE* s, min_inode* inode) {
 
 
   fprintf(s, "  Direct Zones:\n");
-  for (int i = 0; i < DIRECT_ZONES; i++) {
+  int i;
+  for (i = 0; i < DIRECT_ZONES; i++) {
     fprintf(
         s, "  %-*szone[%d]  =%*d\n", 
         ZONE_LBL_LEN, 
