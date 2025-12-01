@@ -88,9 +88,11 @@ int main (int argc, char *argv[]) {
     print_inode(stderr, &src_inode);
   }
 
+  FILE* output = stderr;
+
   /* If the user did not give a destination path. */
   if (minix_dst_path == NULL) {
-    print_file_contents(stderr, &mfs, &src_inode);
+
   }
   else {
     /* The inode that will be populated if the destination path is found. */
@@ -115,34 +117,25 @@ int main (int argc, char *argv[]) {
       print_inode(stderr, &dst_inode);
     }
 
-    if (fseek(
-        mfs.file, 
-        dst_inode_addr+sizeof(uint16_t)*4+sizeof(uint32_t)+sizeof(int32_t)*3, 
-        SEEK_SET) == -1) {
-      fprintf(stderr, "error seeking to dst_inode's direct zones: %d\n", errno);
-      exit(EXIT_FAILURE);
-    }
+    /* ====================================================================== */
 
     /* Overwrite all direct zone numbers from src to dest. */
     for (int i = 0; i < DIRECT_ZONES; i++) {
-      if (fwrite(&src_inode.zone[i], mfs.zone_size, 1, mfs.file) < 1) {
-        fprintf(stderr, "error writing direct zone[%d]: %d\n", i, errno);
-        exit(EXIT_FAILURE);
-      }
-    }
-    
-    /* Overwrite the indirect zone number. */
-    if (fwrite(&src_inode.indirect, mfs.zone_size, 1, mfs.file) < 1) {
-      fprintf(stderr, "error writing indirect zone: %d\n", errno);
-      exit(EXIT_FAILURE);
+      /* Copy the direct zones in the mfs. */
+      fprintf();
+      copy_zone(&mfs, src_inode.zone[i], dst_inode.zone[i]);
     }
 
-    /* Overwrite the double indirect zone number. */
-    if (fwrite(&src_inode.two_indirect, mfs.zone_size, 1, mfs.file)) {
-      fprintf(stderr, "error writing double indirect zone: %d\n", errno);
-      exit(EXIT_FAILURE);
-    }
+    /* Copy the indirect zones in the mfs. */
+    copy_zone(&mfs, src_inode.indirect, dst_inode.indirect);
+
+    /* Copy the double indirect zones in the mfs. */
+    copy_zone(&mfs, src_inode.two_indirect, dst_inode.two_indirect);
+
+    /* ====================================================================== */
   }
+
+  print_file_contents(stderr, &mfs, &src_inode);
 
   /* Close the minix filesystem. */
   close_mfs(&mfs);
