@@ -78,7 +78,7 @@ int main (int argc, char *argv[]) {
   /* Try to find the path. The inode will be updated if the inode was found; 
      can_minix_path, and cur_name will be updated as the search progresses. */
   if (!find_inode(&mfs, &inode, minix_path, can_minix_path, cur_name)) {
-    fprintf(stderr, "The inode [%s] was not found!", minix_path);
+    fprintf(stderr, "The [%s] was not found!", minix_path);
     exit(EXIT_FAILURE);
   }
 

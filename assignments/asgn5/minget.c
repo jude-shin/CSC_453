@@ -73,8 +73,8 @@ int main (int argc, char *argv[]) {
   min_inode src_inode;
 
   if (!find_inode(&mfs, &src_inode, minix_src_path, NULL, NULL)) {
-    /* TODO: no src path found */
-    /* exit here */
+    fprintf(stderr, "The [%s] was not found!", minix_src_path);
+    exit(EXIT_FAILURE);
   }
 
   /* TODO: Check that this file is a regular file. */
@@ -93,8 +93,8 @@ int main (int argc, char *argv[]) {
     min_inode dst_inode;
 
     if (!find_inode(&mfs, &dst_inode, minix_dst_path, NULL, NULL)) {
-      /* TODO: no dst path found */
-      /* exit here */
+      fprintf(stderr, "The [%s] was not found!", minix_src_path);
+      exit(EXIT_FAILURE);
     }
 
     /* TODO: Check that this file is a regular file. */
