@@ -328,8 +328,12 @@ void print_inode(FILE* s, min_inode* inode) {
   print_time(s, inode->ctime);
   fprintf(s, "\n");
 
+  fprintf(s, "Direct Zones:\n");
+  for (int i = 0; i < DIRECT_ZONES; i++) {
+    fprintf(s, "\tzone[%d] = %*d\n", i, VLU_LN, inode->zone[i]);
+  }
 
-  /* TODO: print the zone things*/
+  fprintf(s, "\n");
 }
 
 
