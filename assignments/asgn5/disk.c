@@ -309,6 +309,81 @@ void load_superblock(min_fs* mfs) {
   }
 }
 
+/* Populates inode with the given inode's information and returns true if it was
+ * found. Otherwise, return false. The canonicalized path that was traversed is
+ * also built as this function progresses. If 
+ * @param mfs MinixFileSystem struct that holds the current filesystem and some
+ *  useful information.
+ * @param inode the inode that will be filled once the file is found.
+ * @param path the name of the path that is to be followed
+ * @param can_minix_path the canonicalized minix path that is built as the
+ *  the search progresses. Note that if the file is the root, then 
+ *  can_minix_path does not change. If this is set to NULL, no canonicalized
+ *  path is built. 
+ * @return bool true if we found a valid inode, false otherwise.
+   */
+bool find_inode(
+    min_fs* mfs, 
+    min_inode* inode,
+    char* path,
+    char* can_minix_path) {
+
+  /* Seek the read head to the first inode. */
+  fseek(mfs->file, mfs->b_inodes, SEEK_SET);
+
+  /* Read the value at that address into the root inode struct. */
+  if (fread(&inode, sizeof(min_inode), 1, mfs->file) < 1) {
+    fprintf(stderr, "error reading the root inode: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+
+  /* The tokenized next directory entry name that we are looking for. */
+  char* token = strtok(path, DELIMITER);
+
+  /* The current name that was just processed. */
+  unsigned char curr_name[DIR_NAME_SIZE] = "";
+
+  /* Parse all of the directories that the user gave by traversing through the
+     directories till we are at the last inode. */
+  while(token != NULL) {
+    /* copy the string name to curr_name so we can keep track of the last
+       processed name. */
+    memcpy(curr_name, token, sizeof(char)*DIR_NAME_SIZE);
+
+    /* Add the token to the built canonicalized minix path. */
+    if (can_minix_path != NULL) {
+      strcat(can_minix_path, DELIMITER);
+      strcat(can_minix_path, token);
+    }
+
+    /* The current inode must be traversable (a directory) */
+    if (!(inode->mode & DIR_FT)) {
+      // fprintf(
+      //     stderr, 
+      //     "error traversing the path. %s is not a directory!\n", 
+      //     token);
+      return false;
+    }
+   
+    /* The found inode that is populated if any of the search functions find
+       an inode with a matching name. */
+    min_inode next_inode;
+
+    /* Search through the direct, indirect, and double indirect zones for a 
+       directory entry with a matching name. */
+    if (search_all_zones(mfs, inode, &next_inode, token)) {
+      token = strtok(NULL, DELIMITER);
+      *inode = next_inode;
+      return true;
+    }
+    else {
+      // fprintf(stderr, "error traversing the path: directory not found!\n");
+      return false;
+    }
+  }
+  return false;
+}
+
 /* ========= */
 /* SEARCHING */
 /* ========= */
@@ -547,15 +622,4 @@ uint16_t get_zone_size(min_superblock* sb) {
 
   return zonesize;
 }
-
-/* ===== */
-/* FILES */
-/* ===== */
-
-
-
-
-/* =========== */
-/* DIRECTORIES */
-/* =========== */
 

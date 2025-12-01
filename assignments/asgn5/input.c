@@ -188,8 +188,8 @@ int parse_minget_input(
     int argc, 
     char* argv[], 
     char** imagefile,
-    char** srcpath, 
-    char** dstpath, 
+    char** src_path, 
+    char** dst_path, 
     int i) {
 
   /* Make sure the number of flags processed was correct, or else the indexing
@@ -202,7 +202,7 @@ int parse_minget_input(
   int remainder = argc - i;
 
   /* dstpath is optional, and is set to NULL */
-  *dstpath = NULL;
+  *dst_path = NULL;
 
   /* There aren't enough arguments. */
   if (remainder <= 1) {
@@ -216,13 +216,13 @@ int parse_minget_input(
     *imagefile = argv[i++];
 
     /* point srcpath to the existing string data in argv */
-    *srcpath = argv[i++];
+    *src_path = argv[i++];
   }
 
   /* There is also a dstpath. */
   if (remainder >= 3) {
     /* point dstpath to the existing string data in argv */
-    *dstpath = argv[i++];
+    *dst_path = argv[i++];
   }
 
   /* There are too many arguments. */

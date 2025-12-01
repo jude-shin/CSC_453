@@ -200,9 +200,15 @@ void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* image);
 /* Fills a superblock based ona minix filesystem (a image and an offset) */ 
 void load_superblock(min_fs* mfs);
 
+/* Populates inode with the given inode's information and returns true if it was
+   found. Otherwise, return false. The canonicalized path that was traversed is
+   also built as this function progresses. */
+bool find_inode(
+    min_fs* mfs, 
+    min_inode* inode,
+    char* path,
+    char* can_minix_path);
 
-
-/* TODO: comments */
 
 /* ========= */
 /* SEARCHING */
