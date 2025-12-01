@@ -73,11 +73,14 @@ int main (int argc, char *argv[]) {
   min_inode src_inode;
 
   if (!find_inode(&mfs, &src_inode, minix_src_path, NULL, NULL)) {
-    fprintf(stderr, "The [%s] was not found!", minix_src_path);
+    fprintf(stderr, "The path [%s] was not found!", minix_src_path);
     exit(EXIT_FAILURE);
   }
 
-  /* TODO: Check that this file is a regular file. */
+  if (!(src_inode.mode & REG_FT)) {
+    fprintf(stderr, "The path [%s] is not a regular file!", minix_src_path);
+    exit(EXIT_FAILURE);
+  }
 
   /* Print inode information when the file is found. */
   if (verbose) {
@@ -93,11 +96,14 @@ int main (int argc, char *argv[]) {
     min_inode dst_inode;
 
     if (!find_inode(&mfs, &dst_inode, minix_dst_path, NULL, NULL)) {
-      fprintf(stderr, "The [%s] was not found!", minix_src_path);
+      fprintf(stderr, "The path [%s] was not found!", minix_dst_path);
       exit(EXIT_FAILURE);
     }
 
-    /* TODO: Check that this file is a regular file. */
+    if (!(dst_inode.mode & REG_FT)) {
+      fprintf(stderr, "The path [%s] is not a regular file!", minix_dst_path);
+      exit(EXIT_FAILURE);
+    }
 
     /* Print inode information when the file is found. */
     if (verbose) {

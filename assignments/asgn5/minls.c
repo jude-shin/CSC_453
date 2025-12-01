@@ -78,7 +78,7 @@ int main (int argc, char *argv[]) {
   /* Try to find the path. The inode will be updated if the inode was found; 
      can_minix_path, and cur_name will be updated as the search progresses. */
   if (!find_inode(&mfs, &inode, minix_path, can_minix_path, cur_name)) {
-    fprintf(stderr, "The [%s] was not found!", minix_path);
+    fprintf(stderr, "The path [%s] was not found!", minix_path);
     exit(EXIT_FAILURE);
   }
 
@@ -94,12 +94,13 @@ int main (int argc, char *argv[]) {
     print_inode(stderr, &inode);
   }
 
-  /* If we have fully traversed the path, but we ended up at a file, we cannot
-     ls on that... we must ls on a directory. */
+  /* If we have fully traversed the path and landed on a directory, list all 
+     elements in that directory. */
   if (inode.mode & DIR_FT) {
     print_directory(stderr, &mfs, &inode, can_minix_path);
     exit(EXIT_FAILURE);
   }
+  /* Otherwise, just list the single file we landed on. */
   else {
     print_file(stderr, &inode, cur_name);
     exit(EXIT_FAILURE);
