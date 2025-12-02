@@ -390,8 +390,8 @@ uint32_t find_inode(
 
     /* Add the token to the built canonicalized minix path. */
     if (can_minix_path != NULL) {
-      strcat(can_minix_path, DELIMITER);
       strcat(can_minix_path, token);
+      strcat(can_minix_path, DELIMITER);
     }
 
     /* The current inode must be traversable (a directory) */
