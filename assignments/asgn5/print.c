@@ -233,7 +233,7 @@ void print_files_in_two_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
  */
 void print_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path) {
   /* print the full canonicalized minix path that we are listing. */
-  fprintf(s, "%s:\n", can_path);
+  fprintf(s, "/%s:\n", can_path);
 
   /* DIRECT ZONES */
   int i;

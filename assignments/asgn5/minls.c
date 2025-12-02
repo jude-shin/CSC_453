@@ -79,7 +79,6 @@ int main (int argc, char *argv[]) {
 
   /* By default, set the string to be empty. */
   *can_minix_path = '\0';
-  strcat(can_minix_path, DELIMITER);
 
   /* Try to find the path. The inode will be updated if the inode was found; 
      can_minix_path, and cur_name will be updated as the search progresses. */
@@ -88,8 +87,8 @@ int main (int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  /* TODO: comment this. */
-  if (strcmp(can_minix_path, DELIMITER)) {
+  /* Remove the trailing slash if the string is not empty. */
+  if(can_minix_path[0] != '\0') {
     can_minix_path[strlen(can_minix_path)-1] = '\0';
   }
 
@@ -105,6 +104,7 @@ int main (int argc, char *argv[]) {
   /* If we have fully traversed the path and landed on a directory, list all 
      elements in that directory. */
   if (inode.mode & DIR_FT) {
+    /* The root DELIMITER is going to be added manualy. */
     print_directory(stdout, &mfs, &inode, can_minix_path);
   }
   /* Otherwise, just list the single file we landed on. */
