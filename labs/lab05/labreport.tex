@@ -22,7 +22,7 @@
 
 \section*{Solutions}
 \begin{enumerate} 
-	\item 
+	\item Each program has a 50/50 chance of either waiting on I/O, or doing work (using the CPU or not using the CPU). When the CPU is idle, that means all 4 of the programs will be waiting on I/O at the same time (they are all not using the CPU at the same time). If there was one program, then the probability of the CPU being idle would be the same as the chances of the program waiting on I/O (which is 50\%). If there were two processes, the chances would multiply ($0.50 * 0.50 = 0.25$). If we extrapolate this pattern to 4 processes, then the odds of each program waiting for I/O at the same time would be 6.25\% ($0.5 * 0.5 * 0.5 * 0.5 = 0.0625$). If all I/O operations are distributed randomly with even probability, this would mean that out of the whole time that the CPU is trying to run these 4 programs, the CPU would be idle 6.25\% of that time. 
 	\item
 		\begin{enumerate}
 			\item The virtual address of 20 is 20 bytes away from the start of the virtual page in the range 0K-4K. This means that it will be 20 bytes away from the associated page in the physical memory. The virtual page 0K-4K maps to the physical page 8K-12K. The virtual address 20 will be mapped to the physical address 8020.
@@ -68,6 +68,7 @@
 		\end{enumerate}
 
 		After everything is said and done, there were 4 page faults in the beginning, and 2 extra page faults (one at step 5, and one at step 8). In total there were 6 page faults using FIFO.
+
 	\item Using the same reference string in problem 5, ``0713272013", But this time with LRU, the page faults might be different. 
 
 		\begin{enumerate}
@@ -86,6 +87,7 @@
 		After everything happens, there are 4 page faults for the beginning, and then 4 more page faults in later steps. In total there were 8 page faults using LRU.
 
 	\item 
+
 	\item
 	\item
 	\item
