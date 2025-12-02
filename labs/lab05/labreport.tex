@@ -87,6 +87,8 @@
 		After everything happens, there are 4 page faults for the beginning, and then 4 more page faults in later steps. In total there were 8 page faults using LRU.
 
 	\item 
+		If in the 60 seconds there were 15,000 page faults, then out of those 60 seconds, $(2,000μs * 15,000 = 30,000,000μs = 30.000s)$ would be spent handling the page faults. The remaining 30 seconds would be the time the program actually takes. If the memory was doubled, then there would be half as many page faults that will occur, so the original 15,000 page faults would get cut in half to 7,500 page faults.
+		If it takes 2,000 microseconds to handle a page fault, and there now only being 7,500 page faults because of the doubled memory, the total time spent handling the page faults would be $2,000μs * 7,500 = 15,000,000μs$. Adding that to the raw time the program takes to execute (which was 30,000,000μs) would leave us with 45,000,000μs, or 45 seconds in total.
 
 	\item
 	\item
