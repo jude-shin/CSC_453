@@ -88,14 +88,8 @@ int main (int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  /* If the canonical path is still null, then we did'nt add anything to it, 
-     so it must be a variant of "/" or "//////" or some other form of the 
-     root. For looks, set the canonical path to the DELIMITER. */
-  if (*can_minix_path == '\0') {
-    strcpy(can_minix_path, DELIMITER);
-  }
-  else {
-    /* we want to remove the last character (/) that we added in find_inode() */
+  /* TODO: comment this. */
+  if (strcmp(can_minix_path, DELIMITER)) {
     can_minix_path[strlen(can_minix_path)-1] = '\0';
   }
 
