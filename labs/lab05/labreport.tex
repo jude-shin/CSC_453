@@ -60,16 +60,16 @@
 	\item The string reference string ``0713272013" represents the pages that is requested. (First request page 0, then request page 7, then request...). Remember that a ``page" represents the block of virtual memory, and a ``frame" represents a block in the physical memory. If we have 8 pages, and 4 frames, we really only physically have 4 frames, and there will have to be some pages that are replaced. The 4 values inside of the brackets $[]$ will represent the physical frames that we have on RAM. 
 
 		\begin{enumerate}
-			\item $[-, -, -, -]$ \textrightarrow $[0, -, -, -]$: Page 0 is requested. Since all 4 of the frames are empty, there is no page loaded in a frame. A page fault occurs and loads page 0 in a frame. The number of page faults that have occurred at this point is 1.
-			\item $[0, -, -, -]$ \textrightarrow $[0, 7, -, -]$: Page 7 is requested. Page 7 is not in a frame (just like above), so a page fault occurs. The number of page faults that have occurred at this point is 2.
-			\item $[0, 7, -, -]$ \textrightarrow $[0, 7, 1, -]$: Page 1 is requested, and a page fault occurs. The number of page faults that have occurred at this point is 3.
-			\item $[0, 7, 1, -]$ \textrightarrow $[0, 7, 1, 3]$: Page 3 is requested, and a page fault occur. The number of page faults that have occurred at this point is 4.
-		\item $[0, 7, 1, 3]$ \textrightarrow $[2, 7, 1, 3]$: Page 2 is requested, but there are no empty frames, nor are there any frames that currently hold page 2. A page fault occurs. Using FIFO, the oldest page will be replaced. In this case, page 0. The number of page faults that have occurred at this point is 5.
-			\item $[2, 7, 1, 3]$ \textrightarrow $[2, 7, 1, 3]$: Page 7 is requested, but it is already loaded in a frame! Do nothing and be happy.
-			\item $[2, 7, 1, 3]$ \textrightarrow $[2, 7, 1, 3]$: Page 2 is requested, but it is already loaded in a frame! Do nothing and be happy.
-			\item $[2, 7, 1, 3]$ \textrightarrow $[2, 0, 1, 3]$: Page 0 is requested, but there are no empty frames, nor are there any frames that currently hold page 0. A page fault occurs. Using FIFO, the oldest page will be replaced. Page 2 was just requested, and page 7 was loaded at the very beginning. In this case, the oldest page is 7. The number of page faults that have occurred at this point is 6.
-			\item $[2, 0, 1, 3]$ \textrightarrow $[2, 0, 1, 3]$: Page 1 is requested, but it is already loaded in a frame! Do nothing and be happy.
-			\item $[2, 0, 1, 3]$ \textrightarrow $[2, 0, 1, 3]$: Page 3 is requested, but it is already loaded in a frame! Do nothing and be happy.
+			\item $[-, -, -, -]$ = $[0, -, -, -]$: Page 0 is requested. Since all 4 of the frames are empty, there is no page loaded in a frame. A page fault occurs and loads page 0 in a frame. The number of page faults that have occurred at this point is 1.
+			\item $[0, -, -, -]$ = $[0, 7, -, -]$: Page 7 is requested. Page 7 is not in a frame (just like above), so a page fault occurs. The number of page faults that have occurred at this point is 2.
+			\item $[0, 7, -, -]$ = $[0, 7, 1, -]$: Page 1 is requested, and a page fault occurs. The number of page faults that have occurred at this point is 3.
+			\item $[0, 7, 1, -]$ = $[0, 7, 1, 3]$: Page 3 is requested, and a page fault occur. The number of page faults that have occurred at this point is 4.
+		\item $[0, 7, 1, 3]$ = $[2, 7, 1, 3]$: Page 2 is requested, but there are no empty frames, nor are there any frames that currently hold page 2. A page fault occurs. Using FIFO, the oldest page will be replaced. In this case, page 0. The number of page faults that have occurred at this point is 5.
+			\item $[2, 7, 1, 3]$ = $[2, 7, 1, 3]$: Page 7 is requested, but it is already loaded in a frame! Do nothing and be happy.
+			\item $[2, 7, 1, 3]$ = $[2, 7, 1, 3]$: Page 2 is requested, but it is already loaded in a frame! Do nothing and be happy.
+			\item $[2, 7, 1, 3]$ = $[2, 0, 1, 3]$: Page 0 is requested, but there are no empty frames, nor are there any frames that currently hold page 0. A page fault occurs. Using FIFO, the oldest page will be replaced. Page 2 was just requested, and page 7 was loaded at the very beginning. In this case, the oldest page is 7. The number of page faults that have occurred at this point is 6.
+			\item $[2, 0, 1, 3]$ = $[2, 0, 1, 3]$: Page 1 is requested, but it is already loaded in a frame! Do nothing and be happy.
+			\item $[2, 0, 1, 3]$ = $[2, 0, 1, 3]$: Page 3 is requested, but it is already loaded in a frame! Do nothing and be happy.
 		\end{enumerate}
 
 		After everything is said and done, there were 4 page faults in the beginning, and 2 extra page faults (one at step 5, and one at step 8). In total there were 6 page faults using FIFO.
@@ -77,16 +77,16 @@
 	\item Using the same reference string in problem 5, ``0713272013", But this time with LRU, the page faults might be different. 
 
 		\begin{enumerate}
-			\item $[-, -, -, -]$ \textrightarrow $[0, -, -, -]$: Page 0 is requested. Since all 4 of the frames are empty, there is no page loaded in a frame. A page fault occurs and loads page 0 in a frame. The number of page faults that have occurred at this point is 1.
-			\item $[0, -, -, -]$ \textrightarrow $[0, 7, -, -]$: Page 7 is requested. Page 7 is not in a frame (just like above), so a page fault occurs. The number of page faults that have occurred at this point is 2.
-			\item $[0, 7, -, -]$ \textrightarrow $[0, 7, 1, -]$: Page 1 is requested, and a page fault occurs. The number of page faults that have occurred at this point is 3.
-			\item $[0, 7, 1, -]$ \textrightarrow $[0, 7, 1, 3]$: Page 3 is requested, and a page fault occur. The number of page faults that have occurred at this point is 4.
-			\item $[0, 7, 1, 3]$ \textrightarrow $[2, 7, 1, 3]$: Page 2 is requested, but there are no empty frames, nor are there any frames that currently hold page 2. A page fault occurs. Using LRU, the least recently used page will be replaced. In this case, the time that they were last used was the time that they were also loaded. Page 0 is replaced as it was the oldest to be referenced. The number of page faults that have occurred at this point is 4.
-			\item $[2, 7, 1, 3]$ \textrightarrow $[2, 7, 1, 3]$: Page 7 is requested, but it is already loaded in a frame! Do nothing and be happy.
-			\item $[2, 7, 1, 3]$ \textrightarrow $[2, 7, 1, 3]$: Page 2 is requested, but it is already loaded in a frame! Do nothing and be happy.
-			\item $[2, 7, 1, 3]$ \textrightarrow $[2, 7, 0, 3]$: Page 0 is requested, but there are no empty frames, nor are there any frames that currently hold page 0. A page fault occurs. Using LUR, the least recently used page will be replaced. Page 2 was just requested, and page 7 was also requested just before that! Pages 1 and 3 are the least recently used ones, but since page 1 was added first, it is technically older than page 3, so it is chosen. The number of page faults that have occurred at this point is 6.
-			\item $[2, 7, 0, 3]$ \textrightarrow $[2, 7, 0, 1]$: Page 1 is requested, but there are no empty frames, nor are there any frames that currently hold page 1. A page fault occurs. Using LUR, the least recently used page will be replaced. Page 0 was just updated, before that was page 2, and before that was page 7. This leaves us with page 3 as being the oldest one requested, therefore, it is chosen to be replaced. The number of page faults that have occurred at this point is 7.
-			\item $[2, 7, 0, 1]$ \textrightarrow $[2, 3, 0, 1]$: Page 3 is requested, and a page fault occurs. I can't help you if you don't know what goes on here, and I am not going to spell it out again. The oldest page here is 7. It is chosen for a page fault. The number of page faults that have occurred at this point is 8.
+			\item $[-, -, -, -]$ = $[0, -, -, -]$: Page 0 is requested. Since all 4 of the frames are empty, there is no page loaded in a frame. A page fault occurs and loads page 0 in a frame. The number of page faults that have occurred at this point is 1.
+			\item $[0, -, -, -]$ = $[0, 7, -, -]$: Page 7 is requested. Page 7 is not in a frame (just like above), so a page fault occurs. The number of page faults that have occurred at this point is 2.
+			\item $[0, 7, -, -]$ = $[0, 7, 1, -]$: Page 1 is requested, and a page fault occurs. The number of page faults that have occurred at this point is 3.
+			\item $[0, 7, 1, -]$ = $[0, 7, 1, 3]$: Page 3 is requested, and a page fault occur. The number of page faults that have occurred at this point is 4.
+			\item $[0, 7, 1, 3]$ = $[2, 7, 1, 3]$: Page 2 is requested, but there are no empty frames, nor are there any frames that currently hold page 2. A page fault occurs. Using LRU, the least recently used page will be replaced. In this case, the time that they were last used was the time that they were also loaded. Page 0 is replaced as it was the oldest to be referenced. The number of page faults that have occurred at this point is 4.
+			\item $[2, 7, 1, 3]$ = $[2, 7, 1, 3]$: Page 7 is requested, but it is already loaded in a frame! Do nothing and be happy.
+			\item $[2, 7, 1, 3]$ = $[2, 7, 1, 3]$: Page 2 is requested, but it is already loaded in a frame! Do nothing and be happy.
+			\item $[2, 7, 1, 3]$ = $[2, 7, 0, 3]$: Page 0 is requested, but there are no empty frames, nor are there any frames that currently hold page 0. A page fault occurs. Using LUR, the least recently used page will be replaced. Page 2 was just requested, and page 7 was also requested just before that! Pages 1 and 3 are the least recently used ones, but since page 1 was added first, it is technically older than page 3, so it is chosen. The number of page faults that have occurred at this point is 6.
+			\item $[2, 7, 0, 3]$ = $[2, 7, 0, 1]$: Page 1 is requested, but there are no empty frames, nor are there any frames that currently hold page 1. A page fault occurs. Using LUR, the least recently used page will be replaced. Page 0 was just updated, before that was page 2, and before that was page 7. This leaves us with page 3 as being the oldest one requested, therefore, it is chosen to be replaced. The number of page faults that have occurred at this point is 7.
+			\item $[2, 7, 0, 1]$ = $[2, 3, 0, 1]$: Page 3 is requested, and a page fault occurs. I can't help you if you don't know what goes on here, and I am not going to spell it out again. The oldest page here is 7. It is chosen for a page fault. The number of page faults that have occurred at this point is 8.
 		\end{enumerate}
 
 		After everything happens, there are 4 page faults for the beginning, and then 4 more page faults in later steps. In total there were 8 page faults using LRU.
@@ -105,13 +105,13 @@
 
 		If you multiply the time per request with the rate, you can get the mean time. The following formula can be used to represent the overall mean time. This formula can be seen in Figure \ref{fig:graph}.
 
-		$T(h) = (40ms)*(1-h) + (1ms)*(h)$ \textrightarrow 
+		$T(h) = (40ms)*(1-h) + (1ms)*(h)$ = 
 
-		$T(h) = (40)*(1-h) + h$ \textrightarrow 
+		$(40)*(1-h) + h$ = 
 
-		$T(h) = (40-40h) + h$ \textrightarrow 
+		$(40-40h) + h$ = 
 
-		$T(h) = 40 - 39h$ 
+		$40 - 39h$ 
 
     \begin{figure}[htbp]
         \centering
