@@ -110,7 +110,7 @@ int main (int argc, char *argv[]) {
   }
   /* Otherwise, just list the single file we landed on. */
   else {
-    print_file(stdout, &inode, cur_name);
+    print_file(stdout, &inode, can_minix_path);
   }
 
   /* Close the minix filesystem. */
