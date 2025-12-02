@@ -29,8 +29,9 @@
 			\item The virtual address of 4100 is 100 bytes away from the start of the virtual page in the range 4K-8K. This means that it will be 100 bytes away from the associated page in the physical memory. The virtual page 4K-8K maps to the physical page 4K-8K. The virtual address 4100 will be mapped to the physical address 4100.
 			\item The virtual address of 8300  is 300 bytes away from the start of the virtual page in the range 8K-12K. This means that it will be 300 bytes away from the associated page in the physical memory. The virtual page 8K-12K maps to the physical page 24K-28K. The virtual address 8300 will be mapped to the physical address 24300.
 		\end{enumerate}
-	\item There are 32 bits in an address total. If 9 are used to locate the top level page table field, and 11 bits are used to reference the second level page table field, then there are only 12 remaining bits left to search within that page. [32 - 9 - 11 = 12]. If we only have 12 bits to search through the page, there can only be 2\^12 bits total. This allows us to locate the particular page, as well as look at a particular bit of the page. Therefore, there are only 4096 bits in one page. [2\^12 = 4096 = 4KB]. 
-		To calculate the number of pages in the address space, we can only have 9+11 bits to identify a page. This leaves us with 2\^20 unique page tables that we can use. [2\^(9+11) = 2\^20 = 1048576 pages].
+	\item There are 32 bits in an address total. If 9 are used to locate the top level page table field, and 11 bits are used to reference the second level page table field, then there are only 12 remaining bits left to search within that page. ($32 - 9 - 11 = 12$). If we only have 12 bits to search through the page, there can only be $2^{12}$ bits total. This allows us to locate the particular page, as well as look at a particular bit of the page. Therefore, there are only 4096 bits in one page. ($2^{12} = 4096 = 4KB$). 
+
+		To calculate the number of pages in the address space, we can only have 9+11 bits to identify a page. This leaves us with 2\^20 unique page tables that we can use. ($2^{9+11} = 2^{20} = 1048576$).
 	\item
 		\begin{enumerate}
 			\item NRU stands for ``Not Recently Used", which means that it will replace the lowest-numbered non-empty class (if there are multiple in the same class, it chooses at random). The classes are defined as follows: 
@@ -48,9 +49,24 @@
 			\item FIFO stands for ``First In First Out", which means it will replace the oldest page in terms of when it was loaded. Page 2 was loaded 120 clock ticks from the beginning (of time I suppose). This means that it was loaded the earliest, and will be replaced.
 			\item LRU stands for ``Last Recently Used", which means that it will replace the page that was accessed the longest time ago (aka, the Last Ref. value will be lower). Page 1 has the lowest Last Ref. time, therefore this page will be picked to be replaced. 
 			\item ``Second Chance" is a page replacement algorithm that is a slight modification to the FIFO algorithm. It replaces the oldest page (just like FIFO), however, when the oldest page is chosen, it takes a look at the R bit. If the R bit is set to 1, that means that it was referenced recently, so set the R bit to 0 and put it in the back of the queue of pages to search. Continue the search through the pages from oldest to newest. If we find an old page where the R bit is set to 0, then feel free to replace the page. 
+
 				In our case, page 2 was the oldest page, but it had an R bit set. Put it to the back of the line an look at the next oldest page, which is page 0. page 0's R bit is not set, therefore it is chosen to be replaced.
 		\end{enumerate}
-	\item
+	\item The string reference string ``0713272013" represents the pages that is requested. (First request page 0, then request page 7, then request...). Remember that a ``page" represents the block of virtual memory, and a ``frame" represents a block in the physical memory. If we have 8 pages, and 4 frames, we really only physically have 4 frames, and there will have to be some pages that are replaced. The 4 values inside of the brackets $[]$ will represent the physical frames that we have on RAM. 
+		\begin{enumerate}
+			\item $[-, -, -, -]$ \textrightarrow $[0, -, -, -]$: Page 0 is requested. Since all 4 of the frames are empty, there is no page loaded in a frame. A page fault occurs and loads page 0 in a frame. The number of page faults that have occurred at this point is 1.
+			\item $[0, -, -, -]$ \textrightarrow $[0, 7, -, -]$: Page 7 is requested. Page 7 is not in a frame (just like above), so a page fault occurs. The number of page faults that have occurred at this point is 2.
+			\item $[0, 7, -, -]$ \textrightarrow $[0, 7, 1, -]$: Page 1 is requested, and a page fault occurs. The number of page faults that have occurred at this point is 3.
+			\item $[0, 7, 1, -]$ \textrightarrow $[0, 7, 1, 3]$: Page 3 is requested, and a page fault occur. The number of page faults that have occurred at this point is 4.
+		\item $[0, 7, 1, 3]$ \textrightarrow $[2, 7, 1, 3]$: Page 2 is requested, but there are no empty frames, nor are there any frames that currently hold page 2. A page fault occurs. Using FIFO, the oldest page will be replaced. In this case, page 0. The number of page faults that have occurred at this point is 5.
+			\item $[2, 7, 1, 3]$ \textrightarrow $[2, 7, 1, 3]$: Page 7 is requested, but it is already loaded in a frame! Do nothing and be happy.
+			\item $[2, 7, 1, 3]$ \textrightarrow $[2, 7, 1, 3]$: Page 2 is requested, but it is already loaded in a frame! Do nothing and be happy.
+			\item $[2, 7, 1, 3]$ \textrightarrow $[2, 0, 1, 3]$: Page 0 is requested, but there are no empty frames, nor are there any frames that currently hold page 0. A page fault occurs. Using FIFO, the oldest page will be replaced. Page 2 was just requested, and page 7 was loaded at the very beginning. In this case, the oldest page is 7. The number of page faults that have occurred at this point is 6.
+			\item $[2, 0, 1, 3]$ \textrightarrow $[2, 0, 1, 3]$: Page 1 is requested, but it is already loaded in a frame! Do nothing and be happy.
+			\item $[2, 0, 1, 3]$ \textrightarrow $[2, 0, 1, 3]$: Page 3 is requested, but it is already loaded in a frame! Do nothing and be happy.
+		\end{enumerate}
+
+		After everything is said and done, there were 4 page faults in the beginning, and 2 extra page faults (one at step 5, and one at step 8). In total there were 6 page faults.
 	\item
 	\item 
 	\item
