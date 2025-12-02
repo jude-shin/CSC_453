@@ -19,9 +19,8 @@ Building the application: "make all"
 ------------------------------------
 
 make all
-/bin/gcc -Wall -g -c minls.c -o minls.o
+/bin/gcc -Wall -g -c disk.c -o disk.o
 /bin/gcc -Wall -g -o minls minls.o disk.o print.o input.o
-/bin/gcc -Wall -g -c minget.c -o minget.o
 /bin/gcc -Wall -g -o minget minget.o disk.o print.o input.o
 
 ---------------
@@ -210,25 +209,25 @@ Running the application
        Cmd: minls -p 0 -s 0 HardDisk                       
  20 -- subpart., no filename s2                                         ok.
        Cmd: minls -p 0 -s 2 HardDisk                       
- 21 -- subpart., w/filename                                         FAILED.
+ 21 -- subpart., w/filename                                             ok.
        Cmd: minls -p 0 -s 2 HardDisk /home/pnico/Message   
  22 -- subpart., w/bad filename                                         ok.
        Cmd: minls -p 0 -s 0 HardDisk /home/pnico/Message   
  23 -- directories                                                      ok.
        Cmd: minls Files /Files                             
- 24 -- directories                                                  FAILED.
+ 24 -- directories                                                      ok.
        Cmd: minls Files /Files/0000_Zones                  
- 25 -- directories                                                  FAILED.
+ 25 -- directories                                                      ok.
        Cmd: minls Files /Files/0000_Zone                   
- 26 -- directories                                                  FAILED.
+ 26 -- directories                                                      ok.
        Cmd: minls Files /Files/0007_Zones                  
- 27 -- directories                                                  FAILED.
+ 27 -- directories                                                      ok.
        Cmd: minls Files /Files/0010_Zones                  
- 28 -- directories                                                  FAILED.
+ 28 -- directories                                                      ok.
        Cmd: minls Files /Files/1032_Zones                  
  29 -- directories                                                      ok.
        Cmd: minls Files /DeepPaths/a/b/c/d/e/i/j/k/Files   
- 30 -- directories                                                  FAILED.
+ 30 -- directories                                                      ok.
        Cmd: minls Files /DeepPaths/a/b/c/d/e/i/j/k/Files/Message 
  31 -- multi-zone directory                                             ok.
        Cmd: minls BigDirectories                           
@@ -240,17 +239,17 @@ Running the application
        Cmd: minls BigIndirectDirs Level1/Level2/LastFile   
  35 -- directories-deleted                                              ok.
        Cmd: minls Files /Deleted                           
- 36 -- directories-ok file                                          FAILED.
+ 36 -- directories-ok file                                              ok.
        Cmd: minls Files /Deleted/File-10                   
  37 -- directories-deleted file                                         ok.
        Cmd: minls Files /Deleted/File-05                   
  38 -- 1k blocks. dir.                                                  ok.
        Cmd: minls SmallBlocks--1k                          
- 39 -- 1k blocks. file.                                             FAILED.
+ 39 -- 1k blocks. file.                                                 ok.
        Cmd: minls SmallBlocks--1k DirTwo/FileTwo           
  40 -- 16k zones. dir.                                                  ok.
        Cmd: minls BigZones-16k                             
- 41 -- 16k zones. file.                                             FAILED.
+ 41 -- 16k zones. file.                                                 ok.
        Cmd: minls BigZones-16k /DirOne/FileTwo             
  42 -- 64k zones. dir                                               FAILED.
        Cmd: minls ReallyBigZones-64k                       
@@ -258,15 +257,15 @@ Running the application
        Cmd: minls ReallyBigZones-64k DirTwo/FileOne        
  44 -- 64k zones. longpath                                          FAILED.
        Cmd: minls ReallyBigZones-64k /./.././../DirTwo/FileOne 
- 45 -- Permissions 777                                              FAILED.
+ 45 -- Permissions 777                                                  ok.
        Cmd: minls Files /Permissions/777                   
- 46 -- Permissions 755                                              FAILED.
+ 46 -- Permissions 755                                                  ok.
        Cmd: minls Files /Permissions/755                   
- 47 -- Permissions 753                                              FAILED.
+ 47 -- Permissions 753                                                  ok.
        Cmd: minls Files /Permissions/753                   
- 48 -- Permissions 357                                              FAILED.
+ 48 -- Permissions 357                                                  ok.
        Cmd: minls Files /Permissions/357                   
- 49 -- Permissions 000                                              FAILED.
+ 49 -- Permissions 000                                                  ok.
        Cmd: minls Files /Permissions/000                   
  50 -- unpartitioned, w/filename                                        ok.
        Cmd: minget TestImage /Hello                         
@@ -342,11 +341,11 @@ Running the application
        Cmd: minget Files /Deleted/File-05 /dev/stdout       
  86 -- 1k blocks. dir.                                                  ok.
        Cmd: minls SmallBlocks--1k                          
- 87 -- 1k blocks. file.                                             FAILED.
+ 87 -- 1k blocks. file.                                                 ok.
        Cmd: minls SmallBlocks--1k DirTwo/FileTwo           
  88 -- 16k zones. dir.                                                  ok.
        Cmd: minls BigZones-16k                             
- 89 -- 16k zones. file.                                             FAILED.
+ 89 -- 16k zones. file.                                                 ok.
        Cmd: minls BigZones-16k /DirOne/FileTwo             
  90 -- 64k zones. dir                                               FAILED.
        Cmd: minls ReallyBigZones-64k                       
@@ -421,101 +420,10 @@ Running the application
 125 -- minls: long file name, partial match                             ok.
        Cmd: minls indirectblock ThisNameHasSixtyCharactersItReallyDoesThatsALotReallyItIsBooTooLong 
    =======================================================================
-Failure. (75/125 passed)
+Failure. (92/125 passed)
 
 Actual ouput from tests and detailed results are below.
 
-
-
------------------
-21) subpart., w/filename:
-     minls -p 0 -s 2 /home/pn-cs453/Given/Asgn5/Images/HardDisk /home/pnico/Message 
------------------
-Test program output:
--rw-r--r--        72 Message
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rw-r--r--        72 home/pnico/Message
----
-> -rw-r--r--        72 Message
-
-
------------------
-24) directories:
-     minls /home/pn-cs453/Given/Asgn5/Images/Files /Files/0000_Zones 
------------------
-Test program output:
--rw-r--r--         0 0000_Zones
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rw-r--r--         0 Files/0000_Zones
----
-> -rw-r--r--         0 0000_Zones
-
-
------------------
-25) directories:
-     minls /home/pn-cs453/Given/Asgn5/Images/Files /Files/0000_Zone 
------------------
-Test program output:
--rw-r--r--      4096 0000_Zone
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rw-r--r--      4096 Files/0000_Zone
----
-> -rw-r--r--      4096 0000_Zone
-
-
------------------
-26) directories:
-     minls /home/pn-cs453/Given/Asgn5/Images/Files /Files/0007_Zones 
------------------
-Test program output:
--rw-r--r--     28672 0007_Zones
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rw-r--r--     28672 Files/0007_Zones
----
-> -rw-r--r--     28672 0007_Zones
-
-
------------------
-27) directories:
-     minls /home/pn-cs453/Given/Asgn5/Images/Files /Files/0010_Zones 
------------------
-Test program output:
--rw-r--r--     40960 0010_Zones
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rw-r--r--     40960 Files/0010_Zones
----
-> -rw-r--r--     40960 0010_Zones
-
-
------------------
-28) directories:
-     minls /home/pn-cs453/Given/Asgn5/Images/Files /Files/1032_Zones 
------------------
-Test program output:
--rw-r--r--   4227072 1032_Zones
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rw-r--r--   4227072 Files/1032_Zones
----
-> -rw-r--r--   4227072 1032_Zones
-
-
------------------
-30) directories:
-     minls /home/pn-cs453/Given/Asgn5/Images/Files /DeepPaths/a/b/c/d/e/i/j/k/Files/Message 
------------------
-Test program output:
--rw-r--r--        47 Message
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rw-r--r--        47 DeepPaths/a/b/c/d/e/i/j/k/Files/Message
----
-> -rw-r--r--        47 Message
 
 
 -----------------
@@ -1051,46 +959,7 @@ Program exited with bad status: 1
 Test program output:
 Submitted program's stderr:
 error traversing the path: directory not found!
-The path [Level1] was not found!
-
-
------------------
-36) directories-ok file:
-     minls /home/pn-cs453/Given/Asgn5/Images/Files /Deleted/File-10 
------------------
-Test program output:
--rwxr-xr-x       181 File-10
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rwxr-xr-x       181 Deleted/File-10
----
-> -rwxr-xr-x       181 File-10
-
-
------------------
-39) 1k blocks. file.:
-     minls /home/pn-cs453/Given/Asgn5/Images/SmallBlocks--1k DirTwo/FileTwo  
------------------
-Test program output:
--rwxr-xr-x     20596 FileTwo
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rwxr-xr-x     20596 DirTwo/FileTwo
----
-> -rwxr-xr-x     20596 FileTwo
-
-
------------------
-41) 16k zones. file.:
-     minls /home/pn-cs453/Given/Asgn5/Images/BigZones-16k /DirOne/FileTwo 
------------------
-Test program output:
--rwxr-xr-x       181 FileTwo
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rwxr-xr-x       181 DirOne/FileTwo
----
-> -rwxr-xr-x       181 FileTwo
+The path [Level1/Level2/LastFile/] was not found!
 
 
 -----------------
@@ -1116,7 +985,7 @@ Program exited with bad status: 1
 Test program output:
 Submitted program's stderr:
 error traversing the path: directory not found!
-The path [DirTwo] was not found!
+The path [DirTwo/] was not found!
 
 
 -----------------
@@ -1128,72 +997,7 @@ Program exited with bad status: 1
 Test program output:
 Submitted program's stderr:
 error traversing the path: directory not found!
-The path [/.] was not found!
-
-
------------------
-45) Permissions 777:
-     minls /home/pn-cs453/Given/Asgn5/Images/Files /Permissions/777 
------------------
-Test program output:
--rwxrwxrwx       181 777
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rwxrwxrwx       181 Permissions/777
----
-> -rwxrwxrwx       181 777
-
-
------------------
-46) Permissions 755:
-     minls /home/pn-cs453/Given/Asgn5/Images/Files /Permissions/755 
------------------
-Test program output:
--rwxr-xr-x       181 755
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rwxr-xr-x       181 Permissions/755
----
-> -rwxr-xr-x       181 755
-
-
------------------
-47) Permissions 753:
-     minls /home/pn-cs453/Given/Asgn5/Images/Files /Permissions/753 
------------------
-Test program output:
--rwxr-x-wx       181 753
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rwxr-x-wx       181 Permissions/753
----
-> -rwxr-x-wx       181 753
-
-
------------------
-48) Permissions 357:
-     minls /home/pn-cs453/Given/Asgn5/Images/Files /Permissions/357 
------------------
-Test program output:
---wxr-xrwx       181 357
-Diffs: ( < Reference > Testfile ):
-1c1
-< --wxr-xrwx       181 Permissions/357
----
-> --wxr-xrwx       181 357
-
-
------------------
-49) Permissions 000:
-     minls /home/pn-cs453/Given/Asgn5/Images/Files /Permissions/000 
------------------
-Test program output:
-----------       181 000
-Diffs: ( < Reference > Testfile ):
-1c1
-< ----------       181 Permissions/000
----
-> ----------       181 000
+The path [./] was not found!
 
 
 -----------------
@@ -1221,32 +1025,6 @@ The path [Level1] was not found!
 
 
 -----------------
-87) 1k blocks. file.:
-     minls /home/pn-cs453/Given/Asgn5/Images/SmallBlocks--1k DirTwo/FileTwo  
------------------
-Test program output:
--rwxr-xr-x     20596 FileTwo
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rwxr-xr-x     20596 DirTwo/FileTwo
----
-> -rwxr-xr-x     20596 FileTwo
-
-
------------------
-89) 16k zones. file.:
-     minls /home/pn-cs453/Given/Asgn5/Images/BigZones-16k /DirOne/FileTwo 
------------------
-Test program output:
--rwxr-xr-x       181 FileTwo
-Diffs: ( < Reference > Testfile ):
-1c1
-< -rwxr-xr-x       181 DirOne/FileTwo
----
-> -rwxr-xr-x       181 FileTwo
-
-
------------------
 90) 64k zones. dir:
      minls /home/pn-cs453/Given/Asgn5/Images/ReallyBigZones-64k 
 -----------------
@@ -1269,7 +1047,7 @@ Program exited with bad status: 1
 Test program output:
 Submitted program's stderr:
 error traversing the path: directory not found!
-The path [DirTwo] was not found!
+The path [DirTwo/] was not found!
 
 
 -----------------
@@ -1281,7 +1059,7 @@ Program exited with bad status: 1
 Test program output:
 Submitted program's stderr:
 error traversing the path: directory not found!
-The path [/.] was not found!
+The path [./] was not found!
 
 
 -----------------
@@ -1312,7 +1090,7 @@ M-^W.M-G?1M-^AKM-rM-_;M-<M-U&f+M-yM-/(M-A^QM-_kM-W&M-5^^(M-!M-#M-^JM-6!M-}ZVM-s^
 B^AM-^]^@XM-^]OM-@M-VL^]*$i0M-UM-`M-yM-p_"M-3^WM-PM-^SM-7$M-]M-s^K&C:/home/pnico/bin/iolimit.Linux.x86_64: output character limit (2048) exceeded.
 Diffs: ( < Reference > Testfile ):
  --- Output limited to 10 lines. (There would be too much.) ---
-Binary files /home/pn-cs453/Given/Asgn5/Expected/94 and testminfs.17188 differ
+Binary files /home/pn-cs453/Given/Asgn5/Expected/94 and testminfs.78302 differ
 
 
 -----------------
@@ -1330,7 +1108,7 @@ M-|*M-`^D^FM-ZM-3^]M-`}M-h	M-9M-^[M-bM-TbM-NnM-S"^RmM-QM-FM6PM-LM-$M-^_~M-3M-L^Z
 M-5G~M-g7M-^TM-(M-FM-Jxz#M-]o;M-^P\M-^\FNBM-oM-`^^M-oM-^UM-h^O^RM-7M-[^MM-^DnoGM-_M-~M--pM-^]M-fM-^R_+M-tM-!vM-oaM-IM- O]M-}(&^?^LM-hcM-NM-IjM-$M-Q*wrlCvM-\M-mGM-WM-BM-BM-^ZwM-^K^EM-K6gM-HM-+'M-%XM-^VM-,M-^RM-}c^Hi^DM-yM-OM-HM-*[M-^UBqfM-^I7#M-LM-1>M-fM-DM-IA^V^_*m^?aM-^KM-`M--^_^]M-^?^G.M-rM-vM-VM-M'M-CZM-vM-^L/^[M-^Dh^AM-^KM-&MM-J}7_M-^IKM-voM-^V'M-h8M-tM-vM--M--^EM-3M-Y>M-Kou>nM-?@N/home/pnico/bin/iolimit.Linux.x86_64: output character limit (2048) exceeded.
 Diffs: ( < Reference > Testfile ):
  --- Output limited to 10 lines. (There would be too much.) ---
-Binary files /home/pn-cs453/Given/Asgn5/Expected/95 and testminfs.17188 differ
+Binary files /home/pn-cs453/Given/Asgn5/Expected/95 and testminfs.78302 differ
 
 
 -----------------
@@ -1359,7 +1137,7 @@ M-YM-^D>M-^ M-pvIM-d^]L^?>M-(M-XM-g#XvM-N{M-#^SM-nwM-^O9_M-@M-\M-!M-^\6TM-kM-qM-
 D{M-,M-dM-^ZM-YM-a^AhM-c]@M-/^D:YhM-^JgM-*M-XmM-0M-VJ^ZM-cM-&M-^GM-^\ M-wM-5^:M-{M-1M-hB^TOM-bt^DM-mKM-Ic3M-!SM-^LM-kK^PM-~XS*IM-'FM-y,M-wdM-ZzM-wM-^^eeQyM-PMM-jM-LM-vM-^\M-^JUM-pmLM-^MM-^HM-^KM-|aM-^]TM-SM-'$^H^LM-)$M-LH	cM-$^G+b3^F7M-klM-;M-(DZ^UWM-*fM-^TQK(M-^YM-^]M-3M-^^Ve^T^BM-vPPM/home/pnico/bin/iolimit.Linux.x86_64: output character limit (2048) exceeded.
 Diffs: ( < Reference > Testfile ):
  --- Output limited to 10 lines. (There would be too much.) ---
-Binary files /home/pn-cs453/Given/Asgn5/Expected/97 and testminfs.17188 differ
+Binary files /home/pn-cs453/Given/Asgn5/Expected/97 and testminfs.78302 differ
 Submitted program's stderr:
  --- Output limited to 10 lines. (There would be too much.) ---
 File is too large to print. Exausted direct, indirect, and double indirect zones. Size: (4227072)
@@ -1393,7 +1171,7 @@ M-^W.M-G?1M-^AKM-rM-_;M-<M-U&f+M-yM-/(M-A^QM-_kM-W&M-5^^(M-!M-#M-^JM-6!M-}ZVM-s^
 B^AM-^]^@XM-^]OM-@M-VL^]*$i0M-UM-`M-yM-p_"M-3^WM-PM-^SM-7$M-]M-s^K&C:/home/pnico/bin/iolimit.Linux.x86_64: output character limit (2048) exceeded.
 Diffs: ( < Reference > Testfile ):
  --- Output limited to 10 lines. (There would be too much.) ---
-Binary files /home/pn-cs453/Given/Asgn5/Expected/99 and testminfs.17188 differ
+Binary files /home/pn-cs453/Given/Asgn5/Expected/99 and testminfs.78302 differ
 
 
 -----------------
@@ -1411,7 +1189,7 @@ M-|*M-`^D^FM-ZM-3^]M-`}M-h	M-9M-^[M-bM-TbM-NnM-S"^RmM-QM-FM6PM-LM-$M-^_~M-3M-L^Z
 M-5G~M-g7M-^TM-(M-FM-Jxz#M-]o;M-^P\M-^\FNBM-oM-`^^M-oM-^UM-h^O^RM-7M-[^MM-^DnoGM-_M-~M--pM-^]M-fM-^R_+M-tM-!vM-oaM-IM- O]M-}(&^?^LM-hcM-NM-IjM-$M-Q*wrlCvM-\M-mGM-WM-BM-BM-^ZwM-^K^EM-K6gM-HM-+'M-%XM-^VM-,M-^RM-}c^Hi^DM-yM-OM-HM-*[M-^UBqfM-^I7#M-LM-1>M-fM-DM-IA^V^_*m^?aM-^KM-`M--^_^]M-^?^G.M-rM-vM-VM-M'M-CZM-vM-^L/^[M-^Dh^AM-^KM-&MM-J}7_M-^IKM-voM-^V'M-h8M-tM-vM--M--^EM-3M-Y>M-Kou>nM-?@N/home/pnico/bin/iolimit.Linux.x86_64: output character limit (2048) exceeded.
 Diffs: ( < Reference > Testfile ):
  --- Output limited to 10 lines. (There would be too much.) ---
-Binary files /home/pn-cs453/Given/Asgn5/Expected/100 and testminfs.17188 differ
+Binary files /home/pn-cs453/Given/Asgn5/Expected/100 and testminfs.78302 differ
 
 
 -----------------
@@ -1440,7 +1218,7 @@ M-YM-^D>M-^ M-pvIM-d^]L^?>M-(M-XM-g#XvM-N{M-#^SM-nwM-^O9_M-@M-\M-!M-^\6TM-kM-qM-
 D{M-,M-dM-^ZM-YM-a^AhM-c]@M-/^D:YhM-^JgM-*M-XmM-0M-VJ^ZM-cM-&M-^GM-^\ M-wM-5^:M-{M-1M-hB^TOM-bt^DM-mKM-Ic3M-!SM-^LM-kK^PM-~XS*IM-'FM-y,M-wdM-ZzM-wM-^^eeQyM-PMM-jM-LM-vM-^\M-^JUM-pmLM-^MM-^HM-^KM-|aM-^]TM-SM-'$^H^LM-)$M-LH	cM-$^G+b3^F7M-klM-;M-(DZ^UWM-*fM-^TQK(M-^YM-^]M-3M-^^Ve^T^BM-vPPM/home/pnico/bin/iolimit.Linux.x86_64: output character limit (2048) exceeded.
 Diffs: ( < Reference > Testfile ):
  --- Output limited to 10 lines. (There would be too much.) ---
-Binary files /home/pn-cs453/Given/Asgn5/Expected/102 and testminfs.17188 differ
+Binary files /home/pn-cs453/Given/Asgn5/Expected/102 and testminfs.78302 differ
 Submitted program's stderr:
  --- Output limited to 10 lines. (There would be too much.) ---
 File is too large to print. Exausted direct, indirect, and double indirect zones. Size: (4227072)
@@ -1457,7 +1235,7 @@ Before the hole.
 
 Diffs: ( < Reference > Testfile ):
  --- Output limited to 10 lines. (There would be too much.) ---
-Binary files /home/pn-cs453/Given/Asgn5/Expected/103 and testminfs.17188 differ
+Binary files /home/pn-cs453/Given/Asgn5/Expected/103 and testminfs.78302 differ
 
 
 -----------------
@@ -1527,7 +1305,7 @@ Before the hole.
 
 Diffs: ( < Reference > Testfile ):
  --- Output limited to 10 lines. (There would be too much.) ---
-Binary files /home/pn-cs453/Given/Asgn5/Expected/108 and testminfs.17188 differ
+Binary files /home/pn-cs453/Given/Asgn5/Expected/108 and testminfs.78302 differ
 
 
 -----------------
@@ -1620,7 +1398,7 @@ Program exited with bad status: 1
 Test program output:
 Submitted program's stderr:
 error traversing the path: directory not found!
-The path [ThisNameHasSixtyCharactersItReallyDoesThatsALotReallyItIsBoo] was not found!
+The path [ThisNameHasSixtyCharactersItReallyDoesThatsALotReallyItIsBoo/] was not found!
 FAILED.
 
 
