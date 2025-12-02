@@ -97,6 +97,8 @@
 
 	\item A directory entry is a struct that holds an inode number, and then a name that is associated with it. This means that the actual data is not stored within the directory inode, rather pointers to inodes that do have the data. Reading a directory would mean going through the zones and reading those directory entry structs. In comparison, reading a regular file would be reading the data in the zones with no structs. ``Read the raw directories"is an ambiguous term. 
 
+	\item If the first part of each UNIX file was kept in the same disk block as it's i-node, this would reduce the  time it would take to seek for small files. If the file is small, then a seek would take a lot of time in comparison to the rest of the time it would take to read the file. If the file being read was large, that seek time would be less of an impact on the file in comparison to the time it would take to read the rest of that large file.If the first data block was right next to the inode, then the seek wouldn't occur initially, which may potentially save some time.
+
 	\item The hit rate $h$ is the number of blocks found in the cache. If there is 1 block in the cache and 4 total blocks on the disk, then the hit rate is 0.25. That means that the ``not hit rate" is $1-h$; in our example, the ``not hit rate" would be 0.75. 
 
 		If {\tt h} is 0, then there is no chance that there is a block in the cache. The block will always be read from the disk. This end of the plot should show a mean time of 40ms. On the other hand, if {\tt h} is 1, then there will always be a hit, so the plot should show a mean time of 10ms. Let's say that {\tt h} is 0.5. That means that 1/2 of the requests are handled with the cache, and 1/2 of them are handled with the disk. Just multiply the hit rate with the hit time to get the mean time. 
@@ -119,7 +121,14 @@
     \end{figure}
 
 	\item
-	\item
-	\item
+		For every block read, we must account for a seek, then the rotational latency, and then the time to transfer.I am not sure why the cylinders, tracks and blocks are given. They don't seem to change the problem if we are given the rest of the seek times.
+		\begin{enumerate}
+			\item: No effort to cluster blocks: (Average seek of 5 milliseconds)
+				The time per block would be 5 ms for the seek, 10 ms for the rotational latency, and 0.02 ms for the actual data transfer. In total that is 15.02 ms needed per one block read. For 100 blocks, that will result in 1,502 ms to read the whole file.
+			\item: Some effort to cluster blocks: (Average seek of 100 microseconds, aka 0.1 milliseconds)
+				Only the first read will be slow. This reflects the time to read a block, which would take 15.02 ms. The remaining 99 blocks will be more efficient. In those block reads, the time to seek would change to 0.1 ms, resulting in a time of 10.12 ms needed per block. For 99 blocks, that will result in 1,011.88 ms. Adding that to the initial seek of 15.02 ms, you get a grand total of 1,016.9 ms to read the entire file.
+		\end{enumerate}
+
+	\item Carolyn's answer does not make that much sense. Even if it is faster to fetch a new copy of the inode, you would still have to go back and clean the old inode up to prevent things from trying to point to the old inode. If there is a directory with a bunch of directory entries that point to the old inode, then you would have to go an update those numbers to be the new inode. How do you know what points to a particular inode? For all you know, all the files could be links to said inode number. It is best to not make a duplicate inode with a new inode number, and just seek to the original inode.
 \end{enumerate} 
 \end{document}
