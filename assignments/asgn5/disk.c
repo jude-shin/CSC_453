@@ -380,6 +380,7 @@ uint32_t find_inode(
     /* Make sure that there isn't a filename with a length that is greater than
        DIR_NAME_SIZE*/
     if (strlen(token) > DIR_NAME_SIZE) {
+      fprintf(stderr, "encountered a name greater than %d!\n", DIR_NAME_SIZE);
       exit(EXIT_FAILURE);
     }
 
