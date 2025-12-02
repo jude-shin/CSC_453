@@ -562,6 +562,8 @@ bool search_indirect_zone(
     return false;
   }
 
+  fprintf(stdout, "Searching indirect zone.\n");
+
   /* Start reading the first block in that indirect zone. */
   if (fseek(
         mfs->file, 
@@ -622,6 +624,8 @@ bool search_two_indirect_zone(
     return false;
   }
 
+  fprintf(stdout, "Searching double indirect zone.\n");
+
   /* Start reading the first block in the double indirect zone. */
   if (fseek(
         mfs->file, 
@@ -633,10 +637,10 @@ bool search_two_indirect_zone(
 
   /* How many zone numbers we are going to read (how many fit in the first block
      of the indirect zone) */
-  int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+  int total_two_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
   /* For every zone number in that first double indirect inode block. */
-  for(i = 0; i < total_indirect_inodes; i++) {
+  for(i = 0; i < total_two_indirect_inodes; i++) {
     /* The zone number that holds the indierct zone numbers. */
     uint32_t two_indirect_zone_number;
    
