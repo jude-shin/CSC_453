@@ -29,7 +29,8 @@
 			\item The virtual address of 4100 is 100 bytes away from the start of the virtual page in the range 4K-8K. This means that it will be 100 bytes away from the associated page in the physical memory. The virtual page 4K-8K maps to the physical page 4K-8K. The virtual address 4100 will be mapped to the physical address 4100.
 			\item The virtual address of 8300  is 300 bytes away from the start of the virtual page in the range 8K-12K. This means that it will be 300 bytes away from the associated page in the physical memory. The virtual page 8K-12K maps to the physical page 24K-28K. The virtual address 8300 will be mapped to the physical address 24300.
 		\end{enumerate}
-	\item
+	\item There are 32 bits in an address total. If 9 are used to locate the top level page table field, and 11 bits are used to reference the second level page table field, then there are only 12 remaining bits left to search within that page. [32 - 9 - 11 = 12]. If we only have 12 bits to search through the page, there can only be 2\^12 bits total. This allows us to locate the particular page, as well as look at a particular bit of the page. Therefore, there are only 4096 bits in one page. [2\^12 = 4096 = 4KB]. 
+		To calculate the number of pages in the address space, we can only have 9+11 bits to identify a page. This leaves us with 2\^20 unique page tables that we can use. [2\^(9+11) = 2\^20 = 1048576 pages].
 	\item
 	\item
 	\item
