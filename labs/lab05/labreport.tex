@@ -32,6 +32,24 @@
 	\item There are 32 bits in an address total. If 9 are used to locate the top level page table field, and 11 bits are used to reference the second level page table field, then there are only 12 remaining bits left to search within that page. [32 - 9 - 11 = 12]. If we only have 12 bits to search through the page, there can only be 2\^12 bits total. This allows us to locate the particular page, as well as look at a particular bit of the page. Therefore, there are only 4096 bits in one page. [2\^12 = 4096 = 4KB]. 
 		To calculate the number of pages in the address space, we can only have 9+11 bits to identify a page. This leaves us with 2\^20 unique page tables that we can use. [2\^(9+11) = 2\^20 = 1048576 pages].
 	\item
+		\begin{enumerate}
+			\item NRU stands for ``Not Recently Used", which means that it will replace the lowest-numbered non-empty class (if there are multiple in the same class, it chooses at random). The classes are defined as follows: 
+
+				{\tt Class 0: not referenced, not modified.
+
+				Class 1: not referenced, modified.
+
+				Class 2: referenced, not modified.
+
+				Class 3: referenced, modified.}
+
+
+				This means that Page 0 (the one that has not been referenced, nor modified at the time of loading) will be chosen to be replaced.
+			\item FIFO stands for ``First In First Out", which means it will replace the oldest page in terms of when it was loaded. Page 2 was loaded 120 clock ticks from the beginning (of time I suppose). This means that it was loaded the earliest, and will be replaced.
+			\item LRU stands for ``Last Recently Used", which means that it will replace the page that was accessed the longest time ago (aka, the Last Ref. value will be lower). Page 1 has the lowest Last Ref. time, therefore this page will be picked to be replaced. 
+			\item ``Second Chance" is a page replacement algorithm that is a slight modification to the FIFO algorithm. It replaces the oldest page (just like FIFO), however, when the oldest page is chosen, it takes a look at the R bit. If the R bit is set to 1, that means that it was referenced recently, so set the R bit to 0 and put it in the back of the queue of pages to search. Continue the search through the pages from oldest to newest. If we find an old page where the R bit is set to 0, then feel free to replace the page. 
+				In our case, page 2 was the oldest page, but it had an R bit set. Put it to the back of the line an look at the next oldest page, which is page 0. page 0's R bit is not set, therefore it is chosen to be replaced.
+		\end{enumerate}
 	\item
 	\item
 	\item 
