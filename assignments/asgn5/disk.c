@@ -377,6 +377,12 @@ uint32_t find_inode(
   /* Parse all of the directories that the user gave by traversing through the
      directories till we are at the last inode. */
   while(token != NULL) {
+    /* Make sure that there isn't a filename with a length that is greater than
+       DIR_NAME_SIZE*/
+    if (strlen(token) > DIR_NAME_SIZE) {
+      exit(EXIT_FAILURE);
+    }
+
     /* copy the string name to cur_name so we can keep track of the last
        processed name. */
     if (cur_name != NULL) {
