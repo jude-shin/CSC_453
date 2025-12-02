@@ -1,5 +1,10 @@
 \documentclass[11pt]{article}
 
+\usepackage{graphicx}
+
+% graphicx points to my assets folder with all the images.
+\graphicspath{ {assets/} }
+
 % Use wide margins, but not quite so wide as fullpage.sty
 \marginparwidth 0.5in 
 \oddsidemargin 0.25in 
@@ -87,12 +92,31 @@
 		After everything happens, there are 4 page faults for the beginning, and then 4 more page faults in later steps. In total there were 8 page faults using LRU.
 
 	\item 
-		If in the 60 seconds there were 15,000 page faults, then out of those 60 seconds, $(2,000μs * 15,000 = 30,000,000μs = 30.000s)$ would be spent handling the page faults. The remaining 30 seconds would be the time the program actually takes. If the memory was doubled, then there would be half as many page faults that will occur, so the original 15,000 page faults would get cut in half to 7,500 page faults.
-		If it takes 2,000 microseconds to handle a page fault, and there now only being 7,500 page faults because of the doubled memory, the total time spent handling the page faults would be $2,000μs * 7,500 = 15,000,000μs$. Adding that to the raw time the program takes to execute (which was 30,000,000μs) would leave us with 45,000,000μs, or 45 seconds in total.
+		If in the 60 seconds there were 15,000 page faults, then out of those 60 seconds, $(2,000 microseconds * 15,000 = 30,000,000 microseconds = 30.000s)$ would be spent handling the page faults. The remaining 30 seconds would be the time the program actually takes. If the memory was doubled, then there would be half as many page faults that will occur, so the original 15,000 page faults would get cut in half to 7,500 page faults.
+		If it takes 2,000  microseconds to handle a page fault, and there now only being 7,500 page faults because of the doubled memory, the total time spent handling the page faults would be $2,000 microseconds * 7,500 = 15,000,000 microseconds$. Adding that to the raw time the program takes to execute (which was 30,000,000 microseconds) would leave us with 45,000,000 microseconds, or 45 seconds in total.
 
 	\item A directory entry is a struct that holds an inode number, and then a name that is associated with it. This means that the actual data is not stored within the directory inode, rather pointers to inodes that do have the data. Reading a directory would mean going through the zones and reading those directory entry structs. In comparison, reading a regular file would be reading the data in the zones with no structs. ``Read the raw directories"is an ambiguous term. 
 
-	\item
+	\item The hit rate $h$ is the number of blocks found in the cache. If there is 1 block in the cache and 4 total blocks on the disk, then the hit rate is 0.25. That means that the ``not hit rate" is $1-h$; in our example, the ``not hit rate" would be 0.75. 
+
+		If {\tt h} is 0, then there is no chance that there is a block in the cache. The block will always be read from the disk. This end of the plot should show a mean time of 40ms. On the other hand, if {\tt h} is 1, then there will always be a hit, so the plot should show a mean time of 10ms. Let's say that {\tt h} is 0.5. That means that 1/2 of the requests are handled with the cache, and 1/2 of them are handled with the disk. Just multiply the hit rate with the hit time to get the mean time. 
+
+		If you multiply the time per request with the rate, you can get the mean time. The following formula can be used to represent the overall mean time. This formula can be seen in Figure \ref{fig:graph}.
+
+		$T(h) = (40ms)*(1-h) + (1ms)*(h)$ \textrightarrow 
+
+		$T(h) = (40)*(1-h) + h$ \textrightarrow 
+
+		$T(h) = (40-40h) + h$ \textrightarrow 
+
+		$T(h) = 40 - 39h$ 
+
+    \begin{figure}[htbp]
+        \centering
+        \includegraphics[width=0.8\linewidth]{hitrate}
+        \caption{x-axis representing h in the domain of $[0, 1]$, and the y axis representing the mean time in milliseconds}
+        \label{fig:graph}
+    \end{figure}
 
 	\item
 	\item
