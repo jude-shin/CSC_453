@@ -385,7 +385,7 @@ bool get_block_contents(
     }
 
     /* Print this to the stream. */
-    fprintf(s, "%c", c);
+    fwrite(&c, sizeof(char), 1, s);
 
     /* Note that we read another byte. If we have read all of them, then we
        are done reading, so finish with a new line and return. */
