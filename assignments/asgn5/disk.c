@@ -9,9 +9,6 @@
 #include "disk.h"
 #include "print.h"
 
-/* TODO: in the helpers, don't pass in the entire context, just pass in the 
-   variables that are needed. */
-
 /* TODO: instead of passing in the zone and block numbers, compute the zone 
    numbers outside once, and pass along the zone addresses */
 
@@ -198,8 +195,6 @@ void open_mfs(
  * @return void.
  */
 void close_mfs(min_fs* mfs) {
-  /* TODO: put the malloced canonicalized string in here? then we can just
-     close everything, cleaning up the malloced thing? */
   if (fclose(mfs->file) == -1) {
     fprintf(stderr, "Error close(2)ing the imagefile: %d", errno);
     exit(EXIT_FAILURE);
@@ -348,7 +343,7 @@ void duplicate_inode(min_fs* mfs, uint32_t inode_addr, min_inode* inode) {
  * NULL, the name is not updated. 
  * @return the address to the located inode. If not found, return 0;
    */
-uint32_t find_inode(
+uint32_t ls_inode(
     min_fs* mfs, 
     min_inode* inode,
     char* path,
@@ -356,7 +351,6 @@ uint32_t find_inode(
     unsigned char* cur_name) {
 
   /* The tokenized next directory entry name that we are looking for. */
-  /* TODO: try strtok_r?*/
   char* token = strtok(path, DELIMITER);
 
   /* The current inode we are processing. */
@@ -655,7 +649,6 @@ bool search_two_indirect_zone(
      block of the indirect zone) */
   uint32_t num_indirect_zone_nums = mfs->sb.blocksize / sizeof(uint32_t);
 
-  /* TODO: address*/
   uint32_t zone_addr = mfs->partition_start + (zone_num*mfs->zone_size);
 
   /* For every zone number in that first double indirect inode block. */

@@ -188,7 +188,7 @@ void duplicate_inode(min_fs* mfs, uint32_t inode_addr, min_inode* inode);
    was found. Otherwise, return false. The canonicalized path that was traversed
    is also built as this function progresses, as well as the cur_name being 
    updated. */
-uint32_t find_inode(
+uint32_t ls_inode(
     min_fs* mfs, 
     min_inode* inode,
     char* path,
