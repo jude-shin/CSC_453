@@ -90,25 +90,21 @@ int main (int argc, char *argv[]) {
   }
   /* If there was a dst file, try to write it there. */
   else {
-    int fd;
     struct stat sb;
 
-    if (fstatat(fd, minix_dst_path, &sb, AT_SYMLINK_NOFOLLOW) == -1) {
+    if (stat(minix_dst_path, &sb) == -1) {
       perror("error fstatat on dst path.\n");
-      close(fd);
       exit(EXIT_FAILURE);
     }
 
     if (!S_ISREG(sb.st_mode)) {
       fprintf(stderr, "dst is not a regular file\n");
-      close(fd);
       exit(EXIT_FAILURE);
     }
 
-    FILE *output = fdopen(fd, "wb");
+    FILE *output = fopen(minix_dst_path, "wb");
     if (!output) {
-      perror("fdopen");
-      close(fd);
+      perror("error opening dst path.\n");
       exit(EXIT_FAILURE);
     }
 
