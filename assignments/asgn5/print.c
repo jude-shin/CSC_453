@@ -351,6 +351,25 @@ void get_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
       inode->size);
 }
 
+void fill_hole(
+    FILE* s, 
+    min_inode* inode, 
+    uint32_t hs, /* The size of a hole */
+    uint32_t* bytes_read) {
+
+  /* Update the bytes read. We know that since this is a hole, then this must
+     be less than the total bytes read, and therefore will not go over. */
+  *bytes_read = *bytes_read + hs;
+
+  /* Write a bunch of zeros. */
+  if (fwrite(0, sizeof(char), hs, s) < hs) {
+    fprintf(stderr, "error filling hole: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+
+  // TODO: return (*bytes_read >= inode->size);
+}
+
 bool get_block_contents(
     FILE* s, 
     min_fs* mfs, 
@@ -425,13 +444,16 @@ bool get_direct_zone_contents(
     uint32_t zone_num, 
     uint32_t* bytes_read) {
 
-  // /* We encountered a hole... */
-  // if (zone_num == 0) {
-  //   /* Keep the hole still takes up space, just don't read any of it as it 
-  //      will just be zeros. */
-  //   *bytes_read = *bytes_read + mfs->zone_size;
-  //   return (*bytes_read >= inode->size);
-  // }
+  /* We encountered a hole... */
+  if (zone_num == 0) {
+    /* Keep the hole still takes up space, just don't read any of it as it will
+       just be zeros. */
+    uint32_t hs = mfs->zone_size;
+
+    fill_hole(s, inode, hs, bytes_read);
+
+    return false;
+  }
 
   /* get all of the blocks in this zone. */
   uint32_t num_blocks = mfs->zone_size / mfs->sb.blocksize;
@@ -465,14 +487,14 @@ bool get_indirect_zone_contents(
      block of the indirect zone) */
   uint32_t num_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
-  // /* We encountered a hole... */
-  // if (zone_num == 0) {
-  //   /* a single indirect node will point to multiple indirect blocks. */
-  //   /* We must add (blocksize) * how many indirect zone numbers we can fit in
-  //      a zone. */
-  //   *bytes_read = *bytes_read + (mfs->sb.blocksize*num_indirect_inodes);
-  //   return (*bytes_read >= inode->size);
-  // }
+  /* We encountered a hole... */
+  if (zone_num == 0) {
+    uint32_t hs = mfs->sb.blocksize*num_indirect_inodes;
+
+    fill_hole(s, inode, hs, bytes_read);
+
+    return false;
+  }
 
   /* Start reading the first block in that indirect zone. */
   if (fseek(
@@ -541,18 +563,19 @@ bool get_two_indirect_zone_contents(
      block of the indirect zone) */
   uint32_t num_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
-  ///* We encountered a hole... */
-  //if (zone_num == 0) {
-  //  /* a single indirect node will point to multiple indirect blocks. */
-  //  /* We must add (blocksize) * how many indirect zone numbers we can fit in 
-  //     a zone, but then multiply it one more time by that number because there
-  //     are two layers of indirect nodes we must go through. */
-  //  /* The size of the hole */
-  //  uint32_t hs = (mfs->sb.blocksize*num_indirect_inodes*num_indirect_inodes);
-  //  *bytes_read += hs;
-  //  /* TODO: actually write those zeros. */
-  //  return (*bytes_read >= inode->size);
-  //}
+  /* We encountered a hole... */
+  if (zone_num == 0) {
+    /* a single indirect node will point to multiple indirect blocks. */
+    /* We must add (blocksize) * how many indirect zone numbers we can fit in 
+       a zone, but then multiply it one more time by that number because there
+       are two layers of indirect nodes we must go through. */
+    /* The size of the hole */
+    uint32_t hs = mfs->sb.blocksize*num_indirect_inodes*num_indirect_inodes;
+
+    fill_hole(s, inode, hs, bytes_read);
+
+    return false;
+  }
 
   /* TODO: address*/
   uint32_t zone_addr = mfs->partition_start + (zone_num*mfs->zone_size);
