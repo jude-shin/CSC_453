@@ -79,6 +79,7 @@ void print_files_in_block(FILE* s, min_fs* mfs, uint32_t zone_num, uint32_t bloc
   }
 
   uint32_t zone_addr = mfs->partition_start + (zone_num * mfs->zone_size);
+
   uint32_t block_addr = zone_addr + (block_number * mfs->sb.blocksize);
 
 
@@ -186,7 +187,7 @@ void print_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
     /* Read the entry offset in the first block. */
     if (fseek(
           mfs->file, 
-          block_addr + sizeof(uint32_t),
+          block_addr + (i * sizeof(uint32_t)),
           SEEK_SET) == -1) {
       fprintf(stderr, "error seeking to indirect zone: %d\n", errno);
       exit(EXIT_FAILURE);
