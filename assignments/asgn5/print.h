@@ -17,7 +17,12 @@ void print_minls_usage(FILE* s);
 void print_file(FILE* s, min_inode* inode, unsigned char* name);
 
 /* TODO: */
-void print_files_in_block(FILE* s, min_fs* mfs, uint32_t zone_num, uint32_t block_number);
+void print_files_in_block(
+    FILE* s, 
+    min_fs* mfs, 
+    uint32_t zone_num, 
+    uint32_t block_number);
+
 
 /* Given a zone, print all of the files that are on that zone if they are
    valid. */

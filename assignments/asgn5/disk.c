@@ -12,8 +12,8 @@
 /* TODO: in the helpers, don't pass in the entire context, just pass in the 
    variables that are needed. */
 
-/* TODO: instead of passing in the zone and block numbers, compute the zone numbers
-   outside once, and pass along the zone addresses */
+/* TODO: instead of passing in the zone and block numbers, compute the zone 
+   numbers outside once, and pass along the zone addresses */
 
 /* ================= */
 /* ADDRESS CONSTANTS */

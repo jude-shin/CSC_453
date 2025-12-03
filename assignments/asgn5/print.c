@@ -72,7 +72,11 @@ void print_file(FILE* s, min_inode* inode, unsigned char* name) {
 }
 
 /* TODO: print the files in a block  COMMENTS*/
-void print_files_in_block(FILE* s, min_fs* mfs, uint32_t zone_num, uint32_t block_number) {
+void print_files_in_block(
+    FILE* s, 
+    min_fs* mfs, 
+    uint32_t zone_num, 
+    uint32_t block_number) {
   /* Skip over the zone if it is not used. */
   if (zone_num == 0) { 
     return ;
