@@ -48,19 +48,58 @@
 /* The directory entry size for a minix fs in bytes. */
 #define DIR_ENTRY_SIZE 64
 
+
 /* ==== */
 /* MISC */
 /* ==== */
-
 /* The delimiter when listing directories. */
 #define DELIMITER "/"
 
-/* ========================================================================== */
+
+/* ================= */
+/* ADDRESS CONSTANTS */
+/* ================= */
+/* The address where the partition table is. */
+#define PART_TABLE_OFFSET 0x1BE 
+
+/* Where the superblock lies in relation to the beginning of the partition. */
+#define SUPERBLOCK_OFFSET 1024
+
+/* Addresses for particular signatures in a minix (sub)partition. */
+#define SIG510_OFFSET 510 
+#define SIG511_OFFSET 511
+
+
+/* ============== */
+/* SIZE CONSTANTS */
+/* ============== */
+/* The sector size for a minix fs in bytes. */
+#define SECTOR_SIZE 512 
+
+/* The block number for the imap block in a minix fs. */
+#define IMAP_BLOCK_NUMBER 2
+
+
+/* ================ */
+/* MAGIC VALIDATION */
+/* ================ */
+/* Bootind will be equal to this macro if the partition is bootable */
+#define BOOTABLE_MAGIC 0x80
+
+/* The partition type that indicates this is a minix partition */
+#define MINIX_PARTITION_TYPE 0x81
+
+/* Magic value will be in the superblock, indicating that this is a minix fs. */
+#define MINIX_MAGIC_NUMBER 0x4D5A
+
+/* The expected values for particular signatures in a minix (sub)partition. */
+#define SIG510_EXPECTED 0x55 
+#define SIG511_EXPECTED 0xAA
+
 
 /*==================*/
 /* DATA DEFINITIONS */
 /*==================*/
-
 /* The struct used as the partition table in a minix MBR filesystem. */
 typedef struct __attribute__ ((__packed__)) min_part_tbl {
   uint8_t bootind;    /* Boot magic number (0x80 if bootable). */
@@ -71,8 +110,8 @@ typedef struct __attribute__ ((__packed__)) min_part_tbl {
   uint8_t end_head;   /* End of partition in CHS. */
   uint8_t end_sec;
   uint8_t end_cyl;
-  uint32_t lFirst;     /* First sector (LBA addressing). */
-  uint32_t size;       /* Size of partition (in sectors). */
+  uint32_t lFirst;    /* First sector (LBA addressing). */
+  uint32_t size;      /* Size of partition (in sectors). */
 } min_part_tbl;
 
 /* Superblock structure found in fs/super.h in minix 3.1.1. */
@@ -124,6 +163,8 @@ typedef struct min_fs {
   min_superblock sb;      /* The superblock and it's information for the fs */
 
   uint32_t zone_size;     /* The size of a zone in bytes */
+  /* TODO: add here some calculations like number of addresses in ablock or 
+     something*/
 
   uint32_t b_imap;        /* "real" address of the inode bitmap */
   uint32_t b_zmap;        /* "real" address of the zone bitmap */
@@ -134,7 +175,6 @@ typedef struct min_fs {
 /*==========*/
 /* BASIC IO */
 /*==========*/
-
 /* Opens the imagefile as readonly, and calculates the offset of the specified
    partition. This populates the filesystem struct and superblock structs that
    are allocated in the caller.
@@ -154,7 +194,6 @@ void close_mfs(min_fs* mfs);
 /*============*/
 /* VALIDATION */
 /*============*/
-
 /* Check to see if the partition table holds useful information for this
    assignment. This includes whether an image is bootable, and if the partition
    is from minix. This function does not return anything.
@@ -171,7 +210,6 @@ bool validate_signatures(FILE* image, uint32_t offset);
 /*==============*/
 /* MISC HELPERS */
 /*==============*/
-
 /* Based on an address (primary partition will start at 0, and any subpartition
    will start somewhere else) this function populates the given partition_table
    struct with the data read in the image. Whether the populated data is valid 
@@ -184,6 +222,10 @@ void load_superblock(min_fs* mfs);
 /* Makes a copy of an inode based on an arbitrary address.*/
 void duplicate_inode(min_fs* mfs, uint32_t inode_addr, min_inode* inode);
 
+
+/* ========= */
+/* SEARCHING */
+/* ========= */
 /* Populates inode_addr with the given inode's address and returns true if it 
    was found. Otherwise, return false. The canonicalized path that was traversed
    is also built as this function progresses, as well as the cur_name being 
@@ -195,14 +237,9 @@ uint32_t find_inode(
     char* can_minix_path,
     unsigned char* cur_name);
 
-
-/* ========= */
-/* SEARCHING */
-/* ========= */
-
-/* Searches the direct, indirect, and double indirect zones of an indode 
+/* Searches the direct, indirect, and double indirect zones of the cur_inode 
    (which is a directory), and looks for an entry with a corresponding name. 
-   If a name is found (and it is not deleted) populate the next_inode with the
+   If a name is found (and it is not deleted) populate inode with the
    contents of the found inode, and return true, otherwise, return false. */
 bool search_all_zones(
     min_fs* mfs, 
@@ -242,20 +279,7 @@ bool search_two_indirect_zone(
 /* ========== */
 /* ARITHMETIC */
 /* ========== */
-
 /* Calculates the zonesize based on a superblock using a bitshift. */
 uint32_t get_zone_size(min_superblock* sb);
-
-
-/* ===== */
-/* FILES */
-/* ===== */
-
-
-
-/* =========== */
-/* DIRECTORIES */
-/* =========== */
-
 
 #endif
