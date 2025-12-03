@@ -186,7 +186,7 @@ void duplicate_inode(min_fs* mfs, uint32_t inode_addr, min_inode* inode);
    updated. */
 uint32_t find_inode(
     min_fs* mfs, 
-    uint32_t* inode_addr,
+    min_inode* inode,
     char* path,
     char* can_minix_path,
     unsigned char* cur_name);
@@ -202,16 +202,16 @@ uint32_t find_inode(
    contents of the found inode, and return true, otherwise, return false. */
 bool search_all_zones(
     min_fs* mfs, 
+    min_inode* inode, 
     min_inode* cur_inode,
-    uint32_t* inode_addr, 
     char* name);
 
 /* Searches a zone for a directory entry with a given name, and updates an inode
    address with the address of the inode that corresponds to that name. */
-bool search_zone(
+bool search_direct_zone(
     min_fs* mfs, 
+    min_inode* inode, 
     uint32_t zone_num,
-    uint32_t* inode_addr, 
     char* name);
 
 /* Searches the zones that the indirect zone holds for an entry with a 
@@ -220,8 +220,8 @@ bool search_zone(
    return true. Otherwise, return false. */
 bool search_indirect_zone(
     min_fs* mfs, 
+    min_inode* inode, 
     uint32_t zone_num,
-    uint32_t* inode_addr, 
     char* name);
 
 /* Searches the zones that the double indirect zone holds for an entry with a 
@@ -230,8 +230,8 @@ bool search_indirect_zone(
    return true. Otherwise, return false. */
 bool search_two_indirect_zone(
     min_fs* mfs, 
+    min_inode* inode, 
     uint32_t zone_num,
-    uint32_t* inode_addr, 
     char* name);
 
 

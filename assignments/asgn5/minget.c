@@ -67,16 +67,12 @@ int main (int argc, char *argv[]) {
   /* ======================================================================== */
 
   /* The inode that will be populated if the source path is found. */
-  uint32_t src_inode_addr;
+  min_inode src_inode;
 
-  if (!find_inode(&mfs, &src_inode_addr, minix_src_path, NULL, NULL)) {
+  if (!find_inode(&mfs, &src_inode, minix_src_path, NULL, NULL)) {
     fprintf(stderr, "The path [%s] was not found!\n", minix_src_path);
     exit(EXIT_FAILURE);
   }
-
-  /* Make a copy of the inode so I don't have to keep reading from the image. */
-  min_inode src_inode;
-  duplicate_inode(&mfs, src_inode_addr, &src_inode);
 
   if (!(src_inode.mode & REG_FT)) {
     fprintf(stderr, "The path [%s] is not a regular file!\n", minix_src_path);
@@ -87,7 +83,6 @@ int main (int argc, char *argv[]) {
   if (verbose) {
     print_inode(stderr, &src_inode);
   }
-
 
   /* If there was no dst file, just print it to stdout. */
   if (minix_dst_path == NULL) {

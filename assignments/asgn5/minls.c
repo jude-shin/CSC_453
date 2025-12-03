@@ -64,12 +64,13 @@ int main (int argc, char *argv[]) {
   open_mfs(&mfs, imagefile_path, prim_part, sub_part, verbose);
   
   /* The address of the inode that will be populated if the path is found. */
-  uint32_t inode_addr;
+  min_inode inode;
 
   /* The current name that was just processed. After the last item in the path
      was processed, this will be set to the last file/directory name.*/
   /* TODO: test with the maxed out name size. */
   unsigned char* cur_name = malloc(sizeof(char)*DIR_NAME_SIZE+1);
+
   /* By default, set the string to be empty. */
   *cur_name = '\0';
   
@@ -82,7 +83,7 @@ int main (int argc, char *argv[]) {
 
   /* Try to find the path. The inode will be updated if the inode was found; 
      can_minix_path, and cur_name will be updated as the search progresses. */
-  if (!find_inode(&mfs, &inode_addr, minix_path, can_minix_path, cur_name)) {
+  if (!find_inode(&mfs, &inode, minix_path, can_minix_path, cur_name)) {
     fprintf(stderr, "The path [%s] was not found!\n", can_minix_path);
     exit(EXIT_FAILURE);
   }
@@ -91,10 +92,6 @@ int main (int argc, char *argv[]) {
   if(can_minix_path[0] != '\0') {
     can_minix_path[strlen(can_minix_path)-1] = '\0';
   }
-
-  /* Make a copy of the inode so I don't have to keep reading from the image. */
-  min_inode inode;
-  duplicate_inode(&mfs, inode_addr, &inode);
 
   /* Print inode information when the file is found. */
   if (verbose) {

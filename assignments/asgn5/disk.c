@@ -12,6 +12,9 @@
 /* TODO: in the helpers, don't pass in the entire context, just pass in the 
    variables that are needed. */
 
+/* TODO: instead of passing in the zone and block numbers, compute the zone numbers
+   outside once, and pass along the zone addresses */
+
 /* ================= */
 /* ADDRESS CONSTANTS */
 /* ================= */
@@ -347,7 +350,7 @@ void duplicate_inode(min_fs* mfs, uint32_t inode_addr, min_inode* inode) {
    */
 uint32_t find_inode(
     min_fs* mfs, 
-    uint32_t* inode_addr,
+    min_inode* inode,
     char* path,
     char* can_minix_path,
     unsigned char* cur_name) {
@@ -355,12 +358,9 @@ uint32_t find_inode(
   /* The tokenized next directory entry name that we are looking for. */
   /* TODO: try strtok_r?*/
   char* token = strtok(path, DELIMITER);
- 
-  /* Set the default address to the root inode's address. */
-  *inode_addr = mfs->b_inodes;
 
   /* The current inode we are processing. */
-  min_inode inode;
+  min_inode cur_inode;
 
   /* Seek the read head to the first inode. */
   if (fseek(mfs->file, mfs->b_inodes, SEEK_SET) == -1) {
@@ -369,7 +369,7 @@ uint32_t find_inode(
   }
 
   /* Read the value at that address into the root inode struct. */
-  if (fread(&inode, sizeof(min_inode), 1, mfs->file) < 1) {
+  if (fread(&cur_inode, sizeof(min_inode), 1, mfs->file) < 1) {
     fprintf(stderr, "error reading the root inode: %d\n", errno);
     exit(EXIT_FAILURE);
   }
@@ -402,7 +402,7 @@ uint32_t find_inode(
     }
 
     /* The current inode must be traversable (a directory) */
-    if (!(inode.mode & DIR_FT)) {
+    if (!(cur_inode.mode & DIR_FT)) {
       fprintf(
           stderr, 
           "error traversing the path. %s is not a directory!\n", 
@@ -412,9 +412,8 @@ uint32_t find_inode(
    
     /* Search through the direct, indirect, and double indirect zones for a 
        directory entry with a matching name. */
-    if (search_all_zones(mfs, &inode, inode_addr, token)) {
-      /* Overwrite the inode with the contents in the image at inode_addr. */
-      duplicate_inode(mfs, *inode_addr, &inode);
+    if (search_all_zones(mfs, inode, &cur_inode, token)) {
+      cur_inode = *inode;
       token = strtok(NULL, DELIMITER);
     }
     else {
@@ -422,6 +421,8 @@ uint32_t find_inode(
       return false;
     }
   }
+
+  *inode = cur_inode;
   return true;
 }
 
@@ -444,17 +445,17 @@ uint32_t find_inode(
  */
 bool search_all_zones(
     min_fs* mfs, 
+    min_inode* inode, 
     min_inode* cur_inode,
-    uint32_t* inode_addr, 
     char* name) {
-  int i;
 
   /* Linear search the direct zones. */
+  int i;
   for(i = 0; i < DIRECT_ZONES; i++) {
     /* Search the direct zone for an entry. If found, then we know that 
        search_chunk already wrote the data to inode_addr, so we can just exit.
        Otherwise, the for loop will continue with the search. */
-    if (search_zone(mfs, cur_inode->zone[i], inode_addr, name)) {
+    if (search_direct_zone(mfs, inode, cur_inode->zone[i], name)) {
       return true;
     }
   }
@@ -462,7 +463,7 @@ bool search_all_zones(
   /* Search the indirect zone for an entry. If found, then we know that 
      search_chunk already wrote the data to inode_addr, so we can just exit.
      Otherwise, the for loop will continue with the search. */
-  if (search_indirect_zone(mfs, cur_inode->indirect, inode_addr, name)) {
+  if (search_indirect_zone(mfs, inode, cur_inode->indirect, name)) {
     return true;
   }
 
@@ -471,8 +472,8 @@ bool search_all_zones(
      Otherwise, the for loop will continue with the search. */
   if (search_two_indirect_zone(
         mfs, 
+        inode, 
         cur_inode->two_indirect, 
-        inode_addr, 
         name)){
     return true;
   }
@@ -480,40 +481,30 @@ bool search_all_zones(
   return false;
 }
 
-/* Searches a zone for a directory entry with a given name, and updates an inode
- * address with the address of the inode that corresponds to that name. 
- * @param mfs MinixFileSystem struct that holds the current filesystem and some
- *  useful information.
- * @param zone_num the zone number to search.
- * @param inode_addr a poninter to a variable that holds the address of the real
- *  inode on the image. 
- * @param name the name of the directory entry we are looking for in the current
- *  inode.
- * @return bool true if we found a valid directory entry, false otherwise.
- */
-bool search_zone(
+bool search_block(
     min_fs* mfs, 
+    min_inode* inode, 
     uint32_t zone_num,
-    uint32_t* inode_addr, 
+    uint32_t block_number,
     char* name) {
-  int i;
-
-  /* Skip over the indirect zone if it is not used. */
+  /* Skip over the zone if it is not used. */
   if (zone_num == 0) {
     return false;
   }
 
-  /* The actual address of the zone. */
   uint32_t zone_addr = mfs->partition_start + (zone_num * mfs->zone_size);
 
-  /* Read all directory entries in this chunk. */
-  int num_entries = mfs->zone_size / DIR_ENTRY_SIZE;
+  uint32_t block_addr = zone_addr + (block_number * mfs->sb.blocksize);
 
-  for(i = 0; i < num_entries; i++) {
+  /* Read all directory entries in this block. */
+  int num_directories = mfs->sb.blocksize / DIR_ENTRY_SIZE;
+
+  int i;
+  for (i = 0; i < num_directories; i++) {
     min_dir_entry entry;
 
     /* Seek to the directory entry */
-    if (fseek(mfs->file, zone_addr + (i * DIR_ENTRY_SIZE), SEEK_SET) == -1) {
+    if (fseek(mfs->file, block_addr + (i * DIR_ENTRY_SIZE), SEEK_SET)) {
       fprintf(stderr, "error seeking to directory entry: %d\n", errno);
       exit(EXIT_FAILURE);
     }
@@ -528,12 +519,50 @@ bool search_zone(
     if(entry.inode != 0 && strcmp((char*)entry.name, name) == 0) {
       /* Get the address of the inode address that we found. (Go back one inode
          size because we just read it). */
-      *inode_addr = mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE);
+      uint32_t inode_addr = mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE);
+
+      /* Make a copy of the inode */
+      duplicate_inode(mfs, inode_addr, inode);
+
+      return true;
+    }
+  }
+  return false;
+}
+
+/* Searches a zone for a directory entry with a given name, and updates an inode
+ * address with the address of the inode that corresponds to that name. 
+ * @param mfs MinixFileSystem struct that holds the current filesystem and some
+ *  useful information.
+ * @param zone_num the zone number to search.
+ * @param inode_addr a poninter to a variable that holds the address of the real
+ *  inode on the image. 
+ * @param name the name of the directory entry we are looking for in the current
+ *  inode.
+ * @return bool true if we found a valid directory entry, false otherwise.
+ */
+bool search_direct_zone(
+    min_fs* mfs, 
+    min_inode* inode, 
+    uint32_t zone_num,
+    char* name) {
+
+  /* Skip over the direct zone if it is not used. */
+  if (zone_num == 0) {
+    return false;
+  }
+
+  /* Read all directory entries in this chunk. */
+  int num_blocks = mfs->zone_size / mfs->sb.blocksize;
+
+  int i;
+  for(i = 0; i < num_blocks; i++) {
+    /* search ALL blocks that fit in this zone. */
+    if (search_block(mfs, inode, zone_num, i, name)) {
       return true;
     }
   }
 
-  /* There was no directory entry that had this filename. */
   return false;
 }
 
@@ -552,38 +581,36 @@ bool search_zone(
  */
 bool search_indirect_zone(
     min_fs* mfs, 
+    min_inode* inode, 
     uint32_t zone_num,
-    uint32_t* inode_addr, 
     char* name) {
-  int i;
-
-  fprintf(stdout, "Searching indirect zone.\n");
 
   /* Skip over the indirect zone if it is not used. */
   if (zone_num == 0) {
-
-    fprintf(stdout, "indirect zone skipped (was 0).\n");
     return false;
   }
 
+  /* The first block is going to line up with the address of that zone. */
+  uint32_t block_addr = mfs->partition_start + (zone_num*mfs->zone_size);
 
-  /* Start reading the first block in that indirect zone. */
-  if (fseek(
-        mfs->file, 
-        mfs->partition_start+(zone_num*mfs->zone_size), 
-        SEEK_SET) == -1) {
-    fprintf(stderr, "error seeking to indirect zone.\n");
-    exit(EXIT_FAILURE);
-  }
-
-  /* How many zone numbers we are going to read (how many fit in the first block
-     of the indirect zone) */
-  int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+  /* How many zone numbers we are going to read (how many fit in the first 
+     block of the indirect zone) */
+  int num_indirect_zone_nums = mfs->sb.blocksize / sizeof(uint32_t);
 
   /* For every zone number in that first indirect inode block. */
-  for(i = 0; i < total_indirect_inodes; i++) {
+  int i;
+  for(i = 0; i < num_indirect_zone_nums; i++) {
     /* The zone number that holds directory entries. */
     uint32_t indirect_zone_number;
+
+    /* Start reading the first block in that indirect zone. */
+    if (fseek(
+          mfs->file, 
+          block_addr + (i * sizeof(uint32_t)),
+          SEEK_SET) == -1) {
+      fprintf(stderr, "error seeking to indirect zone.\n");
+      exit(EXIT_FAILURE);
+    }
    
     /* Read the number that holds the zone number. */
     if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
@@ -594,11 +621,10 @@ bool search_indirect_zone(
     /* Search the direct zone for an entry. If found, then we know that 
        search_chunk already wrote the data to inode_addr, so we can just exit.
        Otherwise, the for loop will continue with the search. */
-    if (search_zone(mfs, indirect_zone_number, inode_addr, name)) {
+    if (search_block(mfs, inode, indirect_zone_number, 0, name)) {
       return true;
     }
   }
-
   return false;
 }
 
@@ -617,37 +643,36 @@ bool search_indirect_zone(
  */
 bool search_two_indirect_zone(
     min_fs* mfs, 
+    min_inode* inode, 
     uint32_t zone_num,
-    uint32_t* inode_addr, 
     char* name) {
-  int i;
-
-  fprintf(stdout, "Searching double indirect zone.\n");
-
   /* Skip over the indirect zone if it is not used. */
   if (zone_num == 0) {
-    fprintf(stdout, "double indirect zone skipped (was 0).\n");
     return false;
   }
 
-  /* Start reading the first block in the double indirect zone. */
-  if (fseek(
-        mfs->file, 
-        mfs->partition_start + (zone_num*mfs->zone_size), 
-        SEEK_SET) == -1) {
-    fprintf(stderr, "error seeking to double indirect zone.\n");
-    exit(EXIT_FAILURE);
-  }
+  /* How many zone numbers we are going to read (how many fit in the first 
+     block of the indirect zone) */
+  int num_indirect_zone_nums = mfs->sb.blocksize / sizeof(uint32_t);
 
-  /* How many zone numbers we are going to read (how many fit in the first block
-     of the indirect zone) */
-  int total_two_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+  /* TODO: address*/
+  uint32_t zone_addr = mfs->partition_start + (zone_num*mfs->zone_size);
 
   /* For every zone number in that first double indirect inode block. */
-  for(i = 0; i < total_two_indirect_inodes; i++) {
+  int i;
+  for(i = 0; i < num_indirect_zone_nums; i++) {
     /* The zone number that holds the indierct zone numbers. */
     uint32_t two_indirect_zone_number;
-   
+
+    /* Start reading the first block in the double indirect zone. */
+    if (fseek(
+          mfs->file, 
+          zone_addr + (i * sizeof(uint32_t)),
+          SEEK_SET) == -1) {
+      fprintf(stderr, "error seeking to double indirect zone.\n");
+      exit(EXIT_FAILURE);
+    }
+
     /* Read the number that holds the zone number. */
     if(fread(&two_indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
       fprintf(stderr, "error reading double indirect zone number: %d\n", errno);
@@ -657,7 +682,7 @@ bool search_two_indirect_zone(
     /* Search the indirect zone for an entry. If found, then we know that 
        search_chunk already wrote the data to inode_addr, so we can just exit.
        Otherwise, the for loop will continue with the search. */
-    if (search_indirect_zone(mfs, two_indirect_zone_number, inode_addr, name)) {
+    if (search_indirect_zone(mfs, inode, two_indirect_zone_number, name)) {
       return true;
     }
   }
@@ -681,4 +706,6 @@ uint16_t get_zone_size(min_superblock* sb) {
 
   return zonesize;
 }
+
+/* TODO: CALCULATIONs for the addresses. */
 
