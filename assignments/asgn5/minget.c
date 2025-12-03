@@ -90,15 +90,11 @@ int main (int argc, char *argv[]) {
   }
   /* If there was a dst file, try to write it there. */
   else {
-    int fd = open(minix_dst_path, O_WRONLY | O_TRUNC | O_NOFOLLOW);
-    if (fd == -1) {
-      perror("open");
-      exit(EXIT_FAILURE);
-    }
-
+    int fd;
     struct stat sb;
-    if (fstat(fd, &sb) == -1) {
-      perror("fstat");
+
+    if (fstatat(fd, minix_dst_path, &sb, AT_SYMLINK_NOFOLLOW) == -1) {
+      perror("error fstatat on dst path.\n");
       close(fd);
       exit(EXIT_FAILURE);
     }
@@ -116,10 +112,8 @@ int main (int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     }
 
-    /* Close the minix filesystem. */
-    close_mfs(&mfs);
-
-    exit(EXIT_SUCCESS);
+    print_file_contents(output, &mfs, &src_inode);
+    fclose(output);
   }
 
   /* Close the minix filesystem. */
