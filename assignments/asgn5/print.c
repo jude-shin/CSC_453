@@ -357,12 +357,14 @@ void fill_hole(
     uint32_t hs, /* The size of a hole */
     uint32_t* bytes_read) {
 
+  char foo = 0;
+
   /* Update the bytes read. We know that since this is a hole, then this must
      be less than the total bytes read, and therefore will not go over. */
   *bytes_read = *bytes_read + hs;
 
   /* Write a bunch of zeros. */
-  if (fwrite(0, sizeof(char), hs, s) < hs) {
+  if (fwrite(&foo, sizeof(char), hs, s) < hs) {
     fprintf(stderr, "error filling hole: %d\n", errno);
     exit(EXIT_FAILURE);
   }
