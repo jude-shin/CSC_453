@@ -49,10 +49,18 @@ void print_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path);
 void print_minget_usage(FILE* s);
 
 /* Prints the contents of a regular file to the stream s given an inode. */
-void print_file_contents(FILE* s, min_fs* mfs, min_inode* inode);
+void get_file_contents(FILE* s, min_fs* mfs, min_inode* inode);
+
+bool get_block_contents(
+    FILE* s, 
+    min_fs* mfs, 
+    min_inode* inode, 
+    uint32_t zone_num, 
+    uint32_t block_number, 
+    uint32_t* bytes_read);
 
 /* Prints the contents of a zone to a stream s. */
-bool print_zone_contents(
+bool get_direct_zone_contents(
     FILE* s, 
     min_fs* mfs, 
     min_inode* inode, 
@@ -60,7 +68,7 @@ bool print_zone_contents(
     uint32_t* bytes_read);
 
 /* Prints the contents of an indirect zone to a stream s. */
-bool print_indirect_zone_contents(
+bool get_indirect_zone_contents(
     FILE* s, 
     min_fs* mfs, 
     min_inode* inode, 
@@ -68,7 +76,7 @@ bool print_indirect_zone_contents(
     uint32_t* bytes_read);
 
 /* Prints the contents of a double indirect zone to a stream s. */
-bool print_two_indirect_zone_contents(
+bool get_two_indirect_zone_contents(
     FILE* s, 
     min_fs* mfs, 
     min_inode* inode, 
