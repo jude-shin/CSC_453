@@ -5,7 +5,7 @@
 int parse_flags(
     int argc, 
     char* argv[], 
-    int* verbosity, 
+    bool* verbose, 
     int* prim_part, 
     int* sub_part);
 

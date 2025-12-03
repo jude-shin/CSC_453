@@ -23,7 +23,7 @@
 int parse_flags(
     int argc, 
     char* argv[], 
-    int* verbose, 
+    bool* verbose, 
     int* prim_part, 
     int* sub_part) {
   /* Loop through all of the arguments, only accepting the flagw -v -p and -s

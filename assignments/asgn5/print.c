@@ -88,7 +88,7 @@ void print_files_in_block(
 
 
   /* Read all directory entries in this block. */
-  int num_directories = mfs->sb.blocksize / DIR_ENTRY_SIZE;
+  uint32_t num_directories = mfs->sb.blocksize / DIR_ENTRY_SIZE;
 
   int i;
   for(i = 0; i < num_directories; i++) {
@@ -151,7 +151,7 @@ void print_files_in_direct_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
   }
 
   /* Read all directory entries in this chunk. */
-  int num_blocks = mfs->zone_size / mfs->sb.blocksize;
+  uint32_t num_blocks = mfs->zone_size / mfs->sb.blocksize;
 
   int i;
   for(i = 0; i < num_blocks; i++) {
@@ -180,11 +180,11 @@ void print_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
 
   /* How many zone numbers we are going to read (how many fit in the first 
      block of the indirect zone) */
-  int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+  uint32_t num_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
   /* For every zone number in that first indirect inode block. */
   int i;
-  for(i = 0; i < total_indirect_inodes; i++) {
+  for(i = 0; i < num_indirect_inodes; i++) {
     /* The zone number that holds directory entries. */
     uint32_t indirect_zone_number;
 
@@ -226,14 +226,14 @@ void print_files_in_two_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
 
   /* How many zone numbers we are going to read (how many fit in the first 
      block of the indirect zone) */
-  int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+  uint32_t num_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
   /* TODO: address*/
   uint32_t zone_addr = mfs->partition_start + (zone_num*mfs->zone_size);
 
   /* For every zone number in that first double indirect inode block. */
   int i;
-  for(i = 0; i < total_indirect_inodes; i++) {
+  for(i = 0; i < num_indirect_inodes; i++) {
     /* The zone number that holds the indierct zone numbers. */
     uint32_t indirect_zone_number;
 
@@ -425,7 +425,7 @@ bool get_direct_zone_contents(
   }
 
   /* get all of the blocks in this zone. */
-  int num_blocks = mfs->zone_size / mfs->sb.blocksize;
+  uint32_t num_blocks = mfs->zone_size / mfs->sb.blocksize;
 
   int i;
   for (i = 0; i < num_blocks; i++) {
@@ -473,11 +473,11 @@ bool get_indirect_zone_contents(
 
   /* How many zone numbers we are going to read (how many fit in the first 
      block of the indirect zone) */
-  int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+  uint32_t num_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
   /* For every zone number in that first indirect inode block. */
   int i;
-  for(i = 0; i < total_indirect_inodes; i++) {
+  for(i = 0; i < num_indirect_inodes; i++) {
     /* The zone number that holds directory entries. */
     uint32_t indirect_zone_number;
 
@@ -536,7 +536,7 @@ bool get_two_indirect_zone_contents(
 
   /* How many zone numbers we are going to read (how many fit in the first 
      block of the indirect zone) */
-  int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+  uint32_t num_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
 
   /* TODO: address*/
   uint32_t zone_addr = mfs->partition_start + (zone_num*mfs->zone_size);
@@ -544,7 +544,7 @@ bool get_two_indirect_zone_contents(
 
   /* For every zone number in that first double indirect inode block. */
   int i;
-  for(i = 0; i < total_indirect_inodes; i++) {
+  for(i = 0; i < num_indirect_inodes; i++) {
     /* The zone number that holds the indierct zone numbers. */
     uint32_t two_indirect_zone_number;
 

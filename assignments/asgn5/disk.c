@@ -497,7 +497,7 @@ bool search_block(
   uint32_t block_addr = zone_addr + (block_number * mfs->sb.blocksize);
 
   /* Read all directory entries in this block. */
-  int num_directories = mfs->sb.blocksize / DIR_ENTRY_SIZE;
+  uint32_t num_directories = mfs->sb.blocksize / DIR_ENTRY_SIZE;
 
   int i;
   for (i = 0; i < num_directories; i++) {
@@ -553,7 +553,7 @@ bool search_direct_zone(
   }
 
   /* Read all directory entries in this chunk. */
-  int num_blocks = mfs->zone_size / mfs->sb.blocksize;
+  uint32_t num_blocks = mfs->zone_size / mfs->sb.blocksize;
 
   int i;
   for(i = 0; i < num_blocks; i++) {
@@ -595,7 +595,7 @@ bool search_indirect_zone(
 
   /* How many zone numbers we are going to read (how many fit in the first 
      block of the indirect zone) */
-  int num_indirect_zone_nums = mfs->sb.blocksize / sizeof(uint32_t);
+  uint32_t num_indirect_zone_nums = mfs->sb.blocksize / sizeof(uint32_t);
 
   /* For every zone number in that first indirect inode block. */
   int i;
@@ -653,7 +653,7 @@ bool search_two_indirect_zone(
 
   /* How many zone numbers we are going to read (how many fit in the first 
      block of the indirect zone) */
-  int num_indirect_zone_nums = mfs->sb.blocksize / sizeof(uint32_t);
+  uint32_t num_indirect_zone_nums = mfs->sb.blocksize / sizeof(uint32_t);
 
   /* TODO: address*/
   uint32_t zone_addr = mfs->partition_start + (zone_num*mfs->zone_size);
@@ -697,7 +697,7 @@ bool search_two_indirect_zone(
 
 /* Calculates the zonesize based on a minix filesystem context using a bitshift.
  * @param sb a struct that holds information about the superblock.
- * @return uint16_t the size of a zone
+ * @return uint32_t the size of a zone
  */
 uint32_t get_zone_size(min_superblock* sb) {
   uint32_t blocksize = sb->blocksize;
