@@ -9,8 +9,12 @@
 /* ============== */
 /* FILETYPE MASKS */
 /* ============== */
+/* Directory Mask */
 #define DIR_FT 0040000
+/* Regular File  Mask */
 #define REG_FT 0100000
+/* Symlink Mask */
+#define SYM_FT 0120000 /* found in the minix textbook. */
 
 
 /* ================ */

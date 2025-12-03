@@ -74,6 +74,11 @@ int main (int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  if ((src_inode.mode & SYM_FT)) {
+    fprintf(stderr, "src was a symlink! (not supported)\n");
+    exit(EXIT_FAILURE);
+  }
+
   if (!(src_inode.mode & REG_FT)) {
     fprintf(stderr, "The path [%s] is not a regular file!\n", minix_src_path);
     exit(EXIT_FAILURE);
@@ -88,34 +93,27 @@ int main (int argc, char *argv[]) {
   if (minix_dst_path == NULL) {
     get_file_contents(stdout, &mfs, &src_inode);
   }
+
   /* If there was a dst file, try to write it there. */
   else {
-
     FILE *output = fopen(minix_dst_path, "wb");
     if (!output) {
       perror("error opening dst path.\n");
       exit(EXIT_FAILURE);
     }
 
-    // struct stat sb;
+    struct stat sb;
+    if (fstat(fileno(output), &sb) == -1) {
+      perror("error fstatat on dst path.\n");
+      fclose(output);
+      exit(EXIT_FAILURE);
+    }
 
-    // if (fstat(fileno(output), &sb) == -1) {
-    //   perror("error fstatat on dst path.\n");
-    //   fclose(output);
-    //   exit(EXIT_FAILURE);
-    // }
-
-    // if (!S_ISREG(sb.st_mode)) {
-    //   fprintf(stderr, "dst is not a regular file\n");
-    //   fclose(output);
-    //   exit(EXIT_FAILURE);
-    // }
-
-    // if (S_ISLNK(sb.st_mode)) {
-    //   fprintf(stderr, "dst is a symbolic link!\n");
-    //   fclose(output);
-    //   exit(EXIT_FAILURE);
-    // }
+    if (!S_ISREG(sb.st_mode)) {
+      fprintf(stderr, "dst is not a regular file\n");
+      fclose(output);
+      exit(EXIT_FAILURE);
+    }
 
     get_file_contents(output, &mfs, &src_inode);
     fclose(output);

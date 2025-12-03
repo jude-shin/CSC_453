@@ -340,14 +340,6 @@ void get_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
         &bytes_read)) {
     return;
   }
-
-  /* If we reach here, we have a stupid big file, and we have not read all of
-     the contents. */
-  // fprintf(
-  //     stderr, 
-  //     "File is too large to print. Exausted direct, indirect, and double "
-  //     "indirect zones. Size: (%u)\n",
-  //     inode->size);
 }
 
 bool fill_hole(
