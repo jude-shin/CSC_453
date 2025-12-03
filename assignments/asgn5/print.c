@@ -364,7 +364,7 @@ void fill_hole(
   }
 
   /* Write a bunch of zeros. */
-  if (fwrite(&zeros, sizeof(char), hs, s) < hs) {
+  if (fwrite(zeros, sizeof(char), hs, s) < hs) {
     fprintf(stderr, "error filling hole: %d\n", errno);
     free(zeros);
     exit(EXIT_FAILURE);
