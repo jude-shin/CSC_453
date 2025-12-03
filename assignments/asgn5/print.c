@@ -375,27 +375,36 @@ bool get_block_contents(
 
   /* Read a single character at a time so we don't have to bother with large
      varying sized buffers. */
-  int i;
-  for (i = 0; i < mfs->sb.blocksize; i++) {
-    char c;
-    /* Read the next character (byte sized). */
-    if (fread(&c, sizeof(char), 1, mfs->file) < 1) {
-      fprintf(stderr, "error reading character in zone: %d\n", errno);
-      exit(EXIT_FAILURE);
-    }
 
-    /* Print this to the stream. */
-    fwrite(&c, sizeof(char), 1, s);
+  /* How much we have left to get. */
+  uint32_t difference = inode->size - *bytes_read;
 
-    /* Note that we read another byte. If we have read all of them, then we
-       are done reading, so finish with a new line and return. */
-    *bytes_read = *bytes_read + 1;
+  if (difference > mfs->sb.blocksize) {
+    /* If there is more to read than the size of a block, then read an entire
+       blocks worth */
+    difference = mfs->sb.blocksize;
+  }
 
-    /* If we read everything, make note of it, and return with true. */
-    if (*bytes_read >= inode->size) {
-      fprintf(s, "\n");
-      return true;
-    }
+  /* Make a buffer to fread into. */
+  void* buff = malloc(sizeof(char)*difference);
+  if (buff == NULL) {
+    fprintf(stderr, "error mallocing buffer to get file contents: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+
+  /* Read the next character (byte sized). */
+  if (fread(&buff, sizeof(char)*difference, 1, mfs->file) < 1) {
+    fprintf(stderr, "error reading character in zone: %d\n", errno);
+    free(buff);
+    exit(EXIT_FAILURE);
+  }
+
+  free(buff);
+
+  /* If we read everything, make note of it, and return with true. */
+  if (*bytes_read >= inode->size) {
+    fprintf(s, "\n");
+    return true;
   }
   return false;
 }
