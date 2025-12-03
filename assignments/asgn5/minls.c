@@ -70,6 +70,10 @@ int main (int argc, char *argv[]) {
      was processed, this will be set to the last file/directory name.*/
   /* TODO: test with the maxed out name size. */
   unsigned char* cur_name = malloc(sizeof(char)*DIR_NAME_SIZE+1);
+  if (cur_name == NULL) {
+    fprintf(stderr, "error mallocing space to track the cur name: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
 
   /* By default, set the string to be empty. */
   *cur_name = '\0';
@@ -77,6 +81,11 @@ int main (int argc, char *argv[]) {
   /* Allocate enough space for the canonicalized interpretation of the given 
      minix path. */
   char* can_minix_path = malloc(sizeof(char)*strlen(minix_path)+1);
+  if (can_minix_path == NULL) {
+    fprintf(stderr, "error mallocing canonicalized minix path: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+
 
   /* By default, set the string to be empty. */
   *can_minix_path = '\0';
