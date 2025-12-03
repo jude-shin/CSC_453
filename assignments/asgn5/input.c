@@ -7,24 +7,20 @@
 
 #include "input.h"
 
+/* TODO: define this somewhere else? */
 #define MAX_PRIM_PART 4
 
 /* Parses the flags given. If an error occurs, this function returns -1 and is 
  * handled in the caller.
  * @param argc number of arguments passed to the main function
  * @param argv[] array of strings passes as arguments to the main function
- * @param verbose a ptr to the int tracking the verbosity 
+ * @param verb a ptr to the int tracking the verbosity 
  * @param p_part a ptr to the int tracking the number of primary partition
  * @param s_part a ptr to the int tracking the number of sub partitions 
  * @param the 
  * @return the number of flags that were processed. -1 if any error occured.
  */
-int parse_flags(
-    int argc, 
-    char* argv[], 
-    bool* verbose, 
-    int* p_part, 
-    int* s_part) {
+int parse_flags(int argc, char* argv[], bool* verb, int* p_part, int* s_part) {
   /* Loop through all of the arguments, only accepting the flagw -v -p and -s
      Where -p and -s have arguments after it. */
   int opt;
@@ -32,7 +28,7 @@ int parse_flags(
     switch (opt) {
       /* Verbosity flag */
       case 'v':
-        *verbose = true;
+        *verb = true;
         break;
 
         /* Partition flag (primary) */

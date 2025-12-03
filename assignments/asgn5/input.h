@@ -2,12 +2,7 @@
 #define INPUT 
 
 /* Parses the flags given. Exits with EXIT_FAILURE if anything goes wrong. */
-int parse_flags(
-    int argc, 
-    char* argv[], 
-    bool* verbose, 
-    int* p_part, 
-    int* s_part);
+int parse_flags(int argc, char* argv[], bool* verb, int* p_part, int* s_part);
 
 /* Parses the rest of the input for minls, setting the caller values. */
 int parse_minls_input(
