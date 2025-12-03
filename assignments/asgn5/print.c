@@ -529,10 +529,10 @@ bool get_indirect_zone_contents(
       exit(EXIT_FAILURE);
     }
 
+    /* Check to see if this is a hole. */
     if (indirect_zone_number == 0) {
-      /* Fill the hole here? */
-      uint32_t hs = mfs->sb.blocksize
-      return fill_hole(s, inode, mfs->sb.blocksize, bytes_read);
+      uint32_t hs = mfs->sb.blocksize;
+      return fill_hole(s, inode, hs, bytes_read);
     }
 
     /* print all of the contents inside that zone*/
@@ -607,10 +607,10 @@ bool get_two_indirect_zone_contents(
       exit(EXIT_FAILURE);
     }
 
+    /* Check to see if this is a hole. */
     if (two_indirect_zone_number == 0) {
-      /* Fill the hole here? */
-      uint32_t hs = mfs->sb.blocksize
-      return fill_hole(s, inode, mfs->sb.blocksize, bytes_read);
+      uint32_t hs = mfs->sb.blocksize;
+      return fill_hole(s, inode, hs, bytes_read);
     }
 
     /* Print all of the contents inside that indirect zone*/
