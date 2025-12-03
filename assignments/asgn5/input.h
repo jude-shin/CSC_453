@@ -6,24 +6,24 @@ int parse_flags(
     int argc, 
     char* argv[], 
     bool* verbose, 
-    int* prim_part, 
-    int* sub_part);
+    int* p_part, 
+    int* s_part);
 
 /* Parses the rest of the input for minls, setting the caller values. */
 int parse_minls_input(
     int argc, 
     char* argv[], 
-    char** imagefile,
-    char** path,
+    char** img,
+    char** pth,
     int i);
 
 /* Parses the rest of the input for minget, setting the caller values. */
 int parse_minget_input(
     int argc, 
     char* argv[], 
-    char** imagefile,
-    char** srcpath, 
-    char** dstpath,
+    char** img,
+    char** s_pth, 
+    char** d_pth,
     int i);
 
 /* Safely parses an argument that is supposed to be a positive integer. Returns

@@ -14,8 +14,8 @@
  * @param argc number of arguments passed to the main function
  * @param argv[] array of strings passes as arguments to the main function
  * @param verbose a ptr to the int tracking the verbosity 
- * @param prim_part a ptr to the int tracking the number of primary partition
- * @param sub_part a ptr to the int tracking the number of sub partitions 
+ * @param p_part a ptr to the int tracking the number of primary partition
+ * @param s_part a ptr to the int tracking the number of sub partitions 
  * @param the 
  * @return the number of flags that were processed. -1 if any error occured.
  */
@@ -23,8 +23,8 @@ int parse_flags(
     int argc, 
     char* argv[], 
     bool* verbose, 
-    int* prim_part, 
-    int* sub_part) {
+    int* p_part, 
+    int* s_part) {
   /* Loop through all of the arguments, only accepting the flagw -v -p and -s
      Where -p and -s have arguments after it. */
   int opt;
@@ -37,12 +37,12 @@ int parse_flags(
 
         /* Partition flag (primary) */
       case 'p':
-        *prim_part = parse_positive_int(optarg);
-        if (*prim_part < 0) {
+        *p_part = parse_positive_int(optarg);
+        if (*p_part < 0) {
           fprintf(stderr, "An error occured parsing the primary partition\n");
           return -1;
         }
-        if (*prim_part >= MAX_PRIM_PART) {
+        if (*p_part >= MAX_PRIM_PART) {
           fprintf(
               stderr, 
               "The primary partition must be less than %d.\n",
@@ -53,8 +53,8 @@ int parse_flags(
 
         /* Partition flag (sub) */
       case 's':
-        *sub_part = parse_positive_int(optarg);
-        if (*sub_part < 0) {
+        *s_part = parse_positive_int(optarg);
+        if (*s_part < 0) {
           fprintf(stderr, "An error occured parsing the sub partition\n");
           return -1;
         }
@@ -66,8 +66,8 @@ int parse_flags(
     }
   }
 
-  /* If the sub_part is set, the primary partition must also be set. */
-  if (*sub_part != -1 && *prim_part == -1) {
+  /* If the s_part is set, the primary partition must also be set. */
+  if (*s_part != -1 && *p_part == -1) {
     fprintf(stderr, "A primary partition must also be selected.\n");
     return -1;
   }
@@ -118,7 +118,7 @@ int parse_positive_int(char* s) {
  * caller (imagefile and path).
  * @param argc number of arguments passed to the main function
  * @param argv[] array of strings passes as arguments to the main function
- * @param imagefile a ptr to the string that represents the imagefile (req)
+ * @param img a ptr to the string that represents the imagefile (req)
  * @param path a ptr to the string that represents the path directory. Note
  *  that this is set to NULL if the user does not specify it.
  * @param i the number of flags that were parsed.
@@ -128,7 +128,7 @@ int parse_positive_int(char* s) {
 int parse_minls_input(
     int argc, 
     char* argv[], 
-    char** imagefile,
+    char** img,
     char** path,
     int i) {
   int remainder;
@@ -154,7 +154,7 @@ int parse_minls_input(
   /* There is an imagefile. */
   if (remainder >= 1) {
     /* point imagefile to the existing string data in argv */
-    *imagefile = argv[i++];
+    *img = argv[i++];
   }
 
   /* There is also a path. */
@@ -173,12 +173,12 @@ int parse_minls_input(
 }
 
 /* Parses the rest of the input for minget, setting the values defined in the 
- * caller (imagefile, source path, and destination path).
+ * caller (imgagefile, source path, and destination path).
  * @param argc number of arguments passed to the main function
  * @param argv[] array of strings passes as arguments to the main function
- * @param imagefile a ptr to the string that represents the imagefile (req)
- * @param srcpath a ptr to the string that represents the source path.
- * @param dstpath a ptr to the string that represents the destination path. Note
+ * @param img a ptr to the string that represents the imagefile (req)
+ * @param s_pth a ptr to the string that represents the source path.
+ * @param d_pth a ptr to the string that represents the destination path. Note
  *  that this is set to NULL if the user does not specify it.
  * @param i the number of flags that were parsed.
  * @return the number of arguments that were processed. -1 if anything goes
@@ -187,9 +187,9 @@ int parse_minls_input(
 int parse_minget_input(
     int argc, 
     char* argv[], 
-    char** imagefile,
-    char** src_path, 
-    char** dst_path, 
+    char** img,
+    char** s_pth, 
+    char** d_pth, 
     int i) {
   int remainder;
 
@@ -203,7 +203,7 @@ int parse_minget_input(
   remainder = argc - i;
 
   /* dstpath is optional, and is set to NULL */
-  *dst_path = NULL;
+  *d_pth = NULL;
 
   /* There aren't enough arguments. */
   if (remainder <= 1) {
@@ -214,16 +214,16 @@ int parse_minget_input(
   /* There is an imagefile and srcpath. */
   if (remainder >= 2) {
     /* point imagefile to the existing string data in argv */
-    *imagefile = argv[i++];
+    *img = argv[i++];
 
     /* point srcpath to the existing string data in argv */
-    *src_path = argv[i++];
+    *s_pth= argv[i++];
   }
 
   /* There is also a dstpath. */
   if (remainder >= 3) {
     /* point dstpath to the existing string data in argv */
-    *dst_path = argv[i++];
+    *d_pth = argv[i++];
   }
 
   /* There are too many arguments. */
