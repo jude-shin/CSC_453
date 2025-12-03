@@ -408,11 +408,7 @@ bool get_block_contents(
   free(buff);
 
   /* If we read everything, make note of it, and return with true. */
-  if (*bytes_read >= inode->size) {
-    fprintf(s, "\n");
-    return true;
-  }
-  return false;
+  return (*bytes_read >= inode->size);
 }
 
 /* Prints the contents of a zone to a stream s.  
