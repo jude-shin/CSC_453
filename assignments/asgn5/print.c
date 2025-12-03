@@ -393,14 +393,17 @@ bool get_block_contents(
   }
 
   /* Read the next character (byte sized). */
-  if (fread(&buff, sizeof(char)*difference, 1, mfs->file) < 1) {
+  if (fread(buff, sizeof(char)*difference, 1, mfs->file) < 1) {
     fprintf(stderr, "error reading character in zone: %d\n", errno);
     free(buff);
     exit(EXIT_FAILURE);
   }
 
   /* Write it to the desired stream. */
-  fwrite(&buff, sizeof(char)*difference, 1, s);
+  fwrite(buff, sizeof(char)*difference, 1, s);
+
+  /* Update the bytes_read count. */
+  *bytes_read = *bytes_read + difference;
 
   free(buff);
 
