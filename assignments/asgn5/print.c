@@ -363,8 +363,9 @@ bool print_zone_contents(
 
   /* We still have bytes to read! This is a problem... */
   if (zone_num == 0) {
-    fprintf(stderr, "we reached a hole wtihout finishing reading the file. ");
-    exit(EXIT_FAILURE);
+    return false;
+    // fprintf(stderr, "we reached a hole wtihout finishing reading the file. ");
+    // exit(EXIT_FAILURE);
   }
 
   /* Seek to the beginning of the zone. */
@@ -421,8 +422,9 @@ bool print_indirect_zone_contents(
 
   /* We still have bytes to read! This is a problem... */
   if (zone_num == 0) {
-    fprintf(stderr, "we reached a hole wtihout finishing reading the file. ");
-    exit(EXIT_FAILURE);
+    return false;
+    // fprintf(stderr, "we reached a hole wtihout finishing reading the file. ");
+    // exit(EXIT_FAILURE);
   }
 
   /* Start reading the first block in that indirect zone. */
@@ -478,8 +480,9 @@ bool print_two_indirect_zone_contents(
 
   /* We still have bytes to read! This is a problem... */
   if (zone_num == 0) {
-    fprintf(stderr, "we reached a hole wtihout finishing reading the file. ");
-    exit(EXIT_FAILURE);
+    return false;
+    // fprintf(stderr, "we reached a hole wtihout finishing reading the file. ");
+    // exit(EXIT_FAILURE);
   }
 
   /* Start reading the first block in the double indirect zone. */
