@@ -5,7 +5,7 @@
 #include <errno.h>
 #include <stdbool.h>
 
-#include "input.h"
+#include "parse.h"
 
 /* TODO: define this somewhere else? */
 #define MAX_PRIM_PART 4

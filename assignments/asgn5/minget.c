@@ -4,9 +4,8 @@
 #include <stdbool.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <errno.h>
 
-#include "input.h"
+#include "parse.h"
 #include "print.h"
 #include "disk.h"
 
