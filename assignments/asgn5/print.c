@@ -343,12 +343,11 @@ void get_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
 
   /* If we reach here, we have a stupid big file, and we have not read all of
      the contents. */
-  fprintf(s, "\n");
-  fprintf(
-      stderr, 
-      "File is too large to print. Exausted direct, indirect, and double "
-      "indirect zones. Size: (%u)\n",
-      inode->size);
+  // fprintf(
+  //     stderr, 
+  //     "File is too large to print. Exausted direct, indirect, and double "
+  //     "indirect zones. Size: (%u)\n",
+  //     inode->size);
 }
 
 void fill_hole(
