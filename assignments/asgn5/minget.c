@@ -92,7 +92,7 @@ int main (int argc, char *argv[]) {
   else {
     /* Get the stats of the file on the file. */
     struct stat sb;
-    if (stat(minix_dst_path, &sb) == -1) {
+    if (lstat(minix_dst_path, &sb) == -1) {
       fprintf(stderr, "error getting stat on dst path: %d\n", errno);
       exit(EXIT_FAILURE);
     }
