@@ -699,10 +699,10 @@ bool search_two_indirect_zone(
  * @param sb a struct that holds information about the superblock.
  * @return uint16_t the size of a zone
  */
-uint16_t get_zone_size(min_superblock* sb) {
-  uint16_t blocksize = sb->blocksize;
+uint32_t get_zone_size(min_superblock* sb) {
+  uint32_t blocksize = sb->blocksize;
   int16_t log_zone_size = sb->log_zone_size; /* log_zone_size? */
-  uint16_t zonesize = blocksize << log_zone_size;
+  uint32_t zonesize = blocksize << log_zone_size;
 
   return zonesize;
 }

@@ -119,7 +119,7 @@ typedef struct min_fs {
                              beginning of the image file. aka "real" address)*/
   min_superblock sb;      /* The superblock and it's information for the fs */
 
-  uint16_t zone_size;     /* The size of a zone in bytes */
+  uint32_t zone_size;     /* The size of a zone in bytes */
 
   uint32_t b_imap;        /* "real" address of the inode bitmap */
   uint32_t b_zmap;        /* "real" address of the zone bitmap */
@@ -240,7 +240,7 @@ bool search_two_indirect_zone(
 /* ========== */
 
 /* Calculates the zonesize based on a superblock using a bitshift. */
-uint16_t get_zone_size(min_superblock* sb);
+uint32_t get_zone_size(min_superblock* sb);
 
 
 /* ===== */
