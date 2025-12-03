@@ -557,12 +557,15 @@ bool search_indirect_zone(
     char* name) {
   int i;
 
+  fprintf(stdout, "Searching indirect zone.\n");
+
   /* Skip over the indirect zone if it is not used. */
   if (zone_num == 0) {
+
+    fprintf(stdout, "indirect zone skipped (was 0).\n");
     return false;
   }
 
-  fprintf(stdout, "Searching indirect zone.\n");
 
   /* Start reading the first block in that indirect zone. */
   if (fseek(
@@ -619,12 +622,13 @@ bool search_two_indirect_zone(
     char* name) {
   int i;
 
+  fprintf(stdout, "Searching double indirect zone.\n");
+
   /* Skip over the indirect zone if it is not used. */
   if (zone_num == 0) {
+    fprintf(stdout, "double indirect zone skipped (was 0).\n");
     return false;
   }
-
-  fprintf(stdout, "Searching double indirect zone.\n");
 
   /* Start reading the first block in the double indirect zone. */
   if (fseek(

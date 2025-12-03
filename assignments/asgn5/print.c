@@ -71,6 +71,66 @@ void print_file(FILE* s, min_inode* inode, unsigned char* name) {
   fprintf(s, "%*u %s\n", FILE_SIZE_LN, inode->size, name);
 }
 
+/* TODO: print the files in a block  COMMENTS*/
+void print_files_in_block(FILE* s, min_fs* mfs, uint32_t zone_num, uint32_t block_number) {
+  /* Skip over the zone if it is not used. */
+  if (zone_num == 0) { 
+    return ;
+  }
+
+  uint32_t zone_addr = mfs->partition_start + (zone_num * mfs->zone_size);
+  uint32_t block_addr = zone_addr + (block_number * mfs->sb.blocksize);
+
+
+  /* Read all directory entries in this block. */
+  int num_directories = mfs->sb.blocksize / DIR_ENTRY_SIZE;
+
+  int i;
+  for(i = 0; i < num_directories; i++) {
+    /* print ALL dierctory entries that fit in this block. */
+
+    /* The entry that will hold the filename. */
+    min_dir_entry entry;
+
+    /* Seek to the directory entry */
+    if (fseek(mfs->file, block_addr + (i * DIR_ENTRY_SIZE), SEEK_SET)) {
+      fprintf(stderr, "error seeking to directory entry: %d\n", errno);
+      exit(EXIT_FAILURE);
+    }
+
+    /* Read the directory entry */
+    if(fread(&entry, DIR_ENTRY_SIZE, 1, mfs->file) < 1) {
+      fprintf(stderr, "error reading directory entry: %d\n", errno);
+      exit(EXIT_FAILURE);
+    }
+
+    /* Check if entry is valid */
+    if(entry.inode != 0) {
+      min_inode next_inode;
+
+      /* Seek to the address that holds the inode that we are on. */
+      if (fseek(
+            mfs->file, 
+            mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE),
+            SEEK_SET) == -1) {
+        fprintf(stderr, "error seeking to inode: %d\n", errno);
+        exit(EXIT_FAILURE);
+      }
+
+      /* Fill the next_inode with the found information. */
+      if(fread(&next_inode, INODE_SIZE, 1, mfs->file) < 1) {
+        /* If there was an error writing to the inode, note it an exit. We 
+           could try to limp along, but this is not that critical of an 
+           application, so we'll just bail. */
+        fprintf(stderr, "error getting next inode for printing: %d\n", errno);
+        exit(EXIT_FAILURE);
+      }
+
+      print_file(s, &next_inode, entry.name);
+    }
+  }
+}
+
 /* Given a zone, print all of the files that are on that zone if they are valid.
  * @param s the stream that this message will be printed to.
  * @param mfs a struct that holds an open file descriptor, and the offset (the
@@ -79,57 +139,19 @@ void print_file(FILE* s, min_inode* inode, unsigned char* name) {
  * @param zone_num the zone number of interest
  * @return void.
  */
-void print_files_in_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
+void print_files_in_direct_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
   /* Skip over the indirect zone if it is not used. */
-  if (zone_num != 0) {
+  if (zone_num == 0) { 
+    return ;
+  }
 
-    /* The actual address of the zone. */
-    uint32_t zone_addr = mfs->partition_start + (zone_num * mfs->zone_size);
+  /* Read all directory entries in this chunk. */
+  int num_blocks = mfs->zone_size / mfs->sb.blocksize;
 
-    /* Read all directory entries in this chunk. */
-    int num_entries = mfs->zone_size / DIR_ENTRY_SIZE;
-
-    int i;
-    for(i = 0; i < num_entries; i++) {
-      min_dir_entry entry;
-
-      /* Seek to the directory entry */
-      if (fseek(mfs->file, zone_addr + (i * DIR_ENTRY_SIZE), SEEK_SET)) {
-        fprintf(stderr, "error seeking to directory entry: %d\n", errno);
-        exit(EXIT_FAILURE);
-      }
-
-      /* Read the directory entry */
-      if(fread(&entry, DIR_ENTRY_SIZE, 1, mfs->file) < 1) {
-        fprintf(stderr, "error reading directory entry: %d\n", errno);
-        exit(EXIT_FAILURE);
-      }
-
-      /* Check if entry is valid */
-      if(entry.inode != 0) {
-        min_inode next_inode;
-
-        /* Seek to the address that holds the inode that we are on. */
-        if (fseek(
-              mfs->file, 
-              mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE),
-              SEEK_SET) == -1) {
-          fprintf(stderr, "error seeking to inode: %d\n", errno);
-          exit(EXIT_FAILURE);
-        }
-
-        /* Fill the next_inode with the found informatio. */
-        if(fread(&next_inode, INODE_SIZE, 1, mfs->file) < 1) {
-          /* If there was an error writing to the inode, note it an exit. We 
-             could try to limp along, but this is not that critical of an 
-             application, so we'll just bail. */
-          fprintf(stderr, "error getting next inode for printing: %d\n", errno);
-          exit(EXIT_FAILURE);
-        }
-
-        print_file(s, &next_inode, entry.name);
-      }
-    }
+  int i;
+  for(i = 0; i < num_blocks; i++) {
+    /* print ALL blocks that fit in this zone. */
+    print_files_in_block(s, mfs, zone_num, i);
   }
 }
 
@@ -144,36 +166,40 @@ void print_files_in_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
  */
 void print_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
   /* Skip over the indirect zone if it is not used. */
-  if (zone_num != 0) {
-    /* Start reading the first block in that indirect zone. */
+  if (zone_num == 0) {
+    return;
+  }
+
+  /* The first block is going to line up with the address of that zone. */
+  uint32_t block_addr = mfs->partition_start + (zone_num*mfs->zone_size);
+
+  /* How many zone numbers we are going to read (how many fit in the first 
+     block of the indirect zone) */
+  int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+
+  /* For every zone number in that first indirect inode block. */
+  int i;
+  for(i = 0; i < total_indirect_inodes; i++) {
+    /* The zone number that holds directory entries. */
+    uint32_t indirect_zone_number;
+
+    /* Read the entry offset in the first block. */
     if (fseek(
           mfs->file, 
-          mfs->partition_start + (zone_num*mfs->zone_size), 
+          block_addr + sizeof(uint32_t),
           SEEK_SET) == -1) {
       fprintf(stderr, "error seeking to indirect zone: %d\n", errno);
       exit(EXIT_FAILURE);
     }
 
-    /* How many zone numbers we are going to read (how many fit in the first 
-       block of the indirect zone) */
-    int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
-
-    /* For every zone number in that first indirect inode block. */
-    int i;
-    for(i = 0; i < total_indirect_inodes; i++) {
-      /* The zone number that holds directory entries. */
-      uint32_t indirect_zone_number;
-
-      /* Read the number that holds the zone number. */
-      if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
-        fprintf(stderr, "error reading indirect zone: %d\n", errno);
-        exit(EXIT_FAILURE);
-      }
-
-      /* Print all of the valid files that are in the zones pointed to in
-         the indirect zone. */
-      print_files_in_zone(s, mfs, indirect_zone_number);
+    /* Read the number that holds the zone number. */
+    if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
+      fprintf(stderr, "error reading indirect zone: %d\n", errno);
+      exit(EXIT_FAILURE);
     }
+
+    /* Print all the valid files that are in the first block in this list. */
+    print_files_in_block(s, mfs, indirect_zone_number, 0);
   }
 }
 
@@ -189,36 +215,40 @@ void print_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
  */
 void print_files_in_two_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
   /* Skip over the indirect zone if it is not used. */
-  if (zone_num != 0) {
+  if (zone_num == 0) {
+    return;
+  }
+
+  /* How many zone numbers we are going to read (how many fit in the first 
+     block of the indirect zone) */
+  int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+
+  /* TODO: address*/
+  uint32_t zone_addr = mfs->partition_start + (zone_num*mfs->zone_size);
+
+  /* For every zone number in that first double indirect inode block. */
+  int i;
+  for(i = 0; i < total_indirect_inodes; i++) {
+    /* The zone number that holds the indierct zone numbers. */
+    uint32_t indirect_zone_number;
 
     /* Start reading the first block in the double indirect zone. */
     if (fseek(
-        mfs->file, 
-        mfs->partition_start + (zone_num*mfs->zone_size),
-        SEEK_SET) == -1) {
+          mfs->file, 
+          zone_addr + (i * sizeof(uint32_t)), 
+          SEEK_SET) == -1) {
       fprintf(stderr, "error seeking to double indirect zone: %d\n", errno);
       exit(EXIT_FAILURE);
     }
-
-    /* How many zone numbers we are going to read (how many fit in the first 
-       block of the indirect zone) */
-    int total_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
-
-    /* For every zone number in that first double indirect inode block. */
-    int i;
-    for(i = 0; i < total_indirect_inodes; i++) {
-      /* The zone number that holds the indierct zone numbers. */
-      uint32_t two_indirect_zone_number;
-
-      /* Read the number that holds the zone number. */
-      if(fread(&two_indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
-        fprintf(stderr, "error reading indirect zone number: %d\n", errno);
-        exit(EXIT_FAILURE);
-      }
-
-      /* Print the files in that indirect zone. */
-      print_files_in_indirect_zone(s, mfs, two_indirect_zone_number);
+    
+    /* Read the number that holds the zone number. */
+    if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
+      fprintf(stderr, "error reading indirect zone number: %d\n", errno);
+      exit(EXIT_FAILURE);
     }
+
+    /* Print the files in that indirect zone. */
+    print_files_in_indirect_zone(s, mfs, indirect_zone_number);
   }
 }
 
@@ -239,7 +269,7 @@ void print_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path) {
   int i;
   for(i = 0; i < DIRECT_ZONES; i++) {
     /* Print all of the valid files that are in that zone. */
-    print_files_in_zone(s, mfs, inode->zone[i]);
+    print_files_in_direct_zone(s, mfs, inode->zone[i]);
   }
 
   /* INDIRECT ZONES */
