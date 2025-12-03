@@ -357,17 +357,24 @@ void fill_hole(
     uint32_t hs, /* The size of a hole */
     uint32_t* bytes_read) {
 
-  char foo = 0;
+  char* zeros = calloc(hs, sizeof(char));
+  if (zeros == NULL) {
+    fprintf(stderr, "error callocing buffer of zeros: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+
+  /* Write a bunch of zeros. */
+  if (fwrite(&zeros, sizeof(char), hs, s) < hs) {
+    fprintf(stderr, "error filling hole: %d\n", errno);
+    free(zeros);
+    exit(EXIT_FAILURE);
+  }
+
+  free(zeros);
 
   /* Update the bytes read. We know that since this is a hole, then this must
      be less than the total bytes read, and therefore will not go over. */
   *bytes_read = *bytes_read + hs;
-
-  /* Write a bunch of zeros. */
-  if (fwrite(&foo, sizeof(char), hs, s) < hs) {
-    fprintf(stderr, "error filling hole: %d\n", errno);
-    exit(EXIT_FAILURE);
-  }
 
   // TODO: return (*bytes_read >= inode->size);
 }
