@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -85,31 +84,29 @@ int parse_flags(
 int parse_positive_int(char* s) {
   int value;
   char* end;
-  int errno; /* what kind of error occured. */
 
-  errno = 0;
-
-  /* TODO: check for the overflow before casting? */
+  /* If any underflow or overflow occurs, errno is set to ERANGE. */
   value = (int) strtol(s, &end, 10);
 
+  /* If the conversion could not be performed. */
   if (end == s) {
-    /* If the conversion could not be performed. */
     fprintf(stderr, "No digits were found at the beginning of the argument.\n");
     value = -1;
   }
+  /* There were some non-numberic characters if the end pointer still points
+     to null. */
   else if (*end != '\0') {
-    /* There were some non-numberic characters if the end pointer still points
-       to null. */
     fprintf(stderr, "Invalid characters found after the number: '%s'\n", end);
     value = -1;
   }
+  /* Checks for overflow (and underflow) of the converted value. */
   else if (errno == ERANGE) {
     /* Checks for overflow (and underflow) of the converted value. */
     fprintf(stderr, "Value out of range for long.\n");
     value = -1;
   } 
+  /* We are only parsing posititive integers. */
   else if (value < 0) {
-    /* Checks for overflow (and underflow) of the converted value. */
     fprintf(stderr, "The integer must be positive.\n");
     value = -1;
   }
@@ -117,7 +114,8 @@ int parse_positive_int(char* s) {
   return value;
 }
 
-/* Parses the rest of the input for minls, setting the caller values.  
+/* Parses the rest of the input for minls, setting the values defined in the 
+ * caller (imagefile and path).
  * @param argc number of arguments passed to the main function
  * @param argv[] array of strings passes as arguments to the main function
  * @param imagefile a ptr to the string that represents the imagefile (req)
@@ -133,6 +131,7 @@ int parse_minls_input(
     char** imagefile,
     char** path,
     int i) {
+  int remainder;
 
   /* Make sure the number of flags processed was correct, or else the indexing
      of the rest of the argv's will be off. */
@@ -141,7 +140,7 @@ int parse_minls_input(
   }
 
   /* How many arguments are there (aside from the flags). */
-  int remainder = argc - i;
+  remainder = argc - i;
 
   /* path is optional, and is set to NULL. */
   *path = NULL;
@@ -173,7 +172,8 @@ int parse_minls_input(
   return remainder;
 }
 
-/* Parses the rest of the input for minget, setting the caller values.  
+/* Parses the rest of the input for minget, setting the values defined in the 
+ * caller (imagefile, source path, and destination path).
  * @param argc number of arguments passed to the main function
  * @param argv[] array of strings passes as arguments to the main function
  * @param imagefile a ptr to the string that represents the imagefile (req)
@@ -191,6 +191,7 @@ int parse_minget_input(
     char** src_path, 
     char** dst_path, 
     int i) {
+  int remainder;
 
   /* Make sure the number of flags processed was correct, or else the indexing
      of the rest of the argv's will be off. */
@@ -199,7 +200,7 @@ int parse_minget_input(
   }
 
   /* How many arguments are there (aside from the flags). */
-  int remainder = argc - i;
+  remainder = argc - i;
 
   /* dstpath is optional, and is set to NULL */
   *dst_path = NULL;
@@ -233,4 +234,3 @@ int parse_minget_input(
 
   return remainder;
 }
-
