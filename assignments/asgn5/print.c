@@ -367,6 +367,9 @@ bool print_zone_contents(
 
   /* We still have bytes to read! This is a problem... */
   if (zone_num == 0) {
+    /* Keep the hole still takes up space, just don't read any of it as it will
+       just be zeros. */
+    *bytes_read = *bytes_read + mfs->zone_size;
     return false;
     //fprintf(stderr, "we reached a hole wtihout finishing reading the file. ");
     //exit(EXIT_FAILURE);
