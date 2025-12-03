@@ -90,28 +90,36 @@ int main (int argc, char *argv[]) {
   }
   /* If there was a dst file, try to write it there. */
   else {
-    /* Get the stats of the file on the file. */
+    int fd = open(minix_dst_path, O_WRONLY | O_TRUNC | O_NOFOLLOW);
+    if (fd == -1) {
+      perror("open");
+      exit(EXIT_FAILURE);
+    }
+
     struct stat sb;
-    if (lstat(minix_dst_path, &sb) == -1) {
-      fprintf(stderr, "error getting stat on dst path: %d\n", errno);
+    if (fstat(fd, &sb) == -1) {
+      perror("fstat");
+      close(fd);
       exit(EXIT_FAILURE);
     }
 
-    /* Mask the mode to see if the file is regular. */
     if (!S_ISREG(sb.st_mode)) {
-      fprintf(stderr, "dst is not a regular file: %d\n", errno);
+      fprintf(stderr, "dst is not a regular file\n");
+      close(fd);
       exit(EXIT_FAILURE);
     }
 
-    /* Open the file for writing. */
-    FILE* output = fopen(minix_dst_path, "wb");
-    if (output == 0) {
-      fprintf(stderr, "error opening %s: %d\n", minix_dst_path, errno);
+    FILE *output = fdopen(fd, "wb");
+    if (!output) {
+      perror("fdopen");
+      close(fd);
       exit(EXIT_FAILURE);
     }
 
-    print_file_contents(output, &mfs, &src_inode);
-    fclose(output);
+    /* Close the minix filesystem. */
+    close_mfs(&mfs);
+
+    exit(EXIT_SUCCESS);
   }
 
   /* Close the minix filesystem. */
