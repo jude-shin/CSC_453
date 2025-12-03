@@ -621,7 +621,7 @@ bool search_indirect_zone(
     /* Search the direct zone for an entry. If found, then we know that 
        search_chunk already wrote the data to inode_addr, so we can just exit.
        Otherwise, the for loop will continue with the search. */
-    if (search_block(mfs, inode, indirect_zone_number, 0, name)) {
+    if (search_direct_zone(mfs, inode, indirect_zone_number, name)) {
       return true;
     }
   }

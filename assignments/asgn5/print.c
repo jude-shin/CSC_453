@@ -204,7 +204,7 @@ void print_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
     }
 
     /* Print all the valid files that are in the first block in this list. */
-    print_files_in_block(s, mfs, indirect_zone_number, 0);
+    print_files_in_direct_zone(s, mfs, indirect_zone_number);
   }
 }
 
@@ -539,12 +539,12 @@ bool get_indirect_zone_contents(
     }
 
     /* print all of the contents inside that zone*/
-    if (get_block_contents(
+    /* TODO: get all contents in this zone. */
+    if (get_direct_zone_contents(
           s, 
           mfs, 
           inode, 
           indirect_zone_number, 
-          0, 
           bytes_read)) {
       /* If the printing finished somewhere in here, also make note of it by 
          returning true!*/
