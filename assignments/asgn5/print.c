@@ -350,11 +350,16 @@ void get_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
   //     inode->size);
 }
 
-void fill_hole(
+bool fill_hole(
     FILE* s, 
     min_inode* inode, 
     uint32_t hs, /* The size of a hole */
     uint32_t* bytes_read) {
+
+  uint32_t remaining = inode->size - *bytes_read;
+  if (remaining < hs) {
+    hs = remaining;
+  }
 
   char* zeros = calloc(hs, sizeof(char));
   if (zeros == NULL) {
@@ -375,7 +380,7 @@ void fill_hole(
      be less than the total bytes read, and therefore will not go over. */
   *bytes_read = *bytes_read + hs;
 
-  // TODO: return (*bytes_read >= inode->size);
+  return (*bytes_read >= inode->size);
 }
 
 bool get_block_contents(
@@ -458,9 +463,7 @@ bool get_direct_zone_contents(
        just be zeros. */
     uint32_t hs = mfs->zone_size;
 
-    fill_hole(s, inode, hs, bytes_read);
-
-    return false;
+    return fill_hole(s, inode, hs, bytes_read);
   }
 
   /* get all of the blocks in this zone. */
@@ -499,9 +502,7 @@ bool get_indirect_zone_contents(
   if (zone_num == 0) {
     uint32_t hs = mfs->sb.blocksize*num_indirect_inodes;
 
-    fill_hole(s, inode, hs, bytes_read);
-
-    return false;
+    return fill_hole(s, inode, hs, bytes_read);
   }
 
   /* Start reading the first block in that indirect zone. */
@@ -580,9 +581,7 @@ bool get_two_indirect_zone_contents(
     /* The size of the hole */
     uint32_t hs = mfs->sb.blocksize*num_indirect_inodes*num_indirect_inodes;
 
-    fill_hole(s, inode, hs, bytes_read);
-
-    return false;
+    return fill_hole(s, inode, hs, bytes_read);
   }
 
   /* TODO: address*/
