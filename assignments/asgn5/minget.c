@@ -74,10 +74,11 @@ int main (int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  if ((src_inode.mode & SYM_FT)) {
-    fprintf(stderr, "src was a symlink! (not supported)\n");
-    exit(EXIT_FAILURE);
-  }
+  /* TODO: what is this garbage? */
+  // if ((src_inode.mode & SYM_FT)) {
+  //   fprintf(stderr, "src was a symlink! (not supported)\n");
+  //   exit(EXIT_FAILURE);
+  // }
 
   if (!(src_inode.mode & REG_FT)) {
     fprintf(stderr, "The path [%s] is not a regular file!\n", minix_src_path);
