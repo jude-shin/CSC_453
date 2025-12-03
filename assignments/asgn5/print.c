@@ -67,7 +67,7 @@ void print_file(FILE* s, min_inode* inode, unsigned char* name) {
   print_mask(s, "r", inode->mode, OTHER_R_PEM);
   print_mask(s, "w", inode->mode, OTHER_W_PEM);
   print_mask(s, "x", inode->mode, OTHER_X_PEM);
-  
+
   fprintf(s, "%*u %s\n", FILE_SIZE_LN, inode->size, name);
 }
 
@@ -245,7 +245,7 @@ void print_files_in_two_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
       fprintf(stderr, "error seeking to double indirect zone: %d\n", errno);
       exit(EXIT_FAILURE);
     }
-    
+
     /* Read the number that holds the zone number. */
     if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
       fprintf(stderr, "error reading indirect zone number: %d\n", errno);
@@ -308,7 +308,7 @@ void print_minget_usage(FILE* s) {
  * @param s the stream that this message will be printed to.
  * @param inode the inode of interest. 
  * @return void.
-*/
+ */
 void print_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
   uint32_t bytes_read = 0;
 
@@ -322,20 +322,24 @@ void print_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
   }
 
   /* Go through all of the indirect zones sequentially. */
-  print_indirect_zone_contents(
-      s, 
-      mfs, 
-      inode, 
-      inode->indirect, 
-      &bytes_read);
+  if (print_indirect_zone_contents(
+        s, 
+        mfs, 
+        inode, 
+        inode->indirect, 
+        &bytes_read)) {
+    return;
+  }
 
   /* Go through all of the double indirect zones sequentially. */
-  print_two_indirect_zone_contents(
-      s, 
-      mfs, 
-      inode, 
-      inode->two_indirect, 
-      &bytes_read);
+  if (print_two_indirect_zone_contents(
+        s, 
+        mfs, 
+        inode, 
+        inode->two_indirect, 
+        &bytes_read)) {
+    return;
+  }
 
   /* If we reach here, we have a stupid big file, and we have not read all of
      the contents. */
@@ -401,7 +405,7 @@ bool print_zone_contents(
       return true;
     }
   }
-  
+
   /* We have not yet finished reading. */
   return false;
 }
@@ -445,7 +449,7 @@ bool print_indirect_zone_contents(
   for(i = 0; i < total_indirect_inodes; i++) {
     /* The zone number that holds directory entries. */
     uint32_t indirect_zone_number;
-   
+
     /* Read the number that holds the zone number. */
     if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
       fprintf(stderr, "error reading indirect zone: %d\n", errno);
@@ -503,7 +507,7 @@ bool print_two_indirect_zone_contents(
   for(i = 0; i < total_indirect_inodes; i++) {
     /* The zone number that holds the indierct zone numbers. */
     uint32_t two_indirect_zone_number;
-   
+
     /* Read the number that holds the zone number. */
     if(fread(&two_indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
       fprintf(stderr, "error reading double indirect zone number: %d\n", errno);
