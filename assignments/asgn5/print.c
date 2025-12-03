@@ -529,7 +529,13 @@ bool get_indirect_zone_contents(
       exit(EXIT_FAILURE);
     }
 
-    /* Print all of the contents inside that zone*/
+    if (indirect_zone_number == 0) {
+      /* Fill the hole here? */
+      uint32_t hs = mfs->sb.blocksize
+      return fill_hole(s, inode, mfs->sb.blocksize, bytes_read);
+    }
+
+    /* print all of the contents inside that zone*/
     if (get_block_contents(
           s, 
           mfs, 
@@ -599,6 +605,12 @@ bool get_two_indirect_zone_contents(
     if(fread(&two_indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
       fprintf(stderr, "error reading double indirect zone number: %d\n", errno);
       exit(EXIT_FAILURE);
+    }
+
+    if (two_indirect_zone_number == 0) {
+      /* Fill the hole here? */
+      uint32_t hs = mfs->sb.blocksize
+      return fill_hole(s, inode, mfs->sb.blocksize, bytes_read);
     }
 
     /* Print all of the contents inside that indirect zone*/
