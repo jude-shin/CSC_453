@@ -322,7 +322,7 @@ void print_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
   }
 
   /* Go through all of the indirect zones sequentially. */
-  print_two_indirect_zone_contents(
+  print_indirect_zone_contents(
       s, 
       mfs, 
       inode, 
