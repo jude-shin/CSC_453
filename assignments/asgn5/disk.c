@@ -343,7 +343,7 @@ void duplicate_inode(min_fs* mfs, uint32_t inode_addr, min_inode* inode) {
  * NULL, the name is not updated. 
  * @return the address to the located inode. If not found, return 0;
    */
-uint32_t ls_inode(
+uint32_t find_inode(
     min_fs* mfs, 
     min_inode* inode,
     char* path,
