@@ -97,25 +97,25 @@ int main (int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     }
 
-    struct stat sb;
+    // struct stat sb;
 
-    if (fstat(fileno(output), &sb) == -1) {
-      perror("error fstatat on dst path.\n");
-      fclose(output);
-      exit(EXIT_FAILURE);
-    }
+    // if (fstat(fileno(output), &sb) == -1) {
+    //   perror("error fstatat on dst path.\n");
+    //   fclose(output);
+    //   exit(EXIT_FAILURE);
+    // }
 
-    if (!S_ISREG(sb.st_mode)) {
-      fprintf(stderr, "dst is not a regular file\n");
-      fclose(output);
-      exit(EXIT_FAILURE);
-    }
+    // if (!S_ISREG(sb.st_mode)) {
+    //   fprintf(stderr, "dst is not a regular file\n");
+    //   fclose(output);
+    //   exit(EXIT_FAILURE);
+    // }
 
-    if (S_ISLNK(sb.st_mode)) {
-      fprintf(stderr, "dst is a symbolic link!\n");
-      fclose(output);
-      exit(EXIT_FAILURE);
-    }
+    // if (S_ISLNK(sb.st_mode)) {
+    //   fprintf(stderr, "dst is a symbolic link!\n");
+    //   fclose(output);
+    //   exit(EXIT_FAILURE);
+    // }
 
     get_file_contents(output, &mfs, &src_inode);
     fclose(output);
