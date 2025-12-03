@@ -90,21 +90,30 @@ int main (int argc, char *argv[]) {
   }
   /* If there was a dst file, try to write it there. */
   else {
+
+    FILE *output = fopen(minix_dst_path, "wb");
+    if (!output) {
+      perror("error opening dst path.\n");
+      exit(EXIT_FAILURE);
+    }
+
     struct stat sb;
 
-    if (stat(minix_dst_path, &sb) == -1) {
+    if (fstat(fileno(output), &sb) == -1) {
       perror("error fstatat on dst path.\n");
+      fclose(output);
       exit(EXIT_FAILURE);
     }
 
     if (!S_ISREG(sb.st_mode)) {
       fprintf(stderr, "dst is not a regular file\n");
+      fclose(output);
       exit(EXIT_FAILURE);
     }
 
-    FILE *output = fopen(minix_dst_path, "wb");
-    if (!output) {
-      perror("error opening dst path.\n");
+    if (S_ISLNK(sb.st_mode)) {
+      fprintf(stderr, "dst is a symbolic link!\n");
+      fclose(output);
       exit(EXIT_FAILURE);
     }
 
