@@ -376,7 +376,7 @@ bool get_block_contents(
   /* Read a single character at a time so we don't have to bother with large
      varying sized buffers. */
   int i;
-  for (i = 0; i < mfs->zone_size; i++) {
+  for (i = 0; i < mfs->sb.blocksize; i++) {
     char c;
     /* Read the next character (byte sized). */
     if (fread(&c, sizeof(char), 1, mfs->file) < 1) {
