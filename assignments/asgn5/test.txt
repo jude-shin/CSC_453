@@ -11,8 +11,8 @@ Checking for long lines (no program should have any lines > 80 chars)
 --------------------------------
 
 LINES TOO LONG:
-    print.c has 5 lines over 80 characters.
-    The longest was 82 characters at line 430.
+    print.c has 1 lines over 80 characters.
+    The longest was 81 characters at line 471.
 
 
 FAILED.

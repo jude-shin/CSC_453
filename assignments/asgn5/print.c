@@ -468,7 +468,7 @@ bool get_indirect_zone_contents(
   // /* We encountered a hole... */
   // if (zone_num == 0) {
   //   /* a single indirect node will point to multiple indirect blocks. */
-  //   /* We must add (blocksize) * how many indirect zone numbers we can fit in 
+  //   /* We must add (blocksize) * how many indirect zone numbers we can fit in
   //      a zone. */
   //   *bytes_read = *bytes_read + (mfs->sb.blocksize*num_indirect_inodes);
   //   return (*bytes_read >= inode->size);
