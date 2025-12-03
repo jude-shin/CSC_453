@@ -399,6 +399,9 @@ bool get_block_contents(
     exit(EXIT_FAILURE);
   }
 
+  /* Write it to the desired stream. */
+  fwrite(&buff, sizeof(char)*difference, 1, s);
+
   free(buff);
 
   /* If we read everything, make note of it, and return with true. */
