@@ -1,3 +1,7 @@
 Jude Shin (jshin53)
 
+No special instructions for running the program.
 
+I tried not to have any global variables, but I just ended up passing a bunch
+of structs inside my functions. It feels kind of cluttered because of that in
+my opinion.
