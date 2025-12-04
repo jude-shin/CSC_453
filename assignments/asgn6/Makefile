@@ -1,7 +1,7 @@
-CC=/bin/gcc
-CFLAGS = -Wall -ansi -pedantic
-LD=/bin/gcc
-LDFLAGS = -Wall -ansi -pedantic
+CC=gcc
+CFLAGS = -Wall -ansi -pedantic -g
+LD=gcc
+LDFLAGS = -g
 
 .PHONY: clean test
 
@@ -12,7 +12,9 @@ hello.o: hello.c
 	$(CC) $(CFLAGS) -c $< -o $@ 
 
 clean:
-	rm -f hello.o
+	rm -f hello.o *~ TAGS
 
 test: hello
+	@echo "Testing hello..."
 	@./hello
+	@echo "done."

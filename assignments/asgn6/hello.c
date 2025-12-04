@@ -3,6 +3,9 @@
 #include <unistd.h>
 
 int main(int argc, char *argv[]) {
-  printf("Hello, World!\n");
+  /* Greet the world by printing "Hello, world!" followed by a newline. */
+  printf("Hello, world!\n");
+
+  /* Exit with a zero exit status indicating success. */
   exit(0);
 }
