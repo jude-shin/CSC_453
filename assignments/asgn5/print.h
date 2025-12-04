@@ -18,18 +18,19 @@
 /* The spacing spec for the weird space before the zone. */
 #define ZONE_LBL_LEN 9
 
-
-/* Prints an error that shows the flags that can be used with minls. */
+/* ===== */
+/* USAGE */
+/* ===== */
+/* Prints a message that shows the flags that can be used with minls to s. */
 void print_minls_usage(FILE* s);
 
-/* Prints an error that shows the flags that can be used with minls. */
+/* Prints a message that shows the flags that can be used with minls to s. */
 void print_minget_usage(FILE* s);
 
 
 /* ======= */
 /* GENERAL */
 /* ======= */
-
 /* Prints all of the information in a partition table. */
 void print_part_table(FILE* s, min_part_tbl* pt);
 
@@ -46,8 +47,7 @@ void print_dir_entry(FILE* s, min_dir_entry* dir_entry);
 /* ======= */
 /* HELPERS */
 /* ======= */
-
-/* Pretty Prints an atime, mtime, or ctime nicely to a FILE*. */
+/* Pretty Prints an atime, mtime, or ctime nicely to a stream s. */
 void print_time(FILE* s, uint32_t raw_time);
 
 /* Prints c upon a successful bitmask against mode and mask to a stream s. */

@@ -1,10 +1,12 @@
 #include <stdio.h>
+#include <errno.h>
 #include <time.h>
+#include <stdlib.h>
 
 #include "print.h"
 #include "disk.h"
 
-/* Prints an error that shows the flags that can be used with minls.
+/* Prints message that shows the flags that can be used with minls to s.
  * @param s the stream that this message will be printed to.
  * @return void.
  */
@@ -19,7 +21,7 @@ void print_minls_usage(FILE* s) {
       );
 }
 
-/* Prints an error that shows the flags that can be used with minget.
+/* Prints message that shows the flags that can be used with minget to s. 
  * @param s the stream that this message will be printed to.
  * @return void.
  */
@@ -33,9 +35,6 @@ void print_minget_usage(FILE* s) {
       "-v verbose --- increase verbosity level\n"
       );
 }
-
-
-
 
 /* ======= */
 /* GENERAL */
@@ -89,6 +88,7 @@ void print_superblock(FILE* s, min_superblock* sb) {
  * @return void. 
  */
 void print_inode(FILE* s, min_inode* inode) {
+  /* Print inode attributes. */
   fprintf(s, "File inode:\n");
   fprintf(s,"  %-*s %*s%04x\n", LBL_LN, "mode", HEX_PAD, "0x", inode->mode);
   fprintf(s, "  %-*s %*u\n", LBL_LN, "links", VLU_LN, inode->links);
@@ -107,6 +107,7 @@ void print_inode(FILE* s, min_inode* inode) {
   fprintf(s, "\n");
 
 
+  /* direct zone numbers. */
   fprintf(s, "  Direct Zones:\n");
   int i;
   for (i = 0; i < DIRECT_ZONES; i++) {
@@ -118,12 +119,15 @@ void print_inode(FILE* s, min_inode* inode) {
         inode->zone[i]);
   }
 
+  /* indirect zone numbers. */
   fprintf(
       s, "  %-*sindirect  %*u\n", 
       ZONE_LBL_LEN, 
       "uint32_t",
       VLU_LN,
       inode->indirect);
+
+  /* double indirect zone numbers. */
   fprintf(
       s, "  %-*sdouble    %*u\n", 
       ZONE_LBL_LEN, 
@@ -150,7 +154,6 @@ void print_dir_entry(FILE* s, min_dir_entry* dir_entry) {
 /* ======= */
 /* HELPERS */
 /* ======= */
-
 /* Pretty Prints an atime, mtime, or ctime nicely to a FILE*.
  * @param s the stream that this message will be printed to.
  * @param raw_time a number that represents a time and date. 
@@ -158,6 +161,12 @@ void print_dir_entry(FILE* s, min_dir_entry* dir_entry) {
  */
 void print_time(FILE* s, uint32_t raw_time) {
   time_t t = raw_time;
+  char* ct = ctime(&t);
+  if (ct == NULL) {
+    fprintf(stderr, "error pretty printing time with ctime(): %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+
   fprintf(s, " --- %s", ctime(&t));
 }
 
