@@ -134,20 +134,19 @@ void open_mfs(
   /* Update the mfs context to store the zone size of this filesystem. */
   mfs->zone_size = get_zone_size(&mfs->sb);
 
-  /* TODO: add other handy calculations? */
+  /* Get the number of directories in a block */
+  mfs->num_dir_p_block = mfs->sb.blocksize / DIR_ENTRY_SIZE;
 
   /* Udpate the mfs context to store addresses like the imap, zmap and inodes */
 
   /* Add the partition start address to the block number * blocksize */
-  // mfs->b_imap = mfs->partition_start + (IMAP_BLOCK_NUMBER*mfs->sb.blocksize);
+  mfs->b_imap = mfs->partition_start + (IMAP_BLOCK_NUMBER*mfs->sb.blocksize);
 
+  /* Add where the previous block is to the number of blocks in the imap */
+  mfs->b_zmap = mfs->b_imap + (mfs->sb.i_blocks*mfs->sb.blocksize);
 
-  // /* TODO: get rid of these? */
-  // /* Add where the previous block is to the number of blocks in the imap */
-  // mfs->b_zmap = mfs->b_imap + (mfs->sb.i_blocks*mfs->sb.blocksize);
-
-  // /* Add where the previous block is to the number of blocks in the zmap */
-  // mfs->b_inodes = mfs->b_zmap + (mfs->sb.z_blocks*mfs->sb.blocksize);
+  /* Add where the previous block is to the number of blocks in the zmap */
+  mfs->b_inodes = mfs->b_zmap + (mfs->sb.z_blocks*mfs->sb.blocksize);
 
   /* The mfs context is now populated with everything we need to know in order
      to traverse the minix filesystem. */
@@ -462,12 +461,9 @@ bool search_block(
   /* The address of the block of interest on the minix image. */
   uint32_t block_addr = get_block_addr(mfs, zone_num, block_num);
 
-  /* get the number of directories in a block */
-  uint32_t num_directories = mfs->sb.blocksize / DIR_ENTRY_SIZE;
-
   int i;
   /* Loop through every directory entry in this block. */
-  for (i = 0; i < num_directories; i++) {
+  for (i = 0; i < mfs->num_dir_p_block; i++) {
     /* The directory entry that we are currently on. */
     min_dir_entry entry;
 

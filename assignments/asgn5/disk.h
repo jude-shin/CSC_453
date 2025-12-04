@@ -165,10 +165,11 @@ typedef struct min_fs {
   uint32_t zone_size;     /* The size of a zone in bytes */
   /* TODO: add here some calculations like number of addresses in ablock or 
      something*/
+  uint32_t num_dir_p_block; /* number of directories in a block */
 
-  // uint32_t b_imap;        /* "real" address of the inode bitmap */
-  // uint32_t b_zmap;     /* "real" address of the zone bitmap */
-  // uint32_t b_inodes;   /* "real" address of the actual inodes (first addr)*/
+  uint32_t b_imap;     /* "real" address of the inode bitmap */
+  uint32_t b_zmap;     /* "real" address of the zone bitmap */
+  uint32_t b_inodes;   /* "real" address of the actual inodes (first addr)*/
 } min_fs;
 
 
