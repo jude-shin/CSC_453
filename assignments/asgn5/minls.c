@@ -168,8 +168,9 @@ bool list_block(FILE* s, min_fs* mfs, min_inode* inode,
   uint32_t block_addr = zone_addr + (block_num * mfs->sb.blocksize);
 
   uint32_t num_directories = mfs->sb.blocksize / DIR_ENTRY_SIZE;
-
-  for (int i = 0; i < num_directories; i++) {
+  
+  int i;
+  for (i = 0; i < num_directories; i++) {
     min_dir_entry entry;
 
     if (fseek(mfs->file, block_addr + (i * DIR_ENTRY_SIZE), SEEK_SET)) {
@@ -208,7 +209,8 @@ void ls_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path) {
   fprintf(s, "/%s:\n", can_path);
 
   /* Process direct zones */
-  for (int i = 0; i < DIRECT_ZONES; i++) {
+  int i;
+  for (i = 0; i < DIRECT_ZONES; i++) {
     process_direct_zone(s, mfs, inode, inode->zone[i], list_block, NULL, NULL);
   }
 

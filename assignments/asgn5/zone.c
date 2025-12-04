@@ -25,7 +25,8 @@ bool process_direct_zone(
   /* Process all blocks in this zone */
   uint32_t num_blocks = mfs->zone_size / mfs->sb.blocksize;
 
-  for (int i = 0; i < num_blocks; i++) {
+  int i;
+  for (i = 0; i < num_blocks; i++) {
     if (block_proc(s, mfs, inode, zone_num, i, context)) {
       return true;
     }
@@ -62,7 +63,8 @@ bool process_indirect_zone(
   uint32_t block_addr = mfs->partition_start + (zone_num * mfs->zone_size);
 
   /* For every zone number in the indirect block */
-  for (int i = 0; i < num_indirect; i++) {
+  int i;
+  for (i = 0; i < num_indirect; i++) {
     uint32_t indirect_zone_num;
 
     /* Seek to the zone number entry */
@@ -128,7 +130,8 @@ bool process_two_indirect_zone(
   uint32_t zone_addr = mfs->partition_start + (zone_num * mfs->zone_size);
 
   /* For every zone number in the double indirect block */
-  for (int i = 0; i < num_indirect; i++) {
+  int i;
+  for (i = 0; i < num_indirect; i++) {
     uint32_t indirect_zone_num;
 
     /* Seek to the zone number entry */
