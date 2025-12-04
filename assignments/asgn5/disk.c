@@ -132,7 +132,8 @@ void open_mfs(
   }
 
   /* Update the mfs context to store the zone size of this filesystem. */
-  mfs->zone_size = get_zone_size(&mfs->sb);
+  // mfs->zone_size = get_zone_size(&mfs->sb);
+  mfs->zone_size = 0; /* TODO: sanity please this shold fail*/
 
   /* TODO: add other handy calculations? */
 
