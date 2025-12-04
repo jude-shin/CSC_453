@@ -12,59 +12,6 @@
 #include "zone.h"
 #include "disk.h"
 
-
-/* Context for file extraction */
-typedef struct {
-  uint32_t bytes_read;
-} extract_context_t;
-
-/* Forward declarations */
-bool extract_block(
-    FILE* s, 
-    min_fs* mfs, 
-    min_inode* inode,
-    uint32_t zone_num, 
-    uint32_t block_num, 
-    void* context);
-
-
-bool fill_hole(
-    FILE* s, 
-    min_inode* inode, 
-    uint32_t hs, /* The size of a hole */
-    uint32_t* bytes_read) {
-
-  uint32_t remaining = inode->size - *bytes_read;
-  if (remaining < hs) {
-    hs = remaining;
-  }
-
-  char* zeros = calloc(hs, sizeof(char));
-  if (zeros == NULL) {
-    fprintf(stderr, "error callocing buffer of zeros: %d\n", errno);
-    exit(EXIT_FAILURE);
-  }
-
-  /* Write a bunch of zeros. */
-  if (fwrite(zeros, sizeof(char), hs, s) < hs) {
-    fprintf(stderr, "error filling hole: %d\n", errno);
-    free(zeros);
-    exit(EXIT_FAILURE);
-  }
-
-  free(zeros);
-
-  /* Update the bytes read. We know that since this is a hole, then this must
-     be less than the total bytes read, and therefore will not go over. */
-  *bytes_read = *bytes_read + hs;
-
-  return (*bytes_read >= inode->size);
-}
-
-
-
-/* TODO: for all files, check that there are. */
-
 int main (int argc, char *argv[]) {
   /* Verbosity. If set, print the partition table(s) superblock, and inode of 
      source file/directory to stderr. */
@@ -142,15 +89,14 @@ int main (int argc, char *argv[]) {
   if (minix_dst_path == NULL) {
     get_file_contents(stdout, &mfs, &src_inode);
   }
-
-  /* If there was a dst file, try to write it there. */
-  else {
+  else { /* If there was a dst file, try to write it there. */
     FILE *output = fopen(minix_dst_path, "wb");
     if (!output) {
       perror("error opening dst path.\n");
       exit(EXIT_FAILURE);
     }
-
+  
+    /* Get info on destination file. */
     struct stat sb;
     if (fstat(fileno(output), &sb) == -1) {
       perror("error fstatat on dst path.\n");
@@ -158,13 +104,17 @@ int main (int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     }
 
+    /* The destination can only be a regular file. */
     if (!S_ISREG(sb.st_mode)) {
       fprintf(stderr, "dst is not a regular file\n");
       fclose(output);
       exit(EXIT_FAILURE);
     }
 
+    /* Write those contents to the valid destination file. */
     get_file_contents(output, &mfs, &src_inode);
+
+    /* Close the destination file. */
     fclose(output);
   }
 
@@ -192,61 +142,61 @@ void get_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
           mfs, 
           inode, 
           inode->zone[i], 
-          extract_block, 
+          get_block_contents, 
           fill_hole, 
           &bytes_read)) {
       return;
     }
   }
 
-  /* Go through all of the indirect zones sequentially. */
+  /* Go through all of the indirect zones. */
   if (process_indirect_zone(
         s, 
         mfs, 
         inode, 
         inode->indirect, 
-        extract_block,
+        get_block_contents,
         fill_hole,
         &bytes_read)) {
     return;
   }
 
-  /* Go through all of the double indirect zones sequentially. */
+  /* Go through all of the double indirect zones. */
   if (process_two_indirect_zone(
         s, 
         mfs, 
         inode, 
         inode->two_indirect, 
-        extract_block,
+        get_block_contents,
         fill_hole,
         &bytes_read)) {
     return;
   }
 }
 
-bool extract_block(
-    FILE* s, 
-    min_fs* mfs, 
-    min_inode* inode,
-    uint32_t zone_num, 
-    uint32_t block_num, 
-    void* context) {
-
-  uint32_t* bytes_read = (uint32_t*)context;
-  return get_block_contents(s, mfs, inode, zone_num, block_num, bytes_read);
-}
-
+/* Reads the contents of the block to stream s.
+ * Conforms to the block_proc function and can be used as a callback.
+ * @param s stream to print to.
+ * @param mfs a struct that holds an open file descriptor, and the offset (the
+ *  offset from the beginning of the image which indicates the beginning of the
+ *  partition that holds the filesystem.
+ * @param inode the inode of interest.  
+ * @param zone_num the zone number containing this block.
+ * @param bytes_read the number of bytes read so far.
+ * @return bool if the inode was found in this block or not.
+ */
 bool get_block_contents(
     FILE* s, 
     min_fs* mfs, 
     min_inode* inode, 
     uint32_t zone_num, 
     uint32_t block_number, 
-    uint32_t* bytes_read) {
-  /* TODO: I don't think we need to check the zone number... */
+    void* bytes_read) {
 
+  /* The zone address in the minix image. */
   uint32_t zone_addr = mfs->partition_start + (zone_num * mfs->zone_size);
 
+  /* The block address in the minix image. */
   uint32_t block_addr = zone_addr + (block_number * mfs->sb.blocksize);
 
   /* Seek to the beginning of the block. */
@@ -258,15 +208,12 @@ bool get_block_contents(
     exit(EXIT_FAILURE);
   }
 
-  /* Read a single character at a time so we don't have to bother with large
-     varying sized buffers. */
-
   /* How much we have left to get. */
-  uint32_t difference = inode->size - *bytes_read;
+  uint32_t difference = inode->size - *(uint32_t*)bytes_read;
 
+  /* If there is more to read than the size of a block, then read an entire
+     blocks worth */
   if (difference > mfs->sb.blocksize) {
-    /* If there is more to read than the size of a block, then read an entire
-       blocks worth */
     difference = mfs->sb.blocksize;
   }
 
@@ -288,10 +235,52 @@ bool get_block_contents(
   fwrite(buff, sizeof(char)*difference, 1, s);
 
   /* Update the bytes_read count. */
-  *bytes_read = *bytes_read + difference;
+  *(uint32_t*)bytes_read = *(uint32_t*)bytes_read + difference;
 
+  /* free that buffer we allcoated */
   free(buff);
 
   /* If we read everything, make note of it, and return with true. */
+  return (*(uint32_t*)bytes_read >= inode->size);
+}
+
+/* Fills a hole with zeros. Conforms to the hole_proc function that is used
+ * as callbacks. 
+ * @param s stream to write into.
+ * @param inode the inode of interest.  
+ * @param hs the size of the hole.
+ * @param bytes_read the number of bytes read so far.
+ */
+bool fill_hole(
+    FILE* s, 
+    min_inode* inode, 
+    uint32_t hs,
+    uint32_t* bytes_read) {
+
+  uint32_t remaining = inode->size - *bytes_read;
+  if (remaining < hs) {
+    hs = remaining;
+  }
+
+  char* zeros = calloc(hs, sizeof(char));
+  if (zeros == NULL) {
+    fprintf(stderr, "error callocing buffer of zeros: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+
+  /* Write a bunch of zeros. */
+  if (fwrite(zeros, sizeof(char), hs, s) < hs) {
+    fprintf(stderr, "error filling hole: %d\n", errno);
+    free(zeros);
+    exit(EXIT_FAILURE);
+  }
+
+  free(zeros);
+
+  /* Update the bytes read. We know that since this is a hole, then this must
+     be less than the total bytes read, and therefore will not go over. */
+  *bytes_read = *bytes_read + hs;
+
   return (*bytes_read >= inode->size);
 }
+

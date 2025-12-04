@@ -233,7 +233,6 @@ void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* img) {
   }
 }
 
-/* TODO: remove duplicate functionality? */
 /* Fills a superblock based ona minix filesystem (a image and an offset)
  * @param mfs a struct that holds information; most importantly, the struct for
  *  the superblock.
