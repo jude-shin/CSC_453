@@ -132,23 +132,22 @@ void open_mfs(
   }
 
   /* Update the mfs context to store the zone size of this filesystem. */
-  // mfs->zone_size = get_zone_size(&mfs->sb);
-  mfs->zone_size = 0; /* TODO: sanity please this shold fail*/
+  mfs->zone_size = get_zone_size(&mfs->sb);
 
   /* TODO: add other handy calculations? */
 
   /* Udpate the mfs context to store addresses like the imap, zmap and inodes */
 
   /* Add the partition start address to the block number * blocksize */
-  mfs->b_imap = mfs->partition_start + (IMAP_BLOCK_NUMBER*mfs->sb.blocksize);
+  // mfs->b_imap = mfs->partition_start + (IMAP_BLOCK_NUMBER*mfs->sb.blocksize);
 
 
-  /* TODO: get rid of these? */
-  /* Add where the previous block is to the number of blocks in the imap */
-  mfs->b_zmap = mfs->b_imap + (mfs->sb.i_blocks*mfs->sb.blocksize);
+  // /* TODO: get rid of these? */
+  // /* Add where the previous block is to the number of blocks in the imap */
+  // mfs->b_zmap = mfs->b_imap + (mfs->sb.i_blocks*mfs->sb.blocksize);
 
-  /* Add where the previous block is to the number of blocks in the zmap */
-  mfs->b_inodes = mfs->b_zmap + (mfs->sb.z_blocks*mfs->sb.blocksize);
+  // /* Add where the previous block is to the number of blocks in the zmap */
+  // mfs->b_inodes = mfs->b_zmap + (mfs->sb.z_blocks*mfs->sb.blocksize);
 
   /* The mfs context is now populated with everything we need to know in order
      to traverse the minix filesystem. */
