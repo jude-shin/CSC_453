@@ -19,8 +19,13 @@ typedef struct {
 } extract_context_t;
 
 /* Forward declarations */
-bool extract_block(FILE* s, min_fs* mfs, min_inode* inode,
-    uint32_t zone_num, uint32_t block_num, void* context);
+bool extract_block(
+    FILE* s, 
+    min_fs* mfs, 
+    min_inode* inode,
+    uint32_t zone_num, 
+    uint32_t block_num, 
+    void* context);
 
 
 bool fill_hole(

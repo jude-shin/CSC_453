@@ -8,66 +8,71 @@
 
 #include "disk.h"
 #include "print.h"
+#include "zone.h"
+
+/* TODO: verb, p_prt s_prt img*/
 
 /*==========*/
 /* BASIC IO */
 /*==========*/
-
-/* Opens the imagefile as readonly, and calculates the offset of the specified
- * partition. This populates the filesystem struct and superblock structs that
- * are allocated in the caller.
- * If anything goes wrong, then this function will exit with EXIT_FAILURE. 
+/* Opens the img as readonly, and sets up datastructures like the mfs
+ * context. If anything goes wrong, then this function will exit with 
+ * EXIT_FAILURE. 
  * @param mfs a struct that holds an open file descriptor, and the offset (the
  *  offset from the beginning of the image which indicates the beginning of the
  *  partition that holds the filesystem.
- * @param imagefile_path the host path to the image that we are looking at.
- * @param prim_part what partition number we are interested in. -1 means that
+ * @param img_path the host path to the image that we are looking at.
+ * @param p_prt what partition number we are interested in. -1 means that
  *  this image is unpartitioned.
- * @param sub_part what subpartition number we are interested in. -1 means that
+ * @param s_prt what subpartition number we are interested in. -1 means that
  *  there are no subpartitions. 
- * @param verbose if this is true, print the partition table's contents
+ * @param verb if this is true, print the partition table's contents
  * @return void. 
  */
 void open_mfs(
     min_fs* mfs, 
-    char* imagefile_path, 
-    int prim_part, 
-    int sub_part,
-    bool verbose) {
+    char* img_path, 
+    int p_prt, 
+    int s_prt,
+    bool verb) {
   /* How far from the beginning of the disk the filesystem resides. */
-  uint32_t offset = 0;
+  uint32_t offset;
 
   /* The (sub)partition table that is read from the image. */
   min_part_tbl pt, spt;
   
   /* The FILE that the image resides in. */
-  FILE* imagefile;
+  FILE* img;
 
-  imagefile = fopen(imagefile_path, "rwb");
-  if (imagefile == 0) {
-    fprintf(stderr, "error opening %s: %d\n", imagefile_path, errno);
+  /* Offset should start at 0. */
+  offset = 0;
+
+  /* Open the file for reading only */
+  img = fopen(img_path, "rb");
+  if (img == 0) {
+    fprintf(stderr, "error opening %s: %d\n", img_path, errno);
     exit(EXIT_FAILURE);
   }
 
-  /* Seek to the primary partition */
-  /* Otherwise treat the image as unpartitioned. (offset of 0) */
-  if (prim_part != -1) {
+  /* Seek to the primary partition if one was provided, otherwise treat the 
+     image as unpartitioned (offset of 0). */
+  if (p_prt != -1) {
     /* Populate the partition table (pt) based on what partition was chosen. */
-    load_part_table(
-        &pt, 
-        (prim_part*sizeof(min_part_tbl)) + PART_TABLE_OFFSET, 
-        imagefile);
+    load_part_table(&pt, (p_prt*sizeof(min_part_tbl))+PART_TABLE_OFFSET, img);
 
-    /* Check the signatures, system type, and if this is bootable. */
-    validate_part_table(&pt);
+    /* Check system type. */
+    if (pt.type != MINIX_PARTITION_TYPE) {
+      fprintf(stderr, "This is not a minix image.\n");
+      exit(EXIT_FAILURE);
+    }
 
-    /* Print the contents if you want to. */
-    if (verbose) {
+    /* Print the contents if we are in verbose mode. */
+    if (verb) {
       print_part_table(stderr, &pt);
     }
 
     /* Validate the two signatures in the beginning of the disk. */
-    if (!validate_signatures(imagefile, offset)) {
+    if (!validate_signatures(img, offset)) {
       fprintf(stderr, "primary partition table signatures are not valid\n");
       exit(EXIT_FAILURE);
     }
@@ -76,25 +81,28 @@ void open_mfs(
     offset = pt.lFirst*SECTOR_SIZE;
 
     /* Seek to the subpartition */
-    if (sub_part != -1) { 
+    if (s_prt != -1) { 
     /* Populate the subpartition table (spt) based on what subpartition was 
        chosen. */
       load_part_table(
           &spt, 
-          offset+(sub_part*sizeof(min_part_tbl))+PART_TABLE_OFFSET, 
-          imagefile);
+          offset+(s_prt*sizeof(min_part_tbl))+PART_TABLE_OFFSET, 
+          img);
 
       /* Validate the two signatures in the partition. */
-      if (!validate_signatures(imagefile, offset)) {
+      if (!validate_signatures(img, offset)) {
         fprintf(stderr, "subpartition table signatures are not valid\n");
         exit(EXIT_FAILURE);
       }
 
-      /* Check the signatures, system type, and if this is bootable. */
-      validate_part_table(&spt);
+      /* Check system type. */
+      if (spt.type != MINIX_PARTITION_TYPE) {
+        fprintf(stderr, "This is not a minix image.\n");
+        exit(EXIT_FAILURE);
+      }
 
-      /* Print the contents if you want to. */
-      if (verbose) {
+      /* Print the contents if we are in verbose mode. */
+      if (verb) {
         fprintf(stderr, "(sub)");
         print_part_table(stderr, &pt);
       }
@@ -105,7 +113,7 @@ void open_mfs(
   }
 
   /* Update the struct to reflect the file descriptor and offset found. */
-  mfs->file = imagefile;
+  mfs->file = img;
   mfs->partition_start = offset;
 
   /* At this point we have enough information to update the superblock that is 
@@ -120,19 +128,23 @@ void open_mfs(
     exit(EXIT_FAILURE);
   }
 
-  /* Print the contents if you want to. */
-  if (verbose) {
+  /* Print the contents if we are in verbose mode. */
+  if (verb) {
     print_superblock(stderr, &mfs->sb);
   }
 
   /* Update the mfs context to store the zone size of this filesystem. */
   mfs->zone_size = get_zone_size(&mfs->sb);
 
+  /* TODO: add other handy calculations? */
+
   /* Udpate the mfs context to store addresses like the imap, zmap and inodes */
 
   /* Add the partition start address to the block number * blocksize */
   mfs->b_imap = mfs->partition_start + (IMAP_BLOCK_NUMBER*mfs->sb.blocksize);
 
+
+  /* TODO: get rid of these? */
   /* Add where the previous block is to the number of blocks in the imap */
   mfs->b_zmap = mfs->b_imap + (mfs->sb.i_blocks*mfs->sb.blocksize);
 
@@ -143,13 +155,14 @@ void open_mfs(
      to traverse the minix filesystem. */
 }
 
-/* Closes the file descriptor for the file in the min_fs struct given.
+/* Closes the file descriptor for the file in the min_fs struct given. (Along
+ * with anything else you might need to clean up).
  * @param mfs MinixFileSystem struct that holds the current filesystem. 
  * @return void.
  */
 void close_mfs(min_fs* mfs) {
   if (fclose(mfs->file) == -1) {
-    fprintf(stderr, "Error close(2)ing the imagefile: %d", errno);
+    fprintf(stderr, "Error close(2)ing the img: %d", errno);
     exit(EXIT_FAILURE);
   }
  }
@@ -158,22 +171,6 @@ void close_mfs(min_fs* mfs) {
 /*============*/
 /* VALIDATION */
 /*============*/
-
-/* Check to see if the partition table holds useful information for this
- * assignment. This includes whether an image is bootable, and if the partition
- * is from minix. This function does not return anything.
- * If the program does not exit after calling this function, then the partition
- * table is valid. Otherwise, it will just exit and do nothing.
- * @param partition_table the struct that holds all this information. 
- * @return void.
- */
-void validate_part_table(min_part_tbl* partition_table) {
-  /* Check that the partition type is of minix. */
-  if (partition_table->type != MINIX_PARTITION_TYPE) {
-    fprintf(stderr, "This is not a minix image.\n");
-    exit(EXIT_FAILURE);
-  }
-}
 
 /* Checks to see if an image has both signatures. If they do return true, else
  * return false.
@@ -219,30 +216,30 @@ bool validate_signatures(FILE* image, uint32_t offset) {
  * will start somewhere else) this function populates the given partition table
  * struct with the data read in the image. Whether the populated data is valid 
  * is entirely up to the address variable.
- * @param pt the struct that will be filled (& referenced later).
+ * @param pt the partitinon tbl struct that will be filled (& referenced later).
  * @param addr the address that the partition will start at. 
  * @param image the imagefile that the disk is stored in.
  * @return void.
  */
-void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* image) { 
+void load_part_table(min_part_tbl* pt, uint32_t addr, FILE* img) { 
   /* Seek to the correct location that the partition table resides. */
-  if (fseek(image, addr, SEEK_SET)) {
+  if (fseek(img, addr, SEEK_SET)) {
     fprintf(stderr, "error seeking to partition table: %d\n", errno);
     exit(EXIT_FAILURE);
   }
 
   /* Read the partition table, storing its contents in the struct for us to 
      reference later on. */
-  if (fread(pt, sizeof(min_part_tbl), 1, image) < 1) {
+  if (fread(pt, sizeof(min_part_tbl), 1, img) < 1) {
     fprintf(stderr, "error reading partition table: %d\n", errno);
     exit(EXIT_FAILURE);
   }
 }
 
+/* TODO: remove duplicate functionality? */
 /* Fills a superblock based ona minix filesystem (a image and an offset)
  * @param mfs a struct that holds information; most importantly, the struct for
  *  the superblock.
- * @param verbose if this is true, print the superblock's contents
  * @return void.
  */
 void load_superblock(min_fs* mfs) {
@@ -266,7 +263,7 @@ void load_superblock(min_fs* mfs) {
  * @param inode_addr the address of the real inode on the image
  * @param inode a ponter to a struct in my program that will hold the copy
  * @return void.
-*/
+ */
 void duplicate_inode(min_fs* mfs, uint32_t inode_addr, min_inode* inode) {
   /* Seek to the inode's address */ 
   if (fseek(mfs->file, inode_addr, SEEK_SET) == -1) {
@@ -331,7 +328,7 @@ uint32_t find_inode(
       exit(EXIT_FAILURE);
     }
 
-    /* copy the string name to cur_name so we can keep track of the last
+    /* Copy the string name to cur_name so we can keep track of the last
        processed name. */
     if (cur_name != NULL) {
       size_t len = strlen(token);
@@ -342,7 +339,7 @@ uint32_t find_inode(
       cur_name[len] = '\0';
     }
 
-    /* Add the token to the built canonicalized minix path. */
+    /* Add the token to the build canonicalized minix path. */
     if (can_minix_path != NULL) {
       strcat(can_minix_path, token);
       strcat(can_minix_path, DELIMITER);
@@ -402,7 +399,14 @@ bool search_all_zones(
     /* Search the direct zone for an entry. If found, then we know that 
        search_chunk already wrote the data to inode_addr, so we can just exit.
        Otherwise, the for loop will continue with the search. */
-    if (search_direct_zone(mfs, inode, cur_inode->zone[i], name)) {
+    if (process_direct_zone(
+          NULL,
+          mfs, 
+          inode, 
+          cur_inode->zone[i], 
+          search_block,
+          NULL,
+          (void*)name)) {
       return true;
     }
   }
@@ -410,30 +414,42 @@ bool search_all_zones(
   /* Search the indirect zone for an entry. If found, then we know that 
      search_chunk already wrote the data to inode_addr, so we can just exit.
      Otherwise, the for loop will continue with the search. */
-  if (search_indirect_zone(mfs, inode, cur_inode->indirect, name)) {
+  if (process_indirect_zone(
+        NULL, 
+        mfs, 
+        inode, 
+        cur_inode->indirect, 
+        search_block,
+        NULL,
+        (void*)name)) {
     return true;
   }
 
   /* Search the double indirect zone for an entry. If found, then we know that 
      search_chunk already wrote the data to inode_addr, so we can just exit.
      Otherwise, the for loop will continue with the search. */
-  if (search_two_indirect_zone(
+  if (process_two_indirect_zone(
+        NULL,
         mfs, 
         inode, 
         cur_inode->two_indirect, 
-        name)){
+        search_block,
+        NULL,
+        (void*)name)){
     return true;
   }
 
   return false;
 }
 
+/* Searches a block to find a directory entry with a mathcing name. */
 bool search_block(
+    FILE* s, /* We dont need to have any stream for the output. */
     min_fs* mfs, 
     min_inode* inode, 
     uint32_t zone_num,
     uint32_t block_number,
-    char* name) {
+    void* name) {
   /* Skip over the zone if it is not used. */
   if (zone_num == 0) {
     return false;
@@ -463,184 +479,182 @@ bool search_block(
     }
 
     /* Check if entry is valid (inode != 0) and name matches */
-    if(entry.inode != 0 && strcmp((char*)entry.name, name) == 0) {
+    if(entry.inode != 0 && strcmp((char*)entry.name, (char*)name) == 0) {
       /* Get the address of the inode address that we found. (Go back one inode
          size because we just read it). */
       uint32_t inode_addr = mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE);
 
       /* Make a copy of the inode */
       duplicate_inode(mfs, inode_addr, inode);
-
       return true;
     }
   }
   return false;
 }
 
-/* Searches a zone for a directory entry with a given name, and updates an inode
- * address with the address of the inode that corresponds to that name. 
- * @param mfs MinixFileSystem struct that holds the current filesystem and some
- *  useful information.
- * @param zone_num the zone number to search.
- * @param inode_addr a poninter to a variable that holds the address of the real
- *  inode on the image. 
- * @param name the name of the directory entry we are looking for in the current
- *  inode.
- * @return bool true if we found a valid directory entry, false otherwise.
- */
-bool search_direct_zone(
-    min_fs* mfs, 
-    min_inode* inode, 
-    uint32_t zone_num,
-    char* name) {
-
-  /* Skip over the direct zone if it is not used. */
-  if (zone_num == 0) {
-    return false;
-  }
-
-  /* Read all directory entries in this chunk. */
-  uint32_t num_blocks = mfs->zone_size / mfs->sb.blocksize;
-
-  int i;
-  for(i = 0; i < num_blocks; i++) {
-    /* search ALL blocks that fit in this zone. */
-    if (search_block(mfs, inode, zone_num, i, name)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-/* Searches the zones that the indirect zone holds for an entry with a 
- * corresponding name. If a name is found (and it is not deleted) 
- * populate the inode_addr with the "real" address of the found inode, and 
- * return true. Otherwise, return false.
- * @param mfs MinixFileSystem struct that holds the current filesystem and some
- *  useful information.
- * @param zone_num the zone number to search.
- * @param inode_addr a poninter to a variable that holds the address of the real
- *  inode on the image. 
- * @param name the name of the directory entry we are looking for in the current
- *  inode.
- * @return bool true if we found a valid directory entry, false otherwise.
- */
-bool search_indirect_zone(
-    min_fs* mfs, 
-    min_inode* inode, 
-    uint32_t zone_num,
-    char* name) {
-
-  /* Skip over the indirect zone if it is not used. */
-  if (zone_num == 0) {
-    return false;
-  }
-
-  /* The first block is going to line up with the address of that zone. */
-  uint32_t block_addr = mfs->partition_start + (zone_num*mfs->zone_size);
-
-  /* How many zone numbers we are going to read (how many fit in the first 
-     block of the indirect zone) */
-  uint32_t num_indirect_zone_nums = mfs->sb.blocksize / sizeof(uint32_t);
-
-  /* For every zone number in that first indirect inode block. */
-  int i;
-  for(i = 0; i < num_indirect_zone_nums; i++) {
-    /* The zone number that holds directory entries. */
-    uint32_t indirect_zone_number;
-
-    /* Start reading the first block in that indirect zone. */
-    if (fseek(
-          mfs->file, 
-          block_addr + (i * sizeof(uint32_t)),
-          SEEK_SET) == -1) {
-      fprintf(stderr, "error seeking to indirect zone.\n");
-      exit(EXIT_FAILURE);
-    }
-   
-    /* Read the number that holds the zone number. */
-    if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
-      fprintf(stderr, "error reading indirect zone: %d\n", errno);
-      exit(EXIT_FAILURE);
-    }
-
-    /* Search the direct zone for an entry. If found, then we know that 
-       search_chunk already wrote the data to inode_addr, so we can just exit.
-       Otherwise, the for loop will continue with the search. */
-    if (search_direct_zone(mfs, inode, indirect_zone_number, name)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/* Searches the zones that the double indirect zone holds for an entry with a 
- * corresponding name. If a name is found (and it is not deleted) 
- * populate the inode_addr with the "real" address of the found inode, and 
- * return true. Otherwise, return false.
- * @param mfs MinixFileSystem struct that holds the current filesystem and some
- *  useful information.
- * @param zone_num the zone number to search.
- * @param inode_addr a poninter to a variable that holds the address of the real
- *  inode on the image. 
- * @param name the name of the directory entry we are looking for in the current
- *  inode.
- * @return bool true if we found a valid directory entry, false otherwise.
- */
-bool search_two_indirect_zone(
-    min_fs* mfs, 
-    min_inode* inode, 
-    uint32_t zone_num,
-    char* name) {
-  /* Skip over the indirect zone if it is not used. */
-  if (zone_num == 0) {
-    return false;
-  }
-
-  /* How many zone numbers we are going to read (how many fit in the first 
-     block of the indirect zone) */
-  uint32_t num_indirect_zone_nums = mfs->sb.blocksize / sizeof(uint32_t);
-
-  uint32_t zone_addr = mfs->partition_start + (zone_num*mfs->zone_size);
-
-  /* For every zone number in that first double indirect inode block. */
-  int i;
-  for(i = 0; i < num_indirect_zone_nums; i++) {
-    /* The zone number that holds the indierct zone numbers. */
-    uint32_t two_indirect_zone_number;
-
-    /* Start reading the first block in the double indirect zone. */
-    if (fseek(
-          mfs->file, 
-          zone_addr + (i * sizeof(uint32_t)),
-          SEEK_SET) == -1) {
-      fprintf(stderr, "error seeking to double indirect zone.\n");
-      exit(EXIT_FAILURE);
-    }
-
-    /* Read the number that holds the zone number. */
-    if(fread(&two_indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
-      fprintf(stderr, "error reading double indirect zone number: %d\n", errno);
-      exit(EXIT_FAILURE);
-    }
-
-    /* Search the indirect zone for an entry. If found, then we know that 
-       search_chunk already wrote the data to inode_addr, so we can just exit.
-       Otherwise, the for loop will continue with the search. */
-    if (search_indirect_zone(mfs, inode, two_indirect_zone_number, name)) {
-      return true;
-    }
-  }
-
-  return false;
-}
+// /* Searches a zone for a directory entry with a given name, and updates an inode
+//  * address with the address of the inode that corresponds to that name. 
+//  * @param mfs MinixFileSystem struct that holds the current filesystem and some
+//  *  useful information.
+//  * @param zone_num the zone number to search.
+//  * @param inode_addr a poninter to a variable that holds the address of the real
+//  *  inode on the image. 
+//  * @param name the name of the directory entry we are looking for in the current
+//  *  inode.
+//  * @return bool true if we found a valid directory entry, false otherwise.
+//  */
+// bool search_direct_zone(
+//     min_fs* mfs, 
+//     min_inode* inode, 
+//     uint32_t zone_num,
+//     char* name) {
+// 
+//   /* Skip over the direct zone if it is not used. */
+//   if (zone_num == 0) {
+//     return false;
+//   }
+// 
+//   /* Read all directory entries in this chunk. */
+//   uint32_t num_blocks = mfs->zone_size / mfs->sb.blocksize;
+// 
+//   int i;
+//   for(i = 0; i < num_blocks; i++) {
+//     /* search ALL blocks that fit in this zone. */
+//     if (search_block(mfs, inode, zone_num, i, name)) {
+//       return true;
+//     }
+//   }
+// 
+//   return false;
+// }
+// 
+// /* Searches the zones that the indirect zone holds for an entry with a 
+//  * corresponding name. If a name is found (and it is not deleted) 
+//  * populate the inode_addr with the "real" address of the found inode, and 
+//  * return true. Otherwise, return false.
+//  * @param mfs MinixFileSystem struct that holds the current filesystem and some
+//  *  useful information.
+//  * @param zone_num the zone number to search.
+//  * @param inode_addr a poninter to a variable that holds the address of the real
+//  *  inode on the image. 
+//  * @param name the name of the directory entry we are looking for in the current
+//  *  inode.
+//  * @return bool true if we found a valid directory entry, false otherwise.
+//  */
+// bool search_indirect_zone(
+//     min_fs* mfs, 
+//     min_inode* inode, 
+//     uint32_t zone_num,
+//     char* name) {
+// 
+//   /* Skip over the indirect zone if it is not used. */
+//   if (zone_num == 0) {
+//     return false;
+//   }
+// 
+//   /* The first block is going to line up with the address of that zone. */
+//   uint32_t block_addr = mfs->partition_start + (zone_num*mfs->zone_size);
+// 
+//   /* How many zone numbers we are going to read (how many fit in the first 
+//      block of the indirect zone) */
+//   uint32_t num_indirect_zone_nums = mfs->sb.blocksize / sizeof(uint32_t);
+// 
+//   /* For every zone number in that first indirect inode block. */
+//   int i;
+//   for(i = 0; i < num_indirect_zone_nums; i++) {
+//     /* The zone number that holds directory entries. */
+//     uint32_t indirect_zone_number;
+// 
+//     /* Start reading the first block in that indirect zone. */
+//     if (fseek(
+//           mfs->file, 
+//           block_addr + (i * sizeof(uint32_t)),
+//           SEEK_SET) == -1) {
+//       fprintf(stderr, "error seeking to indirect zone.\n");
+//       exit(EXIT_FAILURE);
+//     }
+//    
+//     /* Read the number that holds the zone number. */
+//     if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
+//       fprintf(stderr, "error reading indirect zone: %d\n", errno);
+//       exit(EXIT_FAILURE);
+//     }
+// 
+//     /* Search the direct zone for an entry. If found, then we know that 
+//        search_chunk already wrote the data to inode_addr, so we can just exit.
+//        Otherwise, the for loop will continue with the search. */
+//     if (search_direct_zone(mfs, inode, indirect_zone_number, name)) {
+//       return true;
+//     }
+//   }
+//   return false;
+// }
+// 
+// /* Searches the zones that the double indirect zone holds for an entry with a 
+//  * corresponding name. If a name is found (and it is not deleted) 
+//  * populate the inode_addr with the "real" address of the found inode, and 
+//  * return true. Otherwise, return false.
+//  * @param mfs MinixFileSystem struct that holds the current filesystem and some
+//  *  useful information.
+//  * @param zone_num the zone number to search.
+//  * @param inode_addr a poninter to a variable that holds the address of the real
+//  *  inode on the image. 
+//  * @param name the name of the directory entry we are looking for in the current
+//  *  inode.
+//  * @return bool true if we found a valid directory entry, false otherwise.
+//  */
+// bool search_two_indirect_zone(
+//     min_fs* mfs, 
+//     min_inode* inode, 
+//     uint32_t zone_num,
+//     char* name) {
+//   /* Skip over the indirect zone if it is not used. */
+//   if (zone_num == 0) {
+//     return false;
+//   }
+// 
+//   /* How many zone numbers we are going to read (how many fit in the first 
+//      block of the indirect zone) */
+//   uint32_t num_indirect_zone_nums = mfs->sb.blocksize / sizeof(uint32_t);
+// 
+//   uint32_t zone_addr = mfs->partition_start + (zone_num*mfs->zone_size);
+// 
+//   /* For every zone number in that first double indirect inode block. */
+//   int i;
+//   for(i = 0; i < num_indirect_zone_nums; i++) {
+//     /* The zone number that holds the indierct zone numbers. */
+//     uint32_t two_indirect_zone_number;
+// 
+//     /* Start reading the first block in the double indirect zone. */
+//     if (fseek(
+//           mfs->file, 
+//           zone_addr + (i * sizeof(uint32_t)),
+//           SEEK_SET) == -1) {
+//       fprintf(stderr, "error seeking to double indirect zone.\n");
+//       exit(EXIT_FAILURE);
+//     }
+// 
+//     /* Read the number that holds the zone number. */
+//     if(fread(&two_indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
+//       fprintf(stderr, "error reading double indirect zone number: %d\n", errno);
+//       exit(EXIT_FAILURE);
+//     }
+// 
+//     /* Search the indirect zone for an entry. If found, then we know that 
+//        search_chunk already wrote the data to inode_addr, so we can just exit.
+//        Otherwise, the for loop will continue with the search. */
+//     if (search_indirect_zone(mfs, inode, two_indirect_zone_number, name)) {
+//       return true;
+//     }
+//   }
+// 
+//   return false;
+// }
 
 
 /* ========== */
 /* ARITHMETIC */
 /* ========== */
-
 /* Calculates the zonesize based on a minix filesystem context using a bitshift.
  * @param sb a struct that holds information about the superblock.
  * @return uint32_t the size of a zone

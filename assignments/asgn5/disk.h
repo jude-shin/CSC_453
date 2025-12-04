@@ -175,16 +175,15 @@ typedef struct min_fs {
 /*==========*/
 /* BASIC IO */
 /*==========*/
-/* Opens the imagefile as readonly, and calculates the offset of the specified
-   partition. This populates the filesystem struct and superblock structs that
-   are allocated in the caller.
-   If anything goes wrong, then this function will exit with EXIT_FAILURE. */
+/* Opens the imagefile as readonly, and sets up datastructures like the mfs
+   context. If anything goes wrong, then this function will exit with 
+   EXIT_FAILURE. */
 void open_mfs(
     min_fs* mfs, 
     char* imagefile_path, 
-    int prim_part, 
-    int sub_part,
-    bool verbose);
+    int p_prt, 
+    int s_prt,
+    bool verb);
 
 /* Closes the minix filesystem. This closes the file descriptor, along with
    cleaning up anything else that is needed. */
@@ -194,13 +193,6 @@ void close_mfs(min_fs* mfs);
 /*============*/
 /* VALIDATION */
 /*============*/
-/* Check to see if the partition table holds useful information for this
-   assignment. This includes whether an image is bootable, and if the partition
-   is from minix. This function does not return anything.
-   If the program does not exit after calling this function, then the partition
-   table is valid. Otherwise, it will just exit and do nothing. */
-void validate_part_table(min_part_tbl* partition_table);
-
 /* Checks to see if an image has both signatures in relation to the offset (This
    allows for subpartitions to be checked also). If they do, return true, else
    return false. */
@@ -237,6 +229,14 @@ uint32_t find_inode(
     char* can_minix_path,
     unsigned char* cur_name);
 
+bool search_block(
+    FILE* s, /* We dont need to have any stream for the output. */
+    min_fs* mfs, 
+    min_inode* inode, 
+    uint32_t zone_num,
+    uint32_t block_number,
+    void* name);
+
 /* Searches the direct, indirect, and double indirect zones of the cur_inode 
    (which is a directory), and looks for an entry with a corresponding name. 
    If a name is found (and it is not deleted) populate inode with the
@@ -247,33 +247,33 @@ bool search_all_zones(
     min_inode* cur_inode,
     char* name);
 
-/* Searches a zone for a directory entry with a given name, and updates an inode
-   address with the address of the inode that corresponds to that name. */
-bool search_direct_zone(
-    min_fs* mfs, 
-    min_inode* inode, 
-    uint32_t zone_num,
-    char* name);
-
-/* Searches the zones that the indirect zone holds for an entry with a 
-   corresponding name. If a name is found (and it is not deleted) 
-   populate the inode_addr with the "real" address of teh found inode, and 
-   return true. Otherwise, return false. */
-bool search_indirect_zone(
-    min_fs* mfs, 
-    min_inode* inode, 
-    uint32_t zone_num,
-    char* name);
-
-/* Searches the zones that the double indirect zone holds for an entry with a 
-   corresponding name. If a name is found (and it is not deleted) 
-   populate the inode_addr with the "real" address of the found inode, and 
-   return true. Otherwise, return false. */
-bool search_two_indirect_zone(
-    min_fs* mfs, 
-    min_inode* inode, 
-    uint32_t zone_num,
-    char* name);
+// /* Searches a zone for a directory entry with a given name, and updates an 
+//    address with the address of the inode that corresponds to that name. */
+// bool search_direct_zone(
+//     min_fs* mfs, 
+//     min_inode* inode, 
+//     uint32_t zone_num,
+//     char* name);
+// 
+// /* Searches the zones that the indirect zone holds for an entry with a 
+//    corresponding name. If a name is found (and it is not deleted) 
+//    populate the inode_addr with the "real" address of teh found inode, and 
+//    return true. Otherwise, return false. */
+// bool search_indirect_zone(
+//     min_fs* mfs, 
+//     min_inode* inode, 
+//     uint32_t zone_num,
+//     char* name);
+// 
+// /* Searches the zones that the double indirect zone holds for an entry with a 
+//    corresponding name. If a name is found (and it is not deleted) 
+//    populate the inode_addr with the "real" address of the found inode, and 
+//    return true. Otherwise, return false. */
+// bool search_two_indirect_zone(
+//     min_fs* mfs, 
+//     min_inode* inode, 
+//     uint32_t zone_num,
+//     char* name);
 
 
 /* ========== */
