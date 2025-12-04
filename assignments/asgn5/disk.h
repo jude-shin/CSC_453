@@ -159,7 +159,7 @@ typedef struct __attribute__ ((__packed__)) min_dir_entry {
 typedef struct min_fs {
   FILE* file;             /* the file that the (minix) image is on */
   uint32_t partition_start; /* the offset (the address in relation to the 
-                             beginning of the image file. aka "real" address)*/
+                               beginning of the image file. aka "real" address)*/
   min_superblock sb;      /* The superblock and it's information for the fs */
 
   uint32_t zone_size;     /* The size of a zone in bytes */
@@ -229,6 +229,9 @@ uint32_t find_inode(
     char* can_minix_path,
     unsigned char* cur_name);
 
+
+/* Searches a block to find a directory entry with a mathcing name. 
+   Conforms to the block_processor function and can be used as a callback. */
 bool search_block(
     FILE* s, /* We dont need to have any stream for the output. */
     min_fs* mfs, 

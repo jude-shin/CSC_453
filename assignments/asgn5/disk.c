@@ -10,8 +10,6 @@
 #include "print.h"
 #include "zone.h"
 
-/* TODO: verb, p_prt s_prt img*/
-
 /*==========*/
 /* BASIC IO */
 /*==========*/
@@ -40,7 +38,7 @@ void open_mfs(
 
   /* The (sub)partition table that is read from the image. */
   min_part_tbl pt, spt;
-  
+
   /* The FILE that the image resides in. */
   FILE* img;
 
@@ -82,8 +80,8 @@ void open_mfs(
 
     /* Seek to the subpartition */
     if (s_prt != -1) { 
-    /* Populate the subpartition table (spt) based on what subpartition was 
-       chosen. */
+      /* Populate the subpartition table (spt) based on what subpartition was 
+         chosen. */
       load_part_table(
           &spt, 
           offset+(s_prt*sizeof(min_part_tbl))+PART_TABLE_OFFSET, 
@@ -165,7 +163,7 @@ void close_mfs(min_fs* mfs) {
     fprintf(stderr, "Error close(2)ing the img: %d", errno);
     exit(EXIT_FAILURE);
   }
- }
+}
 
 
 /*============*/
@@ -180,7 +178,7 @@ void close_mfs(min_fs* mfs) {
  */
 bool validate_signatures(FILE* image, uint32_t offset) {
   unsigned char sig510, sig511;
-  
+
   /* Seek the read head to the address with the signature. */
   if (fseek(image, offset+SIG510_OFFSET, SEEK_SET) == -1) {
     fprintf(stderr, "error seeking to signature 1: %d\n", errno);
@@ -292,7 +290,7 @@ void duplicate_inode(min_fs* mfs, uint32_t inode_addr, min_inode* inode) {
  * @param cur_name the current name that is being processed. If this is set to
  * NULL, the name is not updated. 
  * @return the address to the located inode. If not found, return 0;
-   */
+ */
 uint32_t find_inode(
     min_fs* mfs, 
     min_inode* inode,
@@ -354,7 +352,7 @@ uint32_t find_inode(
           token);
       return false;
     }
-   
+
     /* Search through the direct, indirect, and double indirect zones for a 
        directory entry with a matching name. */
     if (search_all_zones(mfs, inode, &cur_inode, token)) {
