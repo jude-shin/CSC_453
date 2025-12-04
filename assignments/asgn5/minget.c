@@ -21,12 +21,41 @@ typedef struct {
 /* Forward declarations */
 bool extract_block(FILE* s, min_fs* mfs, min_inode* inode,
     uint32_t zone_num, uint32_t block_num, void* context);
-bool handle_direct_zone_with_holes(FILE* s, min_fs* mfs, min_inode* inode,
-    uint32_t zone_num, extract_context_t* ctx);
-bool handle_indirect_zone_with_holes(FILE* s, min_fs* mfs, min_inode* inode,
-    uint32_t zone_num, extract_context_t* ctx);
-bool handle_two_indirect_zone_with_holes(FILE* s, min_fs* mfs, min_inode* inode,
-    uint32_t zone_num, extract_context_t* ctx);
+
+
+bool fill_hole(
+    FILE* s, 
+    min_inode* inode, 
+    uint32_t hs, /* The size of a hole */
+    uint32_t* bytes_read) {
+
+  uint32_t remaining = inode->size - *bytes_read;
+  if (remaining < hs) {
+    hs = remaining;
+  }
+
+  char* zeros = calloc(hs, sizeof(char));
+  if (zeros == NULL) {
+    fprintf(stderr, "error callocing buffer of zeros: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
+
+  /* Write a bunch of zeros. */
+  if (fwrite(zeros, sizeof(char), hs, s) < hs) {
+    fprintf(stderr, "error filling hole: %d\n", errno);
+    free(zeros);
+    exit(EXIT_FAILURE);
+  }
+
+  free(zeros);
+
+  /* Update the bytes read. We know that since this is a hole, then this must
+     be less than the total bytes read, and therefore will not go over. */
+  *bytes_read = *bytes_read + hs;
+
+  return (*bytes_read >= inode->size);
+}
+
 
 
 /* TODO: for all files, check that there are. */
@@ -160,6 +189,7 @@ void get_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
           inode, 
           inode->zone[i], 
           extract_block, 
+          fill_hole, 
           &bytes_read)) {
       return;
     }
@@ -172,6 +202,7 @@ void get_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
         inode, 
         inode->indirect, 
         extract_block,
+        fill_hole,
         &bytes_read)) {
     return;
   }
@@ -183,50 +214,23 @@ void get_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
         inode, 
         inode->two_indirect, 
         extract_block,
+        fill_hole,
         &bytes_read)) {
     return;
   }
 }
 
-bool extract_block(FILE* s, min_fs* mfs, min_inode* inode,
-    uint32_t zone_num, uint32_t block_num, void* context) {
+bool extract_block(
+    FILE* s, 
+    min_fs* mfs, 
+    min_inode* inode,
+    uint32_t zone_num, 
+    uint32_t block_num, 
+    void* context) {
+
   uint32_t* bytes_read = (uint32_t*)context;
   return get_block_contents(s, mfs, inode, zone_num, block_num, bytes_read);
 }
-
-bool fill_hole(
-    FILE* s, 
-    min_inode* inode, 
-    uint32_t hs, /* The size of a hole */
-    uint32_t* bytes_read) {
-
-  uint32_t remaining = inode->size - *bytes_read;
-  if (remaining < hs) {
-    hs = remaining;
-  }
-
-  char* zeros = calloc(hs, sizeof(char));
-  if (zeros == NULL) {
-    fprintf(stderr, "error callocing buffer of zeros: %d\n", errno);
-    exit(EXIT_FAILURE);
-  }
-
-  /* Write a bunch of zeros. */
-  if (fwrite(zeros, sizeof(char), hs, s) < hs) {
-    fprintf(stderr, "error filling hole: %d\n", errno);
-    free(zeros);
-    exit(EXIT_FAILURE);
-  }
-
-  free(zeros);
-
-  /* Update the bytes read. We know that since this is a hole, then this must
-     be less than the total bytes read, and therefore will not go over. */
-  *bytes_read = *bytes_read + hs;
-
-  return (*bytes_read >= inode->size);
-}
-
 
 bool get_block_contents(
     FILE* s, 

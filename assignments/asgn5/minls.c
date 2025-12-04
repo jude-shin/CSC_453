@@ -209,11 +209,11 @@ void ls_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path) {
 
   /* Process direct zones */
   for (int i = 0; i < DIRECT_ZONES; i++) {
-    process_direct_zone(s, mfs, inode, inode->zone[i], list_block, NULL);
+    process_direct_zone(s, mfs, inode, inode->zone[i], list_block, NULL, NULL);
   }
 
   /* Process indirect zone */
-  process_indirect_zone(s, mfs, inode, inode->indirect, list_block, NULL);
+  process_indirect_zone(s, mfs, inode, inode->indirect, list_block, NULL, NULL);
 
   /* Process double indirect zone */
   process_two_indirect_zone(
@@ -221,6 +221,8 @@ void ls_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path) {
       mfs, 
       inode, 
       inode->two_indirect, 
-      list_block, NULL);
+      list_block, 
+      NULL, 
+      NULL);
 }
 
