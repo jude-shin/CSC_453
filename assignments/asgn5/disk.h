@@ -159,7 +159,7 @@ typedef struct __attribute__ ((__packed__)) min_dir_entry {
 typedef struct min_fs {
   FILE* file;             /* the file that the (minix) image is on */
   uint32_t partition_start; /* the offset (the address in relation to the 
-                               beginning of the image file. aka "real" address)*/
+                               beginning of the image. aka "real" address)*/
   min_superblock sb;      /* The superblock and it's information for the fs */
 
   uint32_t zone_size;     /* The size of a zone in bytes */
