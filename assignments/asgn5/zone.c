@@ -57,7 +57,8 @@ bool process_indirect_zone(FILE* s, min_fs* mfs, min_inode* inode,
     }
 
     /* Process that direct zone */
-    if (process_direct_zone(s, mfs, inode, indirect_zone_num, processor, context)) {
+    if (process_direct_zone(s, mfs, inode, indirect_zone_num, processor, 
+          context)) {
       return true;
     }
   }
@@ -96,7 +97,8 @@ bool process_two_indirect_zone(FILE* s, min_fs* mfs, min_inode* inode,
     }
 
     /* Process that indirect zone */
-    if (process_indirect_zone(s, mfs, inode, indirect_zone_num, processor, context)) {
+    if (process_indirect_zone(s, mfs, inode, indirect_zone_num, processor, 
+          context)) {
       return true;
     }
   }

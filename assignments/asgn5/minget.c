@@ -20,13 +20,13 @@ typedef struct {
 
 /* Forward declarations */
 bool extract_block(FILE* s, min_fs* mfs, min_inode* inode,
-                   uint32_t zone_num, uint32_t block_num, void* context);
+    uint32_t zone_num, uint32_t block_num, void* context);
 bool handle_direct_zone_with_holes(FILE* s, min_fs* mfs, min_inode* inode,
-                                    uint32_t zone_num, extract_context_t* ctx);
+    uint32_t zone_num, extract_context_t* ctx);
 bool handle_indirect_zone_with_holes(FILE* s, min_fs* mfs, min_inode* inode,
-                                      uint32_t zone_num, extract_context_t* ctx);
+    uint32_t zone_num, extract_context_t* ctx);
 bool handle_two_indirect_zone_with_holes(FILE* s, min_fs* mfs, min_inode* inode,
-                                          uint32_t zone_num, extract_context_t* ctx);
+    uint32_t zone_num, extract_context_t* ctx);
 
 
 /* TODO: for all files, check that there are. */
@@ -35,7 +35,7 @@ int main (int argc, char *argv[]) {
   /* Verbosity. If set, print the partition table(s) superblock, and inode of 
      source file/directory to stderr. */
   bool verbose = false;
-  
+
   /* What primarty partition number to use (-1 means unpartitioned. )*/
   int prim_part = -1;
 
@@ -50,7 +50,7 @@ int main (int argc, char *argv[]) {
 
   /* The path to the dst file in the minix image. */
   char* minix_dst_path = NULL;
-  
+
   /* A struct that represents the minix filesystem. */
   min_fs mfs;
 
@@ -82,7 +82,7 @@ int main (int argc, char *argv[]) {
 
   /* Open the minix filesystem, populating the values in the mfs struct. */
   open_mfs(&mfs, imagefile_path, prim_part, sub_part, verbose);
- 
+
   /* ======================================================================== */
 
   /* The inode that will be populated if the source path is found. */
@@ -154,7 +154,13 @@ void get_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
   int i;
   for (i = 0; i < DIRECT_ZONES; i++) {
     uint32_t zone_num = inode->zone[i];
-    if (process_direct_zone(s, mfs, inode, inode->zone[i], extract_block, &bytes_read)) {
+    if (process_direct_zone(
+          s, 
+          mfs, 
+          inode, 
+          inode->zone[i], 
+          extract_block, 
+          &bytes_read)) {
       return;
     }
   }
@@ -183,9 +189,9 @@ void get_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
 }
 
 bool extract_block(FILE* s, min_fs* mfs, min_inode* inode,
-                   uint32_t zone_num, uint32_t block_num, void* context) {
-    uint32_t* bytes_read = (uint32_t*)context;
-    return get_block_contents(s, mfs, inode, zone_num, block_num, bytes_read);
+    uint32_t zone_num, uint32_t block_num, void* context) {
+  uint32_t* bytes_read = (uint32_t*)context;
+  return get_block_contents(s, mfs, inode, zone_num, block_num, bytes_read);
 }
 
 bool fill_hole(
@@ -281,208 +287,3 @@ bool get_block_contents(
   /* If we read everything, make note of it, and return with true. */
   return (*bytes_read >= inode->size);
 }
-// 
-// /* Prints the contents of a zone to a stream s.  
-//  * @param s the stream that this message will be printed to.
-//  * @param inode the inode of interest. 
-//  * @param zone_num the zone of interest.  
-//  * @param how many bytes we have read so far.  
-//  * @return bool if we have finished writing everything.
-//  */
-// bool get_direct_zone_contents(
-//     FILE* s, 
-//     min_fs* mfs, 
-//     min_inode* inode, 
-//     uint32_t zone_num, 
-//     uint32_t* bytes_read) {
-// 
-//   /* We encountered a hole... */
-//   if (zone_num == 0) {
-//     /* Keep the hole still takes up space, just don't read any of it as it will
-//        just be zeros. */
-//     uint32_t hs = mfs->zone_size;
-// 
-//     return fill_hole(s, inode, hs, bytes_read);
-//   }
-// 
-//   /* get all of the blocks in this zone. */
-//   uint32_t num_blocks = mfs->zone_size / mfs->sb.blocksize;
-// 
-//   int i;
-//   for (i = 0; i < num_blocks; i++) {
-//     if (get_block_contents(s, mfs, inode, zone_num, i, bytes_read)) {
-//       return true;
-//     }
-//   }
-// 
-//   /* We have not yet finished reading. */
-//   return false;
-// }
-// 
-// /* Prints the contents of an indirect zone to a stream s.  
-//  * @param s the stream that this message will be printed to.
-//  * @param inode the inode of interest. 
-//  * @param zone_num the zone of interest.  
-//  * @param how many bytes we have read so far.  
-//  * @return bool if we have finished writing everything.
-//  */
-// bool get_indirect_zone_contents(
-//     FILE* s, 
-//     min_fs* mfs, 
-//     min_inode* inode, 
-//     uint32_t zone_num, 
-//     uint32_t* bytes_read) {
-// 
-//   /* How many zone numbers we are going to read (how many fit in the first 
-//      block of the indirect zone) */
-//   uint32_t num_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
-// 
-//   /* We encountered a hole... */
-//   if (zone_num == 0) {
-//     uint32_t hs = mfs->sb.blocksize*num_indirect_inodes;
-// 
-//     return fill_hole(s, inode, hs, bytes_read);
-//   }
-// 
-//   /* Start reading the first block in that indirect zone. */
-//   if (fseek(
-//         mfs->file, 
-//         mfs->partition_start+(zone_num*mfs->zone_size), 
-//         SEEK_SET) == -1) {
-//     fprintf(stderr, "error seeking to indirect zone.\n");
-//     exit(EXIT_FAILURE);
-//   }
-// 
-//   /* The first block is going to line up with the address of that zone. */
-//   uint32_t block_addr = mfs->partition_start + (zone_num*mfs->zone_size);
-// 
-//   /* For every zone number in that first indirect inode block. */
-//   int i;
-//   for(i = 0; i < num_indirect_inodes; i++) {
-//     /* The zone number that holds directory entries. */
-//     uint32_t indirect_zone_number;
-// 
-//     /* Read the entry offset in the first block. */
-//     if (fseek(
-//           mfs->file, 
-//           block_addr + (i * sizeof(uint32_t)),
-//           SEEK_SET) == -1) {
-//       fprintf(stderr, "error seeking to indirect zone: %d\n", errno);
-//       exit(EXIT_FAILURE);
-//     }
-// 
-//     if (fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
-//       fprintf(stderr, "error reading indirect zone: %d\n", errno);
-//       exit(EXIT_FAILURE);
-//     }
-// 
-//     /* Check to see if this is a hole. */
-//     if (indirect_zone_number == 0) {
-//       uint32_t hs = mfs->sb.blocksize;
-//       if (fill_hole(s, inode, hs, bytes_read)) {
-//         return true;
-//       }
-//       continue;
-//     }
-// 
-//     /* print all of the contents inside that zone*/
-//     /* TODO: get all contents in this zone. */
-//     if (get_direct_zone_contents(
-//           s, 
-//           mfs, 
-//           inode, 
-//           indirect_zone_number, 
-//           bytes_read)) {
-//       /* If the printing finished somewhere in here, also make note of it by 
-//          returning true!*/
-//       return true;
-//     }
-//   }
-// 
-//   /* We have not yet finished reading. */
-//   return false;
-// }
-// 
-// /* Prints the contents of a double indirect zone to a stream s.  
-//  * @param s the stream that this message will be printed to.
-//  * @param inode the inode of interest. 
-//  * @param zone_num the zone of interest.  
-//  * @param how many bytes we have read so far.  
-//  * @return bool if we have finished writing everything.
-//  */
-// bool get_two_indirect_zone_contents(
-//     FILE* s, 
-//     min_fs* mfs, 
-//     min_inode* inode, 
-//     uint32_t zone_num, 
-//     uint32_t* bytes_read) {
-//   /* How many zone numbers we are going to read (how many fit in the first 
-//      block of the indirect zone) */
-//   uint32_t num_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
-// 
-//   /* We encountered a hole... */
-//   if (zone_num == 0) {
-//     /* a single indirect node will point to multiple indirect blocks. */
-//     /* We must add (blocksize) * how many indirect zone numbers we can fit in 
-//        a zone, but then multiply it one more time by that number because there
-//        are two layers of indirect nodes we must go through. */
-//     /* The size of the hole */
-//     uint32_t hs = mfs->sb.blocksize*num_indirect_inodes*num_indirect_inodes;
-// 
-//     return fill_hole(s, inode, hs, bytes_read);
-//   }
-// 
-//   /* TODO: address*/
-//   uint32_t zone_addr = mfs->partition_start + (zone_num*mfs->zone_size);
-// 
-// 
-//   /* For every zone number in that first double indirect inode block. */
-//   int i;
-//   for(i = 0; i < num_indirect_inodes; i++) {
-//     /* The zone number that holds the indierct zone numbers. */
-//     uint32_t two_indirect_zone_number;
-// 
-//     /* Start reading the first block in the double indirect zone. */
-//     if (fseek(
-//           mfs->file, 
-//           zone_addr + (i * sizeof(uint32_t)), 
-//           SEEK_SET) == -1) {
-//       fprintf(stderr, "error seeking to double indirect zone: %d\n", errno);
-//       exit(EXIT_FAILURE);
-//     }
-// 
-//     /* Read the number that holds the zone number. */
-//     if(fread(&two_indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
-//       fprintf(stderr, "error reading double indirect zone number: %d\n", errno);
-//       exit(EXIT_FAILURE);
-//     }
-// 
-//     /* Check to see if this is a hole. */
-//     if (two_indirect_zone_number == 0) {
-//       uint32_t hs = mfs->sb.blocksize*num_indirect_inodes;
-//       if (fill_hole(s, inode, hs, bytes_read)) {
-//         return true;
-//       }
-//       continue;
-//     }
-// 
-//     /* Print all of the contents inside that indirect zone*/
-//     if (get_indirect_zone_contents(
-//           s, 
-//           mfs, 
-//           inode, 
-//           two_indirect_zone_number, 
-//           bytes_read)) {
-//       /* If the printing finished somewhere in here, also make note of it by 
-//          returning true!*/
-//       return true;
-//     }
-//   }
-// 
-//   /* We have not yet finished reading. */
-//   return false;
-// }
-
-
-
-
