@@ -247,34 +247,6 @@ bool search_all_zones(
     min_inode* cur_inode,
     char* name);
 
-// /* Searches a zone for a directory entry with a given name, and updates an 
-//    address with the address of the inode that corresponds to that name. */
-// bool search_direct_zone(
-//     min_fs* mfs, 
-//     min_inode* inode, 
-//     uint32_t zone_num,
-//     char* name);
-// 
-// /* Searches the zones that the indirect zone holds for an entry with a 
-//    corresponding name. If a name is found (and it is not deleted) 
-//    populate the inode_addr with the "real" address of teh found inode, and 
-//    return true. Otherwise, return false. */
-// bool search_indirect_zone(
-//     min_fs* mfs, 
-//     min_inode* inode, 
-//     uint32_t zone_num,
-//     char* name);
-// 
-// /* Searches the zones that the double indirect zone holds for an entry with a 
-//    corresponding name. If a name is found (and it is not deleted) 
-//    populate the inode_addr with the "real" address of the found inode, and 
-//    return true. Otherwise, return false. */
-// bool search_two_indirect_zone(
-//     min_fs* mfs, 
-//     min_inode* inode, 
-//     uint32_t zone_num,
-//     char* name);
-
 
 /* ========== */
 /* ARITHMETIC */
