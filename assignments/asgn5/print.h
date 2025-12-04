@@ -3,85 +3,20 @@
 
 #include "disk.h"
 
-/* For printing a bunch of messages. */
+/* The max length of a label */
+#define LBL_LN 13
+/* The max length of a value */
+#define VLU_LN 11
+/* The lenfth of a hexadecimal value (the "0000" in "0x0000")*/
+#define HEX_LN 4
+/* The amount of padding needed for a hex value */
+#define HEX_PAD VLU_LN - HEX_LN
 
-/* ===== */
-/* MINLS */
-/* ===== */
+/* The specs when ls'ing a file's information */
+#define FILE_SIZE_LN 10
 
-/* Prints an error that shows the flags that can be used with minls. */
-void print_minls_usage(FILE* s);
-
-/* Prints some information about an inode including the rwx permissions for the
-   Group, User, and Other, it's size, and it's name. */
-void print_file(FILE* s, min_inode* inode, unsigned char* name);
-
-/* TODO: */
-void print_files_in_block(
-    FILE* s, 
-    min_fs* mfs, 
-    uint32_t zone_num, 
-    uint32_t block_number);
-
-
-/* Given a zone, print all of the files that are on that zone if they are
-   valid. */
-void print_files_in_direct_zone(FILE* s, min_fs* mfs, uint32_t zone_num);
-
-/* Given an indirect zone, print all of the files that are on the zones that
-   the indirect zone points to if they are valid. */
-void print_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num);
-
-/* Given a double indirect zone, print all of the files that are on the zones 
-   that are on the zones that the indirect zone points to if they are valid
-   (double indirect -> indirect -> zone -> file). */
-void print_files_in_two_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num);
-
-/* Prints every directory entry in a directory. */
-void print_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path);
-
-
-/* ====== */
-/* MINGET */
-/* ====== */
-
-/* Prints an error that shows the flags that can be used with minls. */
-void print_minget_usage(FILE* s);
-
-/* Prints the contents of a regular file to the stream s given an inode. */
-void get_file_contents(FILE* s, min_fs* mfs, min_inode* inode);
-
-bool get_block_contents(
-    FILE* s, 
-    min_fs* mfs, 
-    min_inode* inode, 
-    uint32_t zone_num, 
-    uint32_t block_number, 
-    uint32_t* bytes_read);
-
-/* Prints the contents of a zone to a stream s. */
-bool get_direct_zone_contents(
-    FILE* s, 
-    min_fs* mfs, 
-    min_inode* inode, 
-    uint32_t zone_num, 
-    uint32_t* bytes_read);
-
-/* Prints the contents of an indirect zone to a stream s. */
-bool get_indirect_zone_contents(
-    FILE* s, 
-    min_fs* mfs, 
-    min_inode* inode, 
-    uint32_t zone_num, 
-    uint32_t* bytes_read);
-
-/* Prints the contents of a double indirect zone to a stream s. */
-bool get_two_indirect_zone_contents(
-    FILE* s, 
-    min_fs* mfs, 
-    min_inode* inode, 
-    uint32_t zone_num, 
-    uint32_t* bytes_read);
+/* The spacing spec for the weird space before the zone. */
+#define ZONE_LBL_LEN 9
 
 
 /* ======= */
