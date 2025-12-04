@@ -332,6 +332,7 @@ uint32_t find_inode(
        processed name. */
     if (cur_name != NULL) {
       size_t len = strlen(token);
+      /* Just make sure you don't go over the max length. */
       if (len >= DIR_NAME_SIZE) {
         len = DIR_NAME_SIZE - 1;
       }
@@ -339,7 +340,7 @@ uint32_t find_inode(
       cur_name[len] = '\0';
     }
 
-    /* Add the token to the build canonicalized minix path. */
+    /* Add the token (and a delimiter) to the build canonicalized minix path. */
     if (can_minix_path != NULL) {
       strcat(can_minix_path, token);
       strcat(can_minix_path, DELIMITER);
@@ -460,12 +461,7 @@ bool search_block(
     uint32_t zone_num,
     uint32_t block_num,
     void* name) {
-  /* TODO: */
-  // /* Skip over the zone if it is not used. */
-  // if (zone_num == 0) {
-  //   return false;
-  // }
-
+  /* The address of the block of interest on the minix image. */
   uint32_t block_addr = get_block_addr(mfs, zone_num, block_num);
 
   /* get the number of directories in a block */
@@ -474,6 +470,7 @@ bool search_block(
   int i;
   /* Loop through every directory entry in this block. */
   for (i = 0; i < num_directories; i++) {
+    /* The directory entry that we are currently on. */
     min_dir_entry entry;
 
     /* Seek to the directory entry */
@@ -494,8 +491,10 @@ bool search_block(
          size because we just read it). */
       uint32_t inode_addr = mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE);
 
-      /* Make a copy of the inode */
+      /* Duplicate the inode information to the inode in the main function so
+         we can reference it later. */
       duplicate_inode(mfs, inode_addr, inode);
+
       return true;
     }
   }
