@@ -55,8 +55,8 @@ int main (int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  /* Set the default path to the root directory '/' */
   if (minix_path == NULL) {
-    /* Set the default path to the root directory '/' */
     minix_path = DELIMITER;
   }
 
@@ -84,9 +84,9 @@ int main (int argc, char *argv[]) {
   char* can_minix_path = malloc(sizeof(char)*strlen(minix_path)+1);
   if (can_minix_path == NULL) {
     fprintf(stderr, "error mallocing canonicalized minix path: %d\n", errno);
+    free(cur_name);
     exit(EXIT_FAILURE);
   }
-
 
   /* By default, set the string to be empty. */
   *can_minix_path = '\0';
@@ -95,6 +95,8 @@ int main (int argc, char *argv[]) {
      can_minix_path, and cur_name will be updated as the search progresses. */
   if (!find_inode(&mfs, &inode, minix_path, can_minix_path, cur_name)) {
     fprintf(stderr, "The path [%s] was not found!\n", can_minix_path);
+    free(cur_name);
+    free(can_minix_path);
     exit(EXIT_FAILURE);
   }
 
@@ -125,6 +127,7 @@ int main (int argc, char *argv[]) {
   close_mfs(&mfs);
 
   /* Free the malloc'ed canonicalized path string. */
+  free(cur_name);
   free(can_minix_path);
 
   exit(EXIT_SUCCESS);
@@ -161,16 +164,34 @@ void ls_file(FILE* s, min_inode* inode, unsigned char* name) {
   fprintf(s, "%*u %s\n", FILE_SIZE_LN, inode->size, name);
 }
 
-/* Block processor callback for listing directory entries */
-bool list_block(FILE* s, min_fs* mfs, min_inode* inode,
-                uint32_t zone_num, uint32_t block_num, void* context) {
+/* Prints the directory elements to stream s. 
+ * Conforms to the block_proc function and can be used as a callback.
+ * @param s stream to print to.
+ * @param mfs a struct that holds information about the minix filesystem. 
+ * @param inode the inode of interest.  
+ * @param zone_num the zone number containing this block.
+ * @param block_num not used for this callback 
+ * @param context not used for this callback
+ * @return bool if the inode was found in this block or not.
+ */
+bool ls_block(
+    FILE* s, 
+    min_fs* mfs, 
+    min_inode* inode,
+    uint32_t zone_num, 
+    uint32_t block_num, 
+    void* context) {
+
+  /* zone addresses in the minix image. */
   uint32_t zone_addr = mfs->partition_start + (zone_num * mfs->zone_size);
+
+  /* block address in teh minix image. */
   uint32_t block_addr = zone_addr + (block_num * mfs->sb.blocksize);
 
-  uint32_t num_directories = mfs->sb.blocksize / DIR_ENTRY_SIZE;
-  
   int i;
-  for (i = 0; i < num_directories; i++) {
+  /* Look at every directory in the zone. */
+  for (i = 0; i < mfs->num_dir_p_block; i++) {
+    /* The entry we are looking at right now. */
     min_dir_entry entry;
 
     if (fseek(mfs->file, block_addr + (i * DIR_ENTRY_SIZE), SEEK_SET)) {
@@ -183,12 +204,15 @@ bool list_block(FILE* s, min_fs* mfs, min_inode* inode,
       exit(EXIT_FAILURE);
     }
 
+    /* Make sure the entry is not "nothing" */
     if (entry.inode != 0) {
+      /* check the next inode */
       min_inode next_inode;
 
-      if (fseek(mfs->file, 
-                mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE),
-                SEEK_SET) == -1) {
+      if (fseek(
+            mfs->file, 
+            mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE), 
+            SEEK_SET) == -1) {
         fprintf(stderr, "error seeking to inode: %d\n", errno);
         exit(EXIT_FAILURE);
       }
@@ -198,6 +222,7 @@ bool list_block(FILE* s, min_fs* mfs, min_inode* inode,
         exit(EXIT_FAILURE);
       }
 
+      /* ls the next inode */
       ls_file(s, &next_inode, entry.name);
     }
   }
@@ -211,11 +236,25 @@ void ls_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path) {
   /* Process direct zones */
   int i;
   for (i = 0; i < DIRECT_ZONES; i++) {
-    process_direct_zone(s, mfs, inode, inode->zone[i], list_block, NULL, NULL);
+    process_direct_zone(
+        s, 
+        mfs, 
+        inode, 
+        inode->zone[i], 
+        ls_block, 
+        NULL,  /* hole callback not used */
+        NULL); /* no extra context needed */
   }
 
   /* Process indirect zone */
-  process_indirect_zone(s, mfs, inode, inode->indirect, list_block, NULL, NULL);
+  process_indirect_zone(
+      s, 
+      mfs, 
+      inode, 
+      inode->indirect, 
+      ls_block, 
+      NULL,  /* hole callback not used */
+      NULL); /* no extra context needed */
 
   /* Process double indirect zone */
   process_two_indirect_zone(
@@ -223,8 +262,8 @@ void ls_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path) {
       mfs, 
       inode, 
       inode->two_indirect, 
-      list_block, 
-      NULL, 
-      NULL);
+      ls_block, 
+      NULL,  /* hole callback not used */
+      NULL); /* no extra context needed */
 }
 
