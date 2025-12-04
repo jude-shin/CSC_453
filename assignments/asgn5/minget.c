@@ -187,7 +187,6 @@ void get_file_contents(FILE* s, min_fs* mfs, min_inode* inode) {
   /* Go through all of the direct zones sequentially. */
   int i;
   for (i = 0; i < DIRECT_ZONES; i++) {
-    uint32_t zone_num = inode->zone[i];
     if (process_direct_zone(
           s, 
           mfs, 

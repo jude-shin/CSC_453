@@ -254,4 +254,11 @@ bool search_all_zones(
 /* Calculates the zonesize based on a superblock using a bitshift. */
 uint32_t get_zone_size(min_superblock* sb);
 
+/* Calculates the zone address on a minix filesystem. */
+uint32_t get_zone_addr(min_fs* mfs, uint32_t zone_num);
+
+/* Calculates the block address on a minix filesystem. */
+uint32_t get_block_addr(min_fs* mfs, uint32_t zone_num, uint32_t block_num);
+
+
 #endif

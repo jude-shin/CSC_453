@@ -380,8 +380,8 @@ uint32_t find_inode(
  * contents of the found inode, and return true, otherwise, return false. 
  * @param mfs MinixFileSystem struct that holds the current filesystem and some
  *  useful information.
+ * @param inode the inode that will be populated when found.
  * @param cur_inode the inode (which is a directory) that we are searching in.
- * @param inode_addr a poninter to a variable that holds the address of the real
  *  inode on the image. 
  * @param name the name of the directory entry we are looking for in the current
  *  inode.
@@ -397,44 +397,44 @@ bool search_all_zones(
   int i;
   for(i = 0; i < DIRECT_ZONES; i++) {
     /* Search the direct zone for an entry. If found, then we know that 
-       search_chunk already wrote the data to inode_addr, so we can just exit.
+       search_block already wrote the data to inode_addr, so we can just exit.
        Otherwise, the for loop will continue with the search. */
     if (process_direct_zone(
-          NULL,
+          NULL, /* We dont need to print to a stream. */
           mfs, 
           inode, 
           cur_inode->zone[i], 
-          search_block,
-          NULL,
+          search_block, /* This is the search function. */
+          NULL, /* If we see a hole we don't have to do anything special. */
           (void*)name)) {
       return true;
     }
   }
 
   /* Search the indirect zone for an entry. If found, then we know that 
-     search_chunk already wrote the data to inode_addr, so we can just exit.
+     search_block already wrote the data to inode_addr, so we can just exit.
      Otherwise, the for loop will continue with the search. */
   if (process_indirect_zone(
-        NULL, 
+        NULL, /* We dont need to print to a stream. */
         mfs, 
         inode, 
-        cur_inode->indirect, 
-        search_block,
-        NULL,
+        cur_inode->zone[i], 
+        search_block, /* This is the search function. */
+        NULL, /* If we see a hole we don't have to do anything special. */
         (void*)name)) {
     return true;
   }
 
   /* Search the double indirect zone for an entry. If found, then we know that 
-     search_chunk already wrote the data to inode_addr, so we can just exit.
+     search_block already wrote the data to inode_addr, so we can just exit.
      Otherwise, the for loop will continue with the search. */
   if (process_two_indirect_zone(
-        NULL,
+        NULL, /* We dont need to print to a stream. */
         mfs, 
         inode, 
-        cur_inode->two_indirect, 
-        search_block,
-        NULL,
+        cur_inode->zone[i], 
+        search_block, /* This is the search function. */
+        NULL, /* If we see a hole we don't have to do anything special. */
         (void*)name)){
     return true;
   }
@@ -442,27 +442,37 @@ bool search_all_zones(
   return false;
 }
 
-/* Searches a block to find a directory entry with a mathcing name. */
+/* Searches a block to find a directory entry with a mathcing name. 
+ * Conforms to the block_processor function and can be used as a callback.
+ * @param s Does nothing.
+ * @param mfs a struct that holds an open file descriptor, and the offset (the
+ *  offset from the beginning of the image which indicates the beginning of the
+ *  partition that holds the filesystem.
+ * @param inode the inode that will be populated when found.
+ * @param zone_num the zone number containing this block.
+ * @param block_num the block number with in the zone.
+ * @return bool if the inode was found in this block or not.
+ */
 bool search_block(
     FILE* s, /* We dont need to have any stream for the output. */
     min_fs* mfs, 
     min_inode* inode, 
     uint32_t zone_num,
-    uint32_t block_number,
+    uint32_t block_num,
     void* name) {
-  /* Skip over the zone if it is not used. */
-  if (zone_num == 0) {
-    return false;
-  }
+  /* TODO: */
+  // /* Skip over the zone if it is not used. */
+  // if (zone_num == 0) {
+  //   return false;
+  // }
 
-  uint32_t zone_addr = mfs->partition_start + (zone_num * mfs->zone_size);
+  uint32_t block_addr = get_block_addr(mfs, zone_num, block_num);
 
-  uint32_t block_addr = zone_addr + (block_number * mfs->sb.blocksize);
-
-  /* Read all directory entries in this block. */
+  /* get the number of directories in a block */
   uint32_t num_directories = mfs->sb.blocksize / DIR_ENTRY_SIZE;
 
   int i;
+  /* Loop through every directory entry in this block. */
   for (i = 0; i < num_directories; i++) {
     min_dir_entry entry;
 
@@ -505,5 +515,24 @@ uint32_t get_zone_size(min_superblock* sb) {
   uint32_t zonesize = blocksize << log_zone_size;
 
   return zonesize;
+}
+
+/* Calculates the zone address on a minix filesystem.
+ * @param mfs a struct that holds info on the minix image.  
+ * @param zone_num the zone number containing this block.
+ * @return uint32_t the address on the minix image
+ */
+uint32_t get_zone_addr(min_fs* mfs, uint32_t zone_num) {
+  return mfs->partition_start + (zone_num * mfs->zone_size);
+}
+
+/* Calculates the block address on a minix filesystem.
+ * @param mfs a struct that holds info on the minix image.  
+ * @param zone_num the zone number containing this block.
+ * @param block_num the block number with in the zone.
+ * @return uint32_t the address on the minix image
+ */
+uint32_t get_block_addr(min_fs* mfs, uint32_t zone_num, uint32_t block_num) {
+  return get_zone_addr(mfs, zone_num) + (block_num * mfs->sb.blocksize);
 }
 
