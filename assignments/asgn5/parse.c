@@ -6,9 +6,7 @@
 #include <stdbool.h>
 
 #include "parse.h"
-
-/* TODO: define this somewhere else? */
-#define MAX_PRIM_PART 4
+#include "disk.h"
 
 /* Parses the flags given. If an error occurs, this function returns -1 and is 
  * handled in the caller.

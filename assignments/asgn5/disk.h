@@ -48,6 +48,9 @@
 /* The directory entry size for a minix fs in bytes. */
 #define DIR_ENTRY_SIZE 64
 
+/* The number of primary partitions we can have. */
+#define MAX_PRIM_PART 4
+
 
 /* ==== */
 /* MISC */
@@ -163,8 +166,6 @@ typedef struct min_fs {
   min_superblock sb;      /* The superblock and it's information for the fs */
 
   uint32_t zone_size;     /* The size of a zone in bytes */
-  /* TODO: add here some calculations like number of addresses in ablock or 
-     something*/
   uint32_t num_dir_p_block; /* number of directories in a block */
 
   uint32_t b_imap;     /* "real" address of the inode bitmap */
@@ -263,6 +264,5 @@ uint32_t get_zone_addr(min_fs* mfs, uint32_t zone_num);
 
 /* Calculates the block address on a minix filesystem. */
 uint32_t get_block_addr(min_fs* mfs, uint32_t zone_num, uint32_t block_num);
-
 
 #endif

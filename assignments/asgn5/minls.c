@@ -116,8 +116,7 @@ int main (int argc, char *argv[]) {
     /* The root DELIMITER is going to be added manualy. */
     ls_directory(stdout, &mfs, &inode, can_minix_path);
   }
-  /* Otherwise, just list the single file we landed on. */
-  else {
+  else { /* Otherwise, just list the single file we landed on. */
     /* note that when listing a single file, we don't want to print the 
        DELIMITER*/
     ls_file(stdout, &inode, (unsigned char*)can_minix_path);
