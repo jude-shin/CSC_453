@@ -3,9 +3,6 @@
 
 #include "disk.h"
 
-/* Prints an error that shows the flags that can be used with minls. */
-void print_minls_usage(FILE* s);
-
 /* Prints some information about an inode including the rwx permissions for the
    Group, User, and Other, it's size, and it's name. */
 void ls_file(FILE* s, min_inode* inode, unsigned char* name);

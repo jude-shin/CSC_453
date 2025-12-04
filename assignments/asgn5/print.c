@@ -4,6 +4,39 @@
 #include "print.h"
 #include "disk.h"
 
+/* Prints an error that shows the flags that can be used with minls.
+ * @param s the stream that this message will be printed to.
+ * @return void.
+ */
+void print_minls_usage(FILE* s) {
+  fprintf(
+      s,
+      "usage: minls [-v] [-p num [-s num]] imagefile [path]\n"
+      "Options:\n"
+      "-p part    --- select partition for filesystem (default: none)\n"
+      "-s sub     --- select subpartition for filesystem (default: none)\n"
+      "-v verbose --- increase verbosity level\n"
+      );
+}
+
+/* Prints an error that shows the flags that can be used with minget.
+ * @param s the stream that this message will be printed to.
+ * @return void.
+ */
+void print_minget_usage(FILE* s) {
+  fprintf(
+      s,
+      "usage: minget [-v] [-p num [-s num]] imagefile srcpath [dstpath]\n"
+      "Options:\n"
+      "-p part    --- select partition for filesystem (default: none)\n"
+      "-s sub     --- select subpartition for filesystem (default: none)\n"
+      "-v verbose --- increase verbosity level\n"
+      );
+}
+
+
+
+
 /* ======= */
 /* GENERAL */
 /* ======= */

@@ -19,6 +19,13 @@
 #define ZONE_LBL_LEN 9
 
 
+/* Prints an error that shows the flags that can be used with minls. */
+void print_minls_usage(FILE* s);
+
+/* Prints an error that shows the flags that can be used with minls. */
+void print_minget_usage(FILE* s);
+
+
 /* ======= */
 /* GENERAL */
 /* ======= */

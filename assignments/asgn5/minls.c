@@ -9,6 +9,7 @@
 #include "parse.h"
 #include "print.h"
 #include "minls.h"
+#include "zone.h"
 #include "disk.h"
 
 int main (int argc, char *argv[]) {
@@ -131,21 +132,6 @@ int main (int argc, char *argv[]) {
 
 /* ========================================================================== */
 
-/* Prints an error that shows the flags that can be used with minls.
- * @param s the stream that this message will be printed to.
- * @return void.
- */
-void print_minls_usage(FILE* s) {
-  fprintf(
-      s,
-      "usage: minls [-v] [-p num [-s num]] imagefile [path]\n"
-      "Options:\n"
-      "-p part    --- select partition for filesystem (default: none)\n"
-      "-s sub     --- select subpartition for filesystem (default: none)\n"
-      "-v verbose --- increase verbosity level\n"
-      );
-}
-
 /* Prints some information about an inode including the rwx permissions for the
  * Group, User, and Other, it's size, and it's name.
  * @param s the stream that this message will be printed to.
@@ -153,7 +139,6 @@ void print_minls_usage(FILE* s) {
  * @param name the name of the file.
  * @return void.
  */
-/* TODO: do we have to check that this is null terminated at 60 characters? */
 void ls_file(FILE* s, min_inode* inode, unsigned char* name) {
   /* prints whether this is a directory or not */
   print_mask(s, "d", inode->mode, DIR_FT);
@@ -176,62 +161,38 @@ void ls_file(FILE* s, min_inode* inode, unsigned char* name) {
   fprintf(s, "%*u %s\n", FILE_SIZE_LN, inode->size, name);
 }
 
-/* TODO: print the files in a block  COMMENTS*/
-void ls_files_in_block(
-    FILE* s, 
-    min_fs* mfs, 
-    uint32_t zone_num, 
-    uint32_t block_number) {
-  /* Skip over the zone if it is not used. */
-  if (zone_num == 0) { 
-    return ;
-  }
-
+/* Block processor callback for listing directory entries */
+bool list_block(FILE* s, min_fs* mfs, min_inode* inode,
+                uint32_t zone_num, uint32_t block_num, void* context) {
   uint32_t zone_addr = mfs->partition_start + (zone_num * mfs->zone_size);
+  uint32_t block_addr = zone_addr + (block_num * mfs->sb.blocksize);
 
-  uint32_t block_addr = zone_addr + (block_number * mfs->sb.blocksize);
-
-
-  /* Read all directory entries in this block. */
   uint32_t num_directories = mfs->sb.blocksize / DIR_ENTRY_SIZE;
 
-  int i;
-  for(i = 0; i < num_directories; i++) {
-    /* print ALL dierctory entries that fit in this block. */
-
-    /* The entry that will hold the filename. */
+  for (int i = 0; i < num_directories; i++) {
     min_dir_entry entry;
 
-    /* Seek to the directory entry */
     if (fseek(mfs->file, block_addr + (i * DIR_ENTRY_SIZE), SEEK_SET)) {
       fprintf(stderr, "error seeking to directory entry: %d\n", errno);
       exit(EXIT_FAILURE);
     }
 
-    /* Read the directory entry */
-    if(fread(&entry, DIR_ENTRY_SIZE, 1, mfs->file) < 1) {
+    if (fread(&entry, DIR_ENTRY_SIZE, 1, mfs->file) < 1) {
       fprintf(stderr, "error reading directory entry: %d\n", errno);
       exit(EXIT_FAILURE);
     }
 
-    /* Check if entry is valid */
-    if(entry.inode != 0) {
+    if (entry.inode != 0) {
       min_inode next_inode;
 
-      /* Seek to the address that holds the inode that we are on. */
-      if (fseek(
-            mfs->file, 
-            mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE),
-            SEEK_SET) == -1) {
+      if (fseek(mfs->file, 
+                mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE),
+                SEEK_SET) == -1) {
         fprintf(stderr, "error seeking to inode: %d\n", errno);
         exit(EXIT_FAILURE);
       }
 
-      /* Fill the next_inode with the found information. */
-      if(fread(&next_inode, INODE_SIZE, 1, mfs->file) < 1) {
-        /* If there was an error writing to the inode, note it an exit. We 
-           could try to limp along, but this is not that critical of an 
-           application, so we'll just bail. */
+      if (fread(&next_inode, INODE_SIZE, 1, mfs->file) < 1) {
         fprintf(stderr, "error getting next inode for printing: %d\n", errno);
         exit(EXIT_FAILURE);
       }
@@ -239,153 +200,235 @@ void ls_files_in_block(
       ls_file(s, &next_inode, entry.name);
     }
   }
+
+  return false; /* Never stop early when listing */
 }
 
-/* Given a zone, print all of the files that are on that zone if they are valid.
- * @param s the stream that this message will be printed to.
- * @param mfs a struct that holds an open file descriptor, and the offset (the
- *  offset from the beginning of the image which indicates the beginning of the
- *  partition that holds the filesystem.
- * @param zone_num the zone number of interest
- * @return void.
- */
-void ls_files_in_direct_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
-  /* Skip over the indirect zone if it is not used. */
-  if (zone_num == 0) { 
-    return ;
-  }
-
-  /* Read all directory entries in this chunk. */
-  uint32_t num_blocks = mfs->zone_size / mfs->sb.blocksize;
-
-  int i;
-  for(i = 0; i < num_blocks; i++) {
-    /* print ALL blocks that fit in this zone. */
-    ls_files_in_block(s, mfs, zone_num, i);
-  }
-}
-
-/* Given an indirect zone, print all of the files that are on the zones that
- * the indirect zone points to if they are valid.
- * @param s the stream that this message will be printed to.
- * @param mfs a struct that holds an open file descriptor, and the offset (the
- *  offset from the beginning of the image which indicates the beginning of the
- *  partition that holds the filesystem.
- * @param zone_num the indirect zone number of interest
- * @return void.
- */
-void ls_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
-  /* Skip over the indirect zone if it is not used. */
-  if (zone_num == 0) {
-    return;
-  }
-
-  /* The first block is going to line up with the address of that zone. */
-  uint32_t block_addr = mfs->partition_start + (zone_num*mfs->zone_size);
-
-  /* How many zone numbers we are going to read (how many fit in the first 
-     block of the indirect zone) */
-  uint32_t num_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
-
-  /* For every zone number in that first indirect inode block. */
-  int i;
-  for(i = 0; i < num_indirect_inodes; i++) {
-    /* The zone number that holds directory entries. */
-    uint32_t indirect_zone_number;
-
-    /* Read the entry offset in the first block. */
-    if (fseek(
-          mfs->file, 
-          block_addr + (i * sizeof(uint32_t)),
-          SEEK_SET) == -1) {
-      fprintf(stderr, "error seeking to indirect zone: %d\n", errno);
-      exit(EXIT_FAILURE);
-    }
-
-    /* Read the number that holds the zone number. */
-    if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
-      fprintf(stderr, "error reading indirect zone: %d\n", errno);
-      exit(EXIT_FAILURE);
-    }
-
-    /* Print all the valid files that are in the first block in this list. */
-    ls_files_in_direct_zone(s, mfs, indirect_zone_number);
-  }
-}
-
-/* Given a double indirect zone, print all of the files that are on the zones 
- * that are on the zones that the indirect zone points to if they are valid
- * (double indirect -> indirect -> zone -> file).
- * @param s the stream that this message will be printed to.
- * @param mfs a struct that holds an open file descriptor, and the offset (the
- *  offset from the beginning of the image which indicates the beginning of the
- *  partition that holds the filesystem.
- * @param zone_num the double indirect zone number of interest
- * @return void.
- */
-void ls_files_in_two_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
-  /* Skip over the indirect zone if it is not used. */
-  if (zone_num == 0) {
-    return;
-  }
-
-  /* How many zone numbers we are going to read (how many fit in the first 
-     block of the indirect zone) */
-  uint32_t num_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
-
-  uint32_t zone_addr = mfs->partition_start + (zone_num*mfs->zone_size);
-
-  /* For every zone number in that first double indirect inode block. */
-  int i;
-  for(i = 0; i < num_indirect_inodes; i++) {
-    /* The zone number that holds the indierct zone numbers. */
-    uint32_t indirect_zone_number;
-
-    /* Start reading the first block in the double indirect zone. */
-    if (fseek(
-          mfs->file, 
-          zone_addr + (i * sizeof(uint32_t)), 
-          SEEK_SET) == -1) {
-      fprintf(stderr, "error seeking to double indirect zone: %d\n", errno);
-      exit(EXIT_FAILURE);
-    }
-
-    /* Read the number that holds the zone number. */
-    if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
-      fprintf(stderr, "error reading indirect zone number: %d\n", errno);
-      exit(EXIT_FAILURE);
-    }
-
-    /* Print the files in that indirect zone. */
-    ls_files_in_indirect_zone(s, mfs, indirect_zone_number);
-  }
-}
-
-/* Prints every directory entry in a directory.
- * @param s the stream that this message will be printed to.
- * @param mfs a struct that holds an open file descriptor, and the offset (the
- *  offset from the beginning of the image which indicates the beginning of the
- *  partition that holds the filesystem.
- * @param inode the inode of interest. 
- * @param can_path the canonicalized path that we are going to list.
- * @return void.
- */
 void ls_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path) {
-  /* print the full canonicalized minix path that we are listing. */
   fprintf(s, "/%s:\n", can_path);
 
-  /* DIRECT ZONES */
-  int i;
-  for(i = 0; i < DIRECT_ZONES; i++) {
-    /* Print all of the valid files that are in that zone. */
-    ls_files_in_direct_zone(s, mfs, inode->zone[i]);
+  /* Process direct zones */
+  for (int i = 0; i < DIRECT_ZONES; i++) {
+    process_direct_zone(s, mfs, inode, inode->zone[i], list_block, NULL);
   }
 
-  /* INDIRECT ZONES */
-  ls_files_in_indirect_zone(s, mfs, inode->indirect);
+  /* Process indirect zone */
+  process_indirect_zone(s, mfs, inode, inode->indirect, list_block, NULL);
 
-  /* DOUBLE INDIRECT ZONES */
-  ls_files_in_two_indirect_zone(s, mfs, inode->two_indirect);
+  /* Process double indirect zone */
+  process_two_indirect_zone(s, mfs, inode, inode->two_indirect, list_block, NULL);
 }
+
+// /* TODO: print the files in a block  COMMENTS*/
+// void ls_files_in_block(
+//     FILE* s, 
+//     min_fs* mfs, 
+//     uint32_t zone_num, 
+//     uint32_t block_number) {
+//   /* Skip over the zone if it is not used. */
+//   if (zone_num == 0) { 
+//     return ;
+//   }
+// 
+//   uint32_t zone_addr = mfs->partition_start + (zone_num * mfs->zone_size);
+// 
+//   uint32_t block_addr = zone_addr + (block_number * mfs->sb.blocksize);
+// 
+// 
+//   /* Read all directory entries in this block. */
+//   uint32_t num_directories = mfs->sb.blocksize / DIR_ENTRY_SIZE;
+// 
+//   int i;
+//   for(i = 0; i < num_directories; i++) {
+//     /* print ALL dierctory entries that fit in this block. */
+// 
+//     /* The entry that will hold the filename. */
+//     min_dir_entry entry;
+// 
+//     /* Seek to the directory entry */
+//     if (fseek(mfs->file, block_addr + (i * DIR_ENTRY_SIZE), SEEK_SET)) {
+//       fprintf(stderr, "error seeking to directory entry: %d\n", errno);
+//       exit(EXIT_FAILURE);
+//     }
+// 
+//     /* Read the directory entry */
+//     if(fread(&entry, DIR_ENTRY_SIZE, 1, mfs->file) < 1) {
+//       fprintf(stderr, "error reading directory entry: %d\n", errno);
+//       exit(EXIT_FAILURE);
+//     }
+// 
+//     /* Check if entry is valid */
+//     if(entry.inode != 0) {
+//       min_inode next_inode;
+// 
+//       /* Seek to the address that holds the inode that we are on. */
+//       if (fseek(
+//             mfs->file, 
+//             mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE),
+//             SEEK_SET) == -1) {
+//         fprintf(stderr, "error seeking to inode: %d\n", errno);
+//         exit(EXIT_FAILURE);
+//       }
+// 
+//       /* Fill the next_inode with the found information. */
+//       if(fread(&next_inode, INODE_SIZE, 1, mfs->file) < 1) {
+//         /* If there was an error writing to the inode, note it an exit. We 
+//            could try to limp along, but this is not that critical of an 
+//            application, so we'll just bail. */
+//         fprintf(stderr, "error getting next inode for printing: %d\n", errno);
+//         exit(EXIT_FAILURE);
+//       }
+// 
+//       ls_file(s, &next_inode, entry.name);
+//     }
+//   }
+// }
+// 
+// /* Given a zone, print all of the files that are on that zone if they are valid.
+//  * @param s the stream that this message will be printed to.
+//  * @param mfs a struct that holds an open file descriptor, and the offset (the
+//  *  offset from the beginning of the image which indicates the beginning of the
+//  *  partition that holds the filesystem.
+//  * @param zone_num the zone number of interest
+//  * @return void.
+//  */
+// void ls_files_in_direct_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
+//   /* Skip over the indirect zone if it is not used. */
+//   if (zone_num == 0) { 
+//     return ;
+//   }
+// 
+//   /* Read all directory entries in this chunk. */
+//   uint32_t num_blocks = mfs->zone_size / mfs->sb.blocksize;
+// 
+//   int i;
+//   for(i = 0; i < num_blocks; i++) {
+//     /* print ALL blocks that fit in this zone. */
+//     ls_files_in_block(s, mfs, zone_num, i);
+//   }
+// }
+// 
+// /* Given an indirect zone, print all of the files that are on the zones that
+//  * the indirect zone points to if they are valid.
+//  * @param s the stream that this message will be printed to.
+//  * @param mfs a struct that holds an open file descriptor, and the offset (the
+//  *  offset from the beginning of the image which indicates the beginning of the
+//  *  partition that holds the filesystem.
+//  * @param zone_num the indirect zone number of interest
+//  * @return void.
+//  */
+// void ls_files_in_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
+//   /* Skip over the indirect zone if it is not used. */
+//   if (zone_num == 0) {
+//     return;
+//   }
+// 
+//   /* The first block is going to line up with the address of that zone. */
+//   uint32_t block_addr = mfs->partition_start + (zone_num*mfs->zone_size);
+// 
+//   /* How many zone numbers we are going to read (how many fit in the first 
+//      block of the indirect zone) */
+//   uint32_t num_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+// 
+//   /* For every zone number in that first indirect inode block. */
+//   int i;
+//   for(i = 0; i < num_indirect_inodes; i++) {
+//     /* The zone number that holds directory entries. */
+//     uint32_t indirect_zone_number;
+// 
+//     /* Read the entry offset in the first block. */
+//     if (fseek(
+//           mfs->file, 
+//           block_addr + (i * sizeof(uint32_t)),
+//           SEEK_SET) == -1) {
+//       fprintf(stderr, "error seeking to indirect zone: %d\n", errno);
+//       exit(EXIT_FAILURE);
+//     }
+// 
+//     /* Read the number that holds the zone number. */
+//     if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
+//       fprintf(stderr, "error reading indirect zone: %d\n", errno);
+//       exit(EXIT_FAILURE);
+//     }
+// 
+//     /* Print all the valid files that are in the first block in this list. */
+//     ls_files_in_direct_zone(s, mfs, indirect_zone_number);
+//   }
+// }
+// 
+// /* Given a double indirect zone, print all of the files that are on the zones 
+//  * that are on the zones that the indirect zone points to if they are valid
+//  * (double indirect -> indirect -> zone -> file).
+//  * @param s the stream that this message will be printed to.
+//  * @param mfs a struct that holds an open file descriptor, and the offset (the
+//  *  offset from the beginning of the image which indicates the beginning of the
+//  *  partition that holds the filesystem.
+//  * @param zone_num the double indirect zone number of interest
+//  * @return void.
+//  */
+// void ls_files_in_two_indirect_zone(FILE* s, min_fs* mfs, uint32_t zone_num) {
+//   /* Skip over the indirect zone if it is not used. */
+//   if (zone_num == 0) {
+//     return;
+//   }
+// 
+//   /* How many zone numbers we are going to read (how many fit in the first 
+//      block of the indirect zone) */
+//   uint32_t num_indirect_inodes = mfs->sb.blocksize / sizeof(uint32_t);
+// 
+//   uint32_t zone_addr = mfs->partition_start + (zone_num*mfs->zone_size);
+// 
+//   /* For every zone number in that first double indirect inode block. */
+//   int i;
+//   for(i = 0; i < num_indirect_inodes; i++) {
+//     /* The zone number that holds the indierct zone numbers. */
+//     uint32_t indirect_zone_number;
+// 
+//     /* Start reading the first block in the double indirect zone. */
+//     if (fseek(
+//           mfs->file, 
+//           zone_addr + (i * sizeof(uint32_t)), 
+//           SEEK_SET) == -1) {
+//       fprintf(stderr, "error seeking to double indirect zone: %d\n", errno);
+//       exit(EXIT_FAILURE);
+//     }
+// 
+//     /* Read the number that holds the zone number. */
+//     if(fread(&indirect_zone_number, sizeof(uint32_t), 1, mfs->file) < 1) {
+//       fprintf(stderr, "error reading indirect zone number: %d\n", errno);
+//       exit(EXIT_FAILURE);
+//     }
+// 
+//     /* Print the files in that indirect zone. */
+//     ls_files_in_indirect_zone(s, mfs, indirect_zone_number);
+//   }
+// }
+// 
+// /* Prints every directory entry in a directory.
+//  * @param s the stream that this message will be printed to.
+//  * @param mfs a struct that holds an open file descriptor, and the offset (the
+//  *  offset from the beginning of the image which indicates the beginning of the
+//  *  partition that holds the filesystem.
+//  * @param inode the inode of interest. 
+//  * @param can_path the canonicalized path that we are going to list.
+//  * @return void.
+//  */
+// void ls_directory(FILE* s, min_fs* mfs, min_inode* inode, char* can_path) {
+//   /* print the full canonicalized minix path that we are listing. */
+//   fprintf(s, "/%s:\n", can_path);
+// 
+//   /* DIRECT ZONES */
+//   int i;
+//   for(i = 0; i < DIRECT_ZONES; i++) {
+//     /* Print all of the valid files that are in that zone. */
+//     ls_files_in_direct_zone(s, mfs, inode->zone[i]);
+//   }
+// 
+//   /* INDIRECT ZONES */
+//   ls_files_in_indirect_zone(s, mfs, inode->indirect);
+// 
+//   /* DOUBLE INDIRECT ZONES */
+//   ls_files_in_two_indirect_zone(s, mfs, inode->two_indirect);
+// }
 
 

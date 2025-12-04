@@ -9,9 +9,6 @@
 #include "disk.h"
 #include "print.h"
 
-/* TODO: instead of passing in the zone and block numbers, compute the zone 
-   numbers outside once, and pass along the zone addresses */
-
 /*==========*/
 /* BASIC IO */
 /*==========*/
@@ -655,6 +652,4 @@ uint32_t get_zone_size(min_superblock* sb) {
 
   return zonesize;
 }
-
-/* TODO: CALCULATIONs for the addresses. */
 

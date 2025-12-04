@@ -5,7 +5,7 @@ LDFLAGS = -Wall -g
 
 ALL_PROGS = minls minget
 OBJS = minls.o minget.o 
-HELPER_OBJS	= disk.o print.o parse.o
+HELPER_OBJS	= disk.o print.o parse.o zone.o
 
 .PHONY: all allclean clean 
 

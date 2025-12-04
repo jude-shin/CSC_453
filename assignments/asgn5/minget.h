@@ -3,8 +3,6 @@
 
 #include "disk.h"
 
-/* Prints an error that shows the flags that can be used with minls. */
-void print_minget_usage(FILE* s);
 
 /* Prints the contents of a regular file to the stream s given an inode. */
 void get_file_contents(FILE* s, min_fs* mfs, min_inode* inode);
