@@ -318,9 +318,12 @@ uint32_t find_inode(
   /* Parse all of the directories that the user gave by traversing through the
      directories till we are at the last inode. */
   while(token != NULL) {
+    /* Length of the next "path" */
+    size_t len = strlen(token); /* fn doesn't indicate error. */
+ 
     /* Make sure that there isn't a filename with a length that is greater than
        DIR_NAME_SIZE*/
-    if (strlen(token) > DIR_NAME_SIZE) {
+    if (len > DIR_NAME_SIZE) {
       fprintf(stderr, "encountered a name greater than %d!\n", DIR_NAME_SIZE);
       exit(EXIT_FAILURE);
     }
@@ -328,19 +331,18 @@ uint32_t find_inode(
     /* Copy the string name to cur_name so we can keep track of the last
        processed name. */
     if (cur_name != NULL) {
-      size_t len = strlen(token);
       /* Just make sure you don't go over the max length. */
       if (len >= DIR_NAME_SIZE) {
         len = DIR_NAME_SIZE - 1;
       }
-      memcpy(cur_name, token, len);
+      memcpy(cur_name, token, len); /* fn doesn't indicate error. */
       cur_name[len] = '\0';
     }
 
     /* Add the token (and a delimiter) to the build canonicalized minix path. */
     if (can_minix_path != NULL) {
-      strcat(can_minix_path, token);
-      strcat(can_minix_path, DELIMITER);
+      strcat(can_minix_path, token); /* fn doesn't indicate error. */
+      strcat(can_minix_path, DELIMITER); /* fn doesn't indicate error. */
     }
 
     /* The current inode must be traversable (a directory) */
@@ -356,7 +358,7 @@ uint32_t find_inode(
        directory entry with a matching name. */
     if (search_all_zones(mfs, inode, &cur_inode, token)) {
       cur_inode = *inode;
-      token = strtok(NULL, DELIMITER);
+      token = strtok(NULL, DELIMITER); /* fn doesn't indicate error. */
     }
     else {
       fprintf(stderr, "error traversing the path: directory not found!\n");
@@ -364,6 +366,7 @@ uint32_t find_inode(
     }
   }
 
+  /* Update the value of inode with the one that we just found. */
   *inode = cur_inode;
   return true;
 }
@@ -371,7 +374,6 @@ uint32_t find_inode(
 /* ========= */
 /* SEARCHING */
 /* ========= */
-
 /* Searches the direct, indirect, and double indirect zones of an indode 
  * (which is a directory), and looks for an entry with a corresponding name. 
  * If a name is found (and it is not deleted) populate the next_inode with the
@@ -416,7 +418,7 @@ bool search_all_zones(
         NULL, /* We dont need to print to a stream. */
         mfs, 
         inode, 
-        cur_inode->zone[i], 
+        cur_inode->indirect, 
         search_block, /* This is the search function. */
         NULL, /* If we see a hole we don't have to do anything special. */
         (void*)name)) {
@@ -430,7 +432,7 @@ bool search_all_zones(
         NULL, /* We dont need to print to a stream. */
         mfs, 
         inode, 
-        cur_inode->zone[i], 
+        cur_inode->two_indirect, 
         search_block, /* This is the search function. */
         NULL, /* If we see a hole we don't have to do anything special. */
         (void*)name)){
@@ -480,12 +482,13 @@ bool search_block(
     }
 
     /* Check if entry is valid (inode != 0) and name matches */
+    /* strcmp fn doesn't indicat errors.  */
     if(entry.inode != 0 && strcmp((char*)entry.name, (char*)name) == 0) {
       /* Get the address of the inode address that we found. (Go back one inode
          size because we just read it). */
       uint32_t inode_addr = mfs->b_inodes + ((entry.inode - 1) * INODE_SIZE);
 
-      /* Duplicate the inode information to the inode in the main function so
+      /* "Duplicate" the inode information to the inode in the main function so
          we can reference it later. */
       duplicate_inode(mfs, inode_addr, inode);
 
@@ -504,7 +507,7 @@ bool search_block(
  */
 uint32_t get_zone_size(min_superblock* sb) {
   uint32_t blocksize = sb->blocksize;
-  int16_t log_zone_size = sb->log_zone_size; /* log_zone_size? */
+  int16_t log_zone_size = sb->log_zone_size;
   uint32_t zonesize = blocksize << log_zone_size;
 
   return zonesize;
@@ -528,4 +531,3 @@ uint32_t get_zone_addr(min_fs* mfs, uint32_t zone_num) {
 uint32_t get_block_addr(min_fs* mfs, uint32_t zone_num, uint32_t block_num) {
   return get_zone_addr(mfs, zone_num) + (block_num * mfs->sb.blocksize);
 }
-
