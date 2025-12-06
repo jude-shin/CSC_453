@@ -1,0 +1,419 @@
+\documentclass[11pt]{article}
+
+% Use wide margins, but not quite so wide as fullpage.sty
+\marginparwidth 0.5in 
+\oddsidemargin 0.25in 
+\evensidemargin 0.25in 
+\marginparsep 0.25in
+\topmargin 0.25in 
+\textwidth 6in \textheight 8 in
+% That's about enough definitions
+
+
+\begin{document}
+\hfill\vbox{\hbox{Jude Shin}
+\hbox{CSC 453, Section 01}	
+\hbox{Lab 3}	
+\hbox{\today}}\par
+
+\bigskip
+\centerline{\Large\bf Lab 2: Minix Scavenger Hunt}\par
+\bigskip
+
+
+\begin{enumerate}
+	\item In Minix (or any other Unix), if user 2 links to a file owned by user 1, then user 1 removes the file, what happens when user 2 tries to read the file? (Tanenbaum and Woodhull, Ch. 1, Ex. 15)
+
+		When the original file is removed, the linked "file" will still be present. Both files had the same i-number that pointed to the same item in the i-node table. Only when there are no files that have an i-number pointing to a particular file, will the file be fully removed from the disk (there is a field in the i-node that keeps track of how many directory entries are pointing to it). A link is not the same thing as copying a file; links point to the same data. 
+
+	\item Under what circumstances is multiprogramming likely to increase CPU utilization? Why?
+
+		CPU utilization will increase with multiprogramming when there are processes that will be blocked. Suppose there is a program that waits for I/O. Now suppose there is a user that is taking a nap at work instead of typing input that this program is waiting for. If there was no multiprogramming, then the CPU will idly wait for this one input, only continuing when an input has been given. The more familiar solution is to have a scheduler that switches the contexts of "ready" processes. This allows for programs which are blocked to be "skipped", giving resources to "running" and/or "ready" resources, reducing the CPU's idle waiting time, therefore increasing CPU utilization. Multiprogramming includes context switches (obviously)... but if those context switches take a week to complete, then the CPU utilization would be spent more on overhead and less on the actual processes that want to be run; this is not ideal. 
+
+	\item Suppose a computer can execute 1 billion instructions/sec and that a system call takes 1000 instructions, including the trap and all the context switching. How many system calls can the computer execute per second and still have half the CPU capacity for running application code? (T\&W 1-21)
+
+		1 billion instructions per second multiplied by (1 syscall / 1000 inst) results in the equivalent ratio of 1 million syscalls per second if the CPU ran at full capacity. If it ran at 1/2 capacity, we will divide 1 million by 2. The computer can execute 500,000 system calls per second. 
+
+	\item What is a race condition? What are the symptoms of a race condition? (T\&W 2-9)
+
+		A race condition is when there is non-determinism in a system with resources that different processes (or threads) are trying to access; when two or more processes are reading or writing some shared data, and the final result depends on who ran when and in what order. Most of the time it isn't a big deal, but on the rare occasion that multiple processes are trying to access the same resource at the exact same moment, the question becomes who gets to use it first? Will using the resource alter the result of using it for a second time? The answer is we don't know. Maybe process B writes to a file before process A, which would obviously be different from process A writing before process B.
+
+	\item Does the busy waiting solution using the turn variable (Fig. 2-10 in T\&W) work when the two processes are running on a shared-memory multiprocessor, that is, two CPUs, sharing a common memory? (T\&W, 2-13)
+
+		The busy waiting solution presented in Fig. 2-10 is Strict alternation, and it works, however is very inefficient because it is constantly busy waiting. 
+
+	\item Describe how an operating system that can disable interrupts could implement semaphores. That is, what steps would have to happen in which order to implement the semaphore operations safely. (T\&W, 2-10)
+
+		The semaphore UP() and DOWN() operations have to be atomic. If the action of adding or decrementing semaphore values is interrupted, we have basically used a completely useless fancy integer variable. To make the semaphore useful, you would need to first disable interrupts, then increment/decrement the semaphore, and then finally re-enable the interrupts so that the original process can be interrupted as normal. This atomicity is necessary when implementing a mutex or a semaphore.
+
+	\item Round robin schedulers normally maintain a list of all runnable processes, with each process occurring exactly once in the list. What would happen if a process occurred twice in the list? Can you think of any reason for allowing this? (T\&W, 2-25) (And what is the reason. “Yes” or “no” would not be considered a sufficient answer.)
+
+		If you wanted to have a particular process be called by the scheduler twice as frequent as any other processes due to priority or some other reason, then no further modification would have to be done to the very simple scheduler. Processes could be "seen" or processed more often because they appear more often in the round robin list.
+
+	\item Five batch jobs, A through E, arrive at a computer center, in alphabetical order, at almost the same time. They have estimated running times of 10, 3, 4, 7, and 6 seconds respectively. Their (externally determined) priorities are 3, 5, 2, 1, and 4, respectively, with 5 being the highest priority. For each of the following scheduling algorithms, determine the time at which each job completes and the mean process turnaround time. Assume a 1 second quantum and ignore process switching overhead. (Modified from T\&W, 2 - 28)
+
+		For (a), assume that the system is multiprogrammed, and that each job gets its fair share of the CPU. For (b)–(d) assume that only one job at a time runs, and each job runs until it finished. All jobs are completely CPU bound.
+
+		\begin{enumerate}
+			\item Round robin:
+				t00: All the jobs arrive in alphabetical order. 
+
+				t01: job A
+
+				t02: job B
+
+				t03: job C
+
+				t04: job D
+
+				t05: job E
+
+
+
+				t06: job A
+
+				t07: job B
+
+				t08: job C
+
+				t09: job D
+
+				t10: job E
+
+
+				t11: job A
+
+				t12: job B [finished!]
+
+				t13: job C
+
+				t14: job D
+
+				t15: job E
+
+
+				t16: job A
+
+				t17: job C [finished!]
+
+				t18: job D
+
+				t19: job E
+
+
+				t20: job A
+
+				t21: job D
+
+				t22: job E
+
+
+				t23: job A
+
+				t24: job D
+
+				t25: job E [finished!]
+
+
+				t26: job A
+
+				t27: job D [finished!]
+
+
+				t28: job A
+
+				t29: job A
+
+				t30: job A [finished!]
+
+				job A finished at t30 (30 seconds elapsed)
+
+				job B finished at t12 (12 seconds elapsed)
+
+				job C finished at t17 (17 seconds elapsed)
+
+				job D finished at t27 (27 seconds elapsed)
+
+				job E finished at t25 (25 seconds elapsed)
+
+
+				Average turnaround time: (30+12+17+27+25)/5 = 22.2 seconds
+
+			\item Priority scheduling:
+
+				t00: All the jobs arrive in alphabetical order. 
+
+				t01: job B
+
+				t02: job B
+
+				t03: job B [finished!]
+
+
+				t04: job E
+
+				t05: job E
+
+				t06: job E
+
+				t07: job E
+
+				t08: job E
+
+				t09: job E [finished!]
+
+
+				t10: job A
+
+				t11: job A
+
+				t12: job A 
+
+				t13: job A
+
+				t14: job A
+
+				t15: job A
+
+				t16: job A
+
+				t17: job A
+
+				t18: job A
+
+				t19: job A [finished!]
+
+
+				t20: job C
+
+				t21: job C
+
+				t22: job C
+
+				t23: job C [finished!]
+
+
+				t24: job D
+
+				t25: job D 
+
+				t26: job D
+
+				t27: job D
+
+				t28: job D
+
+				t29: job D
+
+				t30: job D [finished!]
+
+
+				job A finished at t19 (19 seconds elapsed)
+
+				job B finished at t03 (3 seconds elapsed)
+
+				job C finished at t23 (23 seconds elapsed)
+
+				job D finished at t30 (30 seconds elapsed)
+
+				job E finished at t09 (9 seconds elapsed)
+
+
+				Average turnaround time: (19+3+23+30+9)/5 = 16.8 seconds
+
+			\item First-come, first-served (given that they arrive in alphabetical order):
+
+				t00: All the jobs arrive in alphabetical order. 
+
+				t01: job A
+
+				t02: job A
+
+				t03: job A
+
+				t04: job A
+
+				t05: job A
+
+				t06: job A
+
+				t07: job A
+
+				t08: job A
+
+				t09: job A
+
+				t10: job A [finished!]
+
+
+				t11: job B
+
+				t12: job B 
+
+				t13: job B [finished!]
+
+
+				t14: job C
+
+				t15: job C
+
+				t16: job C
+
+				t17: job C [finished!]
+
+
+				t18: job D
+
+				t19: job D
+
+				t20: job D
+
+				t21: job D
+
+				t22: job D
+
+				t23: job D
+
+				t24: job D [finished]
+
+
+				t25: job E 
+
+				t26: job E
+
+				t27: job E
+
+				t28: job E
+
+				t29: job E
+
+				t30: job E [finished]
+
+
+				job A finished at t10 (10 seconds elapsed)
+
+				job B finished at t13 (13 seconds elapsed)
+
+				job C finished at t17 (17 seconds elapsed)
+
+				job D finished at t24 (24 seconds elapsed)
+
+				job E finished at t30 (30 seconds elapsed)
+
+
+				Average turnaround time: (10+13+17+24+30)/5 = 18.8 seconds
+
+			\item Shortest job first:
+
+				Note: remaining time (rt: ...) is listed in alphabetical order
+
+				t00: All the jobs arrive in alphabetical order. 
+
+				t01: job B (rt: 10, 2, 4, 7, 6)
+
+				t02: job B (rt: 10, 1, 4, 7, 6)
+
+				t03: job B (rt: 10, -, 4, 7, 6) [finished!]
+
+				t04: job C (rt: 10, -, 3, 7, 6)
+
+				t05: job C (rt: 10, -, 2, 7, 6)
+
+				t06: job C (rt: 10, -, 1, 7, 6)
+
+				t07: job C (rt: 10, -, -, 7, 6) [finished!]
+
+
+				t08: job E (rt: 10, -, -, 7, 5)
+
+				t09: job E (rt: 10, -, -, 7, 4)
+
+				t10: job E (rt: 10, -, -, 7, 3)
+
+				t11: job E (rt: 10, -, -, 7, 2)
+
+				t12: job E (rt: 10, -, -, 7, 1)
+
+				t13: job E (rt: 10, -, -, 7, -) [finished!]
+
+
+				t14: job D (rt: 10, -, -, 6, -)
+
+				t15: job D (rt: 10, -, -, 5, -)
+
+				t16: job D (rt: 10, -, -, 4, -)
+
+				t17: job D (rt: 10, -, -, 3, -)
+
+				t18: job D (rt: 10, -, -, 2, -)
+
+				t19: job D (rt: 10, -, -, 1, -)
+
+				t20: job D (rt: 10, -, -, -, -) [finished!]
+
+
+				t21: job D (rt: 9, -, -, -, -)
+
+				t22: job D (rt: 8, -, -, -, -)
+
+				t23: job D (rt: 7, -, -, -, -)
+
+				t24: job D (rt: 6, -, -, -, -)
+
+				t25: job D (rt: 5, -, -, -, -)
+
+				t26: job D (rt: 4, -, -, -, -)
+
+				t27: job D (rt: 3, -, -, -, -)
+
+				t28: job D (rt: 2, -, -, -, -)
+
+				t29: job D (rt: 1, -, -, -, -)
+
+				t30: job D (rt: -, -, -, -, -) [finished!]
+
+
+				job A finished at t30 (30 seconds elapsed)
+
+				job B finished at t03 (3 seconds elapsed)
+
+				job C finished at t07 (7 seconds elapsed)
+
+				job D finished at t20 (20 seconds elapsed)
+
+				job E finished at t13 (13 seconds elapsed)
+
+
+				Average turnaround time: (30+3+7+20+13)/5 = 14.6 seconds
+
+		\end{enumerate}
+
+	\item Re-do problem 8a with the modification that job D is IO bound. After each 500ms it is allowed to run, it blocks for an IO operation that takes 1s to complete. The IO processing itself doesn’t take any noticeable time. Assume that jobs moving from the blocked state to the ready state are placed at the end of the run queue. If a blocked job becomes runnable at the same time a running process’s quantum is up, the formerly blocked job is placed back on the queue ahead of the other one.
+
+		job A finished at t27.5 (27.5 seconds elapsed)
+
+		job B finished at t11   (11   seconds elapsed)
+
+		job C finished at t15.5 (15.5 seconds elapsed)
+
+		job D finished at t34   (34   seconds elapsed)
+
+		job E finished at t22   (22   seconds elapsed)
+
+		Average turnaround time: (27.5+11+15.5+34+22)/5 = 22.0 seconds
+
+	\item A CPU-bound process running on CTSS needs 30 quanta to complete. How many times must it be swapped in, including the first time (before it has run at all)? Assume that there are always other runnable jobs and that the number of priority classes is unlimited. (T\&W, 2-29)
+
+		Every time the process uses all of the quanta allocated to it, it will move down a "class", which allows a process to have more quanta in powers of 2. This means the process will first use up 1 quantum, then 2 quanta, then 4, then 8, then finally 16. 30-(1+2+2+4+8+16). On the 5th iteration, the process will have NOT used all of it's allocated quanta. It doesn't matter either way because the process has finished using all of it's 30 quanta at the 5th "swap" cycle. 
+
+\end{enumerate}
+
+\end{document}
+
+
+
+
+
+
+
+
